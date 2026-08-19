@@ -27,14 +27,8 @@ Aplikasi ini merupakan implementasi dari karya tulis ilmiah:
 
 ## 🎵 Sistem 12-TET (20 Nada per Oktaf)
 
-### Rumus Frekuensi
 
-
-Saya akan membantu Anda membuat repository GitHub untuk aplikasi Musik 12-TET (20 Nada per Oktaf). Berikut panduan lengkapnya:
-
-📦 Persiapan File
-
-Buat struktur folder seperti ini:
+Sttruktur folder seperti ini:
 
 ```
 musik-12tet-20nada/
