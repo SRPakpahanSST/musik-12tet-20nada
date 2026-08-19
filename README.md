@@ -6,6 +6,8 @@ Aplikasi web interaktif untuk mengeksplorasi sistem musik mikrotonal **12-Tone E
 
 ![Screenshot](screenshot.png)
 
+URL Link Aplikasi: https://musik-12tet-20nada-kpfqdex8uerd5pgekv9mvs.streamlit.app/
+
 ## 📖 Tentang Proyek
 
 Aplikasi ini merupakan implementasi dari karya tulis ilmiah:
