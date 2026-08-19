@@ -158,6 +158,144 @@ Kontribusi sangat diterima! Silakan fork repository ini dan buat pull request.
 
 MIT License - lihat file LICENSE untuk detail.
 
+```text
+MIT License
+
+Copyright (c) 2026 Sukma Riadi Pakpahan
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+---
+
+📝 Penjelasan Lisensi MIT
+
+Apa itu Lisensi MIT?
+
+Lisensi MIT adalah lisensi open source yang sangat permisif. Ini berarti:
+
+✅ Boleh:
+
+· Menggunakan kode secara komersial
+· Memodifikasi kode
+· Mendistribusikan kode
+· Menggabungkan dengan proyek lain
+· Menggunakan tanpa batasan
+
+❌ Tidak Boleh:
+
+· Menghapus pemberitahuan hak cipta
+· Menuntuk penulis atas kerusakan yang disebabkan
+
+Keuntungan Lisensi MIT:
+
+1. Sederhana - Hanya beberapa paragraf
+2. Populer - Digunakan oleh banyak proyek besar (React, Angular, jQuery)
+3. Fleksibel - Dapat digunakan untuk proyek apapun
+4. Aman - Melindungi penulis dari tuntutan hukum
+
+---
+
+📂 Cara Menambahkan LICENSE ke Repository
+
+Cara 1: Melalui GitHub Website
+
+1. Buka repository di GitHub
+2. Klik Add file → Create new file
+3. Nama file: LICENSE
+4. Copy-paste kode di atas
+5. Klik Commit new file
+
+Cara 2: Melalui GitHub Template
+
+1. Buka repository di GitHub
+2. Klik Add file → Create new file
+3. Nama file: LICENSE
+4. Klik Choose a license template
+5. Pilih MIT License
+6. Isi tahun dan nama: 2026 Sukma Riadi Pakpahan
+7. Klik Review and submit
+8. Klik Commit new file
+
+Cara 3: Melalui Terminal
+
+```bash
+# Buat file LICENSE
+cat > LICENSE << 'EOF'
+MIT License
+
+Copyright (c) 2026 Sukma Riadi Pakpahan
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+EOF
+
+# Commit dan push
+git add LICENSE
+git commit -m "Add MIT License"
+git push
+```
+
+---
+
+🔄 Lisensi Alternatif
+
+Jika Anda ingin menggunakan lisensi lain, berikut beberapa pilihan:
+
+1. GNU GPL v3 (Lebih Ketat)
+
+· Kode harus tetap open source
+· Perubahan harus dibagikan
+· Cocok untuk proyek yang ingin tetap bebas
+
+2. Apache 2.0 (Seperti MIT + Paten)
+
+· Seperti MIT tapi dengan perlindungan paten
+· Digunakan oleh Google, Apache, dll.
+
+3. BSD 3-Clause (Mirip MIT)
+
+· Sedikit lebih ketat dari MIT
+· Digunakan oleh proyek BSD
+
+4. Creative Commons (Untuk Non-Software)
+
+· Untuk karya seni, dokumentasi, dll.
+· CC BY, CC BY-SA, CC BY-NC, dll.
+
+---
+
 👨‍💻 Penulis
 
 Sukma Riadi Pakpahan, SST
