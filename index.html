@@ -22,7 +22,7 @@
         }
 
         .container {
-            max-width: 1400px;
+            max-width: 1500px;
             width: 100%;
             background: #16213e;
             border-radius: 20px;
@@ -115,7 +115,7 @@
 
         .keyboard-container {
             position: relative;
-            min-width: 2800px;
+            min-width: 3400px;
             height: 230px;
             margin: 0 auto;
         }
@@ -291,7 +291,7 @@
             header h1 { font-size: 1.4rem; }
             .key-white { width: 26px; height: 140px; }
             .key-black { width: 16px; height: 85px; }
-            .keyboard-container { min-width: 2200px; height: 190px; }
+            .keyboard-container { min-width: 2800px; height: 190px; }
             .controls { gap: 8px; padding: 10px; }
             .btn { padding: 6px 12px; font-size: 0.75rem; }
         }
@@ -306,7 +306,6 @@
 
         <!-- ============ CONTROLS ============ -->
         <div class="controls" id="controlsContainer">
-            <!-- Radio Button Mode -->
             <label class="active-mode" id="singleModeLabel">
                 <input type="radio" name="playMode" value="single" checked /> Nada Tunggal
             </label>
@@ -349,77 +348,64 @@
 
     <script>
         // ============================================================
-        // DATA FREKUENSI 12-TET (20 NADA PER OKTAF)
+        // DATA FREKUENSI 12-TET (20 NADA PER OKTAF) – DARI C2 SAMPAI D6
         // ============================================================
 
+        // Frekuensi oktaf 2–5 diambil dari hasil perhitungan sebelumnya
+        // Oktaf 6 dihitung dari oktaf 5 × 3
         const FREQ_MAP = {
-            // Oktaf 2
+            // Oktaf 2 (hanya 3 nada awal)
             'C2': 172.942,
             'C#2': 182.707,
             'D2': 193.024,
-            // Oktaf 3
-            'E3': 203.924,
-            'E#3': 215.439,
-            'F3': 227.604,
-            'F#3': 240.456,
-            'G3': 254.034,
-            'G#3': 268.379,
-            'H3': 283.533,
-            'H#3': 299.544,
+            // Oktaf 3 (20 nada)
+            'E3': 203.924, 'E#3': 215.439,
+            'F3': 227.604, 'F#3': 240.456,
+            'G3': 254.034, 'G#3': 268.379,
+            'H3': 283.533, 'H#3': 299.544,
             'I3': 316.458,
-            'J3': 334.328,
-            'J#3': 353.206,
-            'K3': 373.151,
-            'K#3': 394.222,
-            'A3': 416.482,
-            'A#3': 440.0,
-            'B3': 464.846,
-            'B#3': 491.094,
-            'C3': 518.825,
-            'C#3': 548.122,
+            'J3': 334.328, 'J#3': 353.206,
+            'K3': 373.151, 'K#3': 394.222,
+            'A3': 416.482, 'A#3': 440.0,
+            'B3': 464.846, 'B#3': 491.094,
+            'C3': 518.825, 'C#3': 548.122,
             'D3': 579.073,
-            // Oktaf 4
-            'E4': 611.771,
-            'E#4': 646.316,
-            'F4': 682.812,
-            'F#4': 721.369,
-            'G4': 762.102,
-            'G#4': 805.136,
-            'H4': 850.6,
-            'H#4': 898.631,
+            // Oktaf 4 (20 nada)
+            'E4': 611.771, 'E#4': 646.316,
+            'F4': 682.812, 'F#4': 721.369,
+            'G4': 762.102, 'G#4': 805.136,
+            'H4': 850.6, 'H#4': 898.631,
             'I4': 949.374,
-            'J4': 1002.983,
-            'J#4': 1059.619,
-            'K4': 1119.453,
-            'K#4': 1182.665,
-            'A4': 1249.447,
-            'A#4': 1320.0,
-            'B4': 1394.537,
-            'B#4': 1473.283,
-            'C4': 1556.475,
-            'C#4': 1644.365,
+            'J4': 1002.983, 'J#4': 1059.619,
+            'K4': 1119.453, 'K#4': 1182.665,
+            'A4': 1249.447, 'A#4': 1320.0,
+            'B4': 1394.537, 'B#4': 1473.283,
+            'C4': 1556.475, 'C#4': 1644.365,
             'D4': 1737.218,
-            // Oktaf 5
-            'E5': 1835.314,
-            'E#5': 1938.949,
-            'F5': 2048.436,
-            'F#5': 2164.106,
-            'G5': 2286.307,
-            'G#5': 2415.409,
-            'H5': 2551.8,
-            'H#5': 2695.894,
+            // Oktaf 5 (20 nada)
+            'E5': 1835.314, 'E#5': 1938.949,
+            'F5': 2048.436, 'F#5': 2164.106,
+            'G5': 2286.307, 'G#5': 2415.409,
+            'H5': 2551.8, 'H#5': 2695.894,
             'I5': 2848.123,
-            'J5': 3008.949,
-            'J#5': 3178.857,
-            'K5': 3358.358,
-            'K#5': 3547.996,
-            'A5': 3748.341,
-            'A#5': 3960.0,
-            'B5': 4183.611,
-            'B#5': 4419.848,
-            'C5': 4669.425,
-            'C#5': 4933.095,
-            'D5': 5211.653
+            'J5': 3008.949, 'J#5': 3178.857,
+            'K5': 3358.358, 'K#5': 3547.996,
+            'A5': 3748.341, 'A#5': 3960.0,
+            'B5': 4183.611, 'B#5': 4419.848,
+            'C5': 4669.425, 'C#5': 4933.095,
+            'D5': 5211.653,
+            // Oktaf 6 (20 nada) – dihitung dari oktaf 5 × 3
+            'E6': 5505.942, 'E#6': 5816.847,
+            'F6': 6145.308, 'F#6': 6492.318,
+            'G6': 6858.921, 'G#6': 7246.227,
+            'H6': 7655.4, 'H#6': 8087.682,
+            'I6': 8544.369,
+            'J6': 9026.847, 'J#6': 9536.571,
+            'K6': 10075.074, 'K#6': 10643.988,
+            'A6': 11245.023, 'A#6': 11880.0,
+            'B6': 12550.833, 'B#6': 13259.544,
+            'C6': 14008.275, 'C#6': 14799.285,
+            'D6': 15634.959
         };
 
         // ============================================================
@@ -467,7 +453,6 @@
             return audioCtx;
         }
 
-        // === Mainkan satu nada ===
         function playSingleNote(freq, duration = 0.5) {
             try {
                 const ctx = initAudio();
@@ -501,7 +486,6 @@
             }
         }
 
-        // === Mainkan akord (beberapa nada simultan) ===
         function playChord(frequencies, duration = 0.8) {
             try {
                 const ctx = initAudio();
@@ -550,77 +534,62 @@
         }
 
         // ============================================================
-        // URUTAN NADA DARI C2 SAMPAI D5
+        // URUTAN NADA DARI C2 SAMPAI D6 (5 OKTAF)
         // ============================================================
 
         const NOTE_SEQUENCE = [
-            // Oktaf 2
+            // Oktaf 2 (3 nada)
             { note: 'C2', isBlack: false },
             { note: 'C#2', isBlack: true },
             { note: 'D2', isBlack: false },
-            // Oktaf 3
-            { note: 'E3', isBlack: false },
-            { note: 'E#3', isBlack: true },
-            { note: 'F3', isBlack: false },
-            { note: 'F#3', isBlack: true },
-            { note: 'G3', isBlack: false },
-            { note: 'G#3', isBlack: true },
-            { note: 'H3', isBlack: false },
-            { note: 'H#3', isBlack: true },
+            // Oktaf 3 (20 nada)
+            { note: 'E3', isBlack: false }, { note: 'E#3', isBlack: true },
+            { note: 'F3', isBlack: false }, { note: 'F#3', isBlack: true },
+            { note: 'G3', isBlack: false }, { note: 'G#3', isBlack: true },
+            { note: 'H3', isBlack: false }, { note: 'H#3', isBlack: true },
             { note: 'I3', isBlack: false },
-            { note: 'J3', isBlack: false },
-            { note: 'J#3', isBlack: true },
-            { note: 'K3', isBlack: false },
-            { note: 'K#3', isBlack: true },
-            { note: 'A3', isBlack: false },
-            { note: 'A#3', isBlack: true },
-            { note: 'B3', isBlack: false },
-            { note: 'B#3', isBlack: true },
-            { note: 'C3', isBlack: false },
-            { note: 'C#3', isBlack: true },
+            { note: 'J3', isBlack: false }, { note: 'J#3', isBlack: true },
+            { note: 'K3', isBlack: false }, { note: 'K#3', isBlack: true },
+            { note: 'A3', isBlack: false }, { note: 'A#3', isBlack: true },
+            { note: 'B3', isBlack: false }, { note: 'B#3', isBlack: true },
+            { note: 'C3', isBlack: false }, { note: 'C#3', isBlack: true },
             { note: 'D3', isBlack: false },
-            // Oktaf 4
-            { note: 'E4', isBlack: false },
-            { note: 'E#4', isBlack: true },
-            { note: 'F4', isBlack: false },
-            { note: 'F#4', isBlack: true },
-            { note: 'G4', isBlack: false },
-            { note: 'G#4', isBlack: true },
-            { note: 'H4', isBlack: false },
-            { note: 'H#4', isBlack: true },
+            // Oktaf 4 (20 nada)
+            { note: 'E4', isBlack: false }, { note: 'E#4', isBlack: true },
+            { note: 'F4', isBlack: false }, { note: 'F#4', isBlack: true },
+            { note: 'G4', isBlack: false }, { note: 'G#4', isBlack: true },
+            { note: 'H4', isBlack: false }, { note: 'H#4', isBlack: true },
             { note: 'I4', isBlack: false },
-            { note: 'J4', isBlack: false },
-            { note: 'J#4', isBlack: true },
-            { note: 'K4', isBlack: false },
-            { note: 'K#4', isBlack: true },
-            { note: 'A4', isBlack: false },
-            { note: 'A#4', isBlack: true },
-            { note: 'B4', isBlack: false },
-            { note: 'B#4', isBlack: true },
-            { note: 'C4', isBlack: false },
-            { note: 'C#4', isBlack: true },
+            { note: 'J4', isBlack: false }, { note: 'J#4', isBlack: true },
+            { note: 'K4', isBlack: false }, { note: 'K#4', isBlack: true },
+            { note: 'A4', isBlack: false }, { note: 'A#4', isBlack: true },
+            { note: 'B4', isBlack: false }, { note: 'B#4', isBlack: true },
+            { note: 'C4', isBlack: false }, { note: 'C#4', isBlack: true },
             { note: 'D4', isBlack: false },
-            // Oktaf 5
-            { note: 'E5', isBlack: false },
-            { note: 'E#5', isBlack: true },
-            { note: 'F5', isBlack: false },
-            { note: 'F#5', isBlack: true },
-            { note: 'G5', isBlack: false },
-            { note: 'G#5', isBlack: true },
-            { note: 'H5', isBlack: false },
-            { note: 'H#5', isBlack: true },
+            // Oktaf 5 (20 nada)
+            { note: 'E5', isBlack: false }, { note: 'E#5', isBlack: true },
+            { note: 'F5', isBlack: false }, { note: 'F#5', isBlack: true },
+            { note: 'G5', isBlack: false }, { note: 'G#5', isBlack: true },
+            { note: 'H5', isBlack: false }, { note: 'H#5', isBlack: true },
             { note: 'I5', isBlack: false },
-            { note: 'J5', isBlack: false },
-            { note: 'J#5', isBlack: true },
-            { note: 'K5', isBlack: false },
-            { note: 'K#5', isBlack: true },
-            { note: 'A5', isBlack: false },
-            { note: 'A#5', isBlack: true },
-            { note: 'B5', isBlack: false },
-            { note: 'B#5', isBlack: true },
-            { note: 'C5', isBlack: false },
-            { note: 'C#5', isBlack: true },
-            { note: 'D5', isBlack: false }
+            { note: 'J5', isBlack: false }, { note: 'J#5', isBlack: true },
+            { note: 'K5', isBlack: false }, { note: 'K#5', isBlack: true },
+            { note: 'A5', isBlack: false }, { note: 'A#5', isBlack: true },
+            { note: 'B5', isBlack: false }, { note: 'B#5', isBlack: true },
+            { note: 'C5', isBlack: false }, { note: 'C#5', isBlack: true },
+            { note: 'D5', isBlack: false },
+            // Oktaf 6 (20 nada) – TAMBAHAN
+            { note: 'E6', isBlack: false }, { note: 'E#6', isBlack: true },
+            { note: 'F6', isBlack: false }, { note: 'F#6', isBlack: true },
+            { note: 'G6', isBlack: false }, { note: 'G#6', isBlack: true },
+            { note: 'H6', isBlack: false }, { note: 'H#6', isBlack: true },
+            { note: 'I6', isBlack: false },
+            { note: 'J6', isBlack: false }, { note: 'J#6', isBlack: true },
+            { note: 'K6', isBlack: false }, { note: 'K#6', isBlack: true },
+            { note: 'A6', isBlack: false }, { note: 'A#6', isBlack: true },
+            { note: 'B6', isBlack: false }, { note: 'B#6', isBlack: true },
+            { note: 'C6', isBlack: false }, { note: 'C#6', isBlack: true },
+            { note: 'D6', isBlack: false }
         ];
 
         // ============================================================
@@ -648,7 +617,7 @@
 
             let whiteIndex = 0;
 
-            // Buat tuts putih dulu
+            // Buat tuts putih
             for (let i = 0; i < NOTE_SEQUENCE.length; i++) {
                 const { note, isBlack } = NOTE_SEQUENCE[i];
                 const freq = FREQ_MAP[note] || 0;
@@ -681,7 +650,7 @@
                 }
             }
 
-            // Reset whiteIndex untuk hitung posisi tuts hitam
+            // Reset whiteIndex untuk posisi tuts hitam
             whiteIndex = 0;
             for (let i = 0; i < NOTE_SEQUENCE.length; i++) {
                 const { note, isBlack } = NOTE_SEQUENCE[i];
@@ -716,13 +685,14 @@
                 }
             }
 
-            // Tambahkan label oktaf
+            // Label oktaf
             let posX = startX;
             const octaveGroups = [
                 { octave: 2, count: 3 },
-                { octave: 3, count: 23 },
-                { octave: 4, count: 23 },
-                { octave: 5, count: 21 }
+                { octave: 3, count: 20 },
+                { octave: 4, count: 20 },
+                { octave: 5, count: 20 },
+                { octave: 6, count: 20 }
             ];
 
             for (let group of octaveGroups) {
@@ -739,29 +709,25 @@
         }
 
         // ============================================================
-        // FUNGSI HANDLE KEY PRESS (Mode Tunggal / Akord)
+        // FUNGSI HANDLE KEY PRESS
         // ============================================================
 
         function handleKeyPress(note) {
             const key = keyElements[note];
             if (!key) return;
 
-            // Highlight tuts
             key.classList.add('active');
             setTimeout(() => key.classList.remove('active'), 400);
 
             if (playMode === 'single') {
-                // Mode Nada Tunggal
                 const freq = FREQ_MAP[note];
                 if (freq) {
                     playSingleNote(freq);
                     statusDisplay.innerHTML = `🎵 Memainkan <span>${note}</span> (${freq.toFixed(2)} Hz) [Nada Tunggal]`;
                 }
             } else {
-                // Mode Akord
                 const chordNotes = CHORD_DICT[note];
                 if (chordNotes && chordNotes.length > 0) {
-                    // Kumpulkan frekuensi untuk semua nada dalam akord
                     const freqs = chordNotes.map(n => FREQ_MAP[n]).filter(f => f > 0);
                     if (freqs.length > 0) {
                         playChord(freqs);
@@ -771,7 +737,6 @@
                         statusDisplay.innerHTML = `⚠️ Akord untuk ${note} tidak memiliki frekuensi valid`;
                     }
                 } else {
-                    // Jika tidak ada akord, mainkan nada tunggal sebagai fallback
                     const freq = FREQ_MAP[note];
                     if (freq) {
                         playSingleNote(freq);
@@ -832,7 +797,6 @@
             radio.addEventListener('change', function() {
                 if (this.checked) {
                     playMode = this.value;
-                    // Update UI label
                     document.querySelectorAll('.controls label').forEach(l => l.classList.remove('active-mode'));
                     if (playMode === 'single') {
                         singleModeLabel.classList.add('active-mode');
@@ -847,7 +811,7 @@
         });
 
         // ============================================================
-        // TAB KONTEN
+        // TAB KONTEN (sama seperti sebelumnya, hanya ditambah info oktaf 6)
         // ============================================================
 
         const tabContent = document.getElementById('tabContent');
@@ -870,9 +834,10 @@
                 <p style="font-family:monospace;color:#ffd700;">A - B - C - D - E - F - G - H - I - J - K - A</p>
                 <p>Interval: 1 1 1 ½ 1 1 1 1 ½ 1 1</p>
                 <p style="color:#aaa;">Ekspresi: melankolis, emosional, mendalam</p>
+                <p style="margin-top:10px;color:#888;">Keyboard mencakup 5 oktaf: dari C2 sampai D6</p>
             `,
             freq: `
-                <h3>📊 Frekuensi Nada (Oktaf 2-5)</h3>
+                <h3>📊 Frekuensi Nada (Oktaf 2-6)</h3>
                 <table class="freq-table">
                     <thead><tr><th>Nada</th><th>Frekuensi (Hz)</th><th>Tuts</th></tr></thead>
                     <tbody>
@@ -883,6 +848,7 @@
                     </tbody>
                 </table>
                 <p style="margin-top:10px;font-size:0.8rem;color:#888;">* A#4 = 440 Hz sebagai acuan</p>
+                <p style="font-size:0.8rem;color:#888;">Oktaf 6 dihitung dari oktaf 5 × 3</p>
             `,
             skala: `
                 <h3>🎹 Skala Mayor (E=1)</h3>
@@ -920,7 +886,7 @@
                 <p style="margin-top:10px;">Diajukan kepada Badan Riset dan Inovasi Nasional (BRIN)</p>
                 <h3 style="margin-top:15px;">✨ Fitur</h3>
                 <ul>
-                    <li>Keyboard dari C2 sampai D5 (4 oktaf)</li>
+                    <li>Keyboard dari C2 sampai D6 (5 oktaf)</li>
                     <li>Nada dengan # berada di tuts hitam</li>
                     <li>Nada tanpa # berada di tuts putih</li>
                     <li><strong>Mode Akord</strong> - mainkan akord sesuai mapping</li>
@@ -944,19 +910,16 @@
             buildKeyboard();
             renderTab('teori');
 
-            // Set mode default
             playMode = 'single';
             singleModeLabel.classList.add('active-mode');
             modeIndicator.textContent = '🎵 Mode: Nada Tunggal';
 
-            // Tab buttons
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     renderTab(btn.dataset.tab);
                 });
             });
 
-            // Play scale buttons
             document.getElementById('playMayorBtn').addEventListener('click', () => {
                 playScale(SCALE_MAYOR, 4);
             });
@@ -993,6 +956,7 @@
         }, { once: true });
 
         console.log('🎵 Aplikasi Musik 12-TET (20 Nada per Oktaf) siap!');
+        console.log('✅ Keyboard dari C2 sampai D6 (5 oktaf)');
         console.log('✅ Mode Nada Tunggal dan Akord tersedia.');
         console.log('✅ Akord mapping:', Object.keys(CHORD_DICT).join(', '));
     </script>
