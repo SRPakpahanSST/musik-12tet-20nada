@@ -368,10 +368,10 @@
             <!-- Instrumen -->
             <span class="effect-label">🎹 Instrumen:</span>
             <select id="instrumentSelector">
-                <option value="sine">Sine (Sinus)</option>
-                <option value="square">Square (Kotak)</option>
-                <option value="sawtooth">Sawtooth (Gergaji)</option>
-                <option value="triangle">Triangle (Segitiga)</option>
+                <option value="sine">Sine</option>
+                <option value="square">Square</option>
+                <option value="sawtooth">Sawtooth</option>
+                <option value="triangle">Triangle</option>
                 <option value="organ" selected>Organ</option>
             </select>
 
@@ -387,6 +387,13 @@
                 <span class="effect-label">⏳ Delay:</span>
                 <input type="range" id="delayMix" min="0" max="100" value="0" />
                 <span id="delayVal" style="font-size:0.7rem;color:#aaa;min-width:30px;">0%</span>
+            </div>
+
+            <!-- ============ AMPLIFIER (PENGUAT BUNYI) ============ -->
+            <div class="effect-group" style="background:#2a1a3e; border:1px solid #6c2bd9;">
+                <span class="effect-label" style="color:#d4a0ff;">🔊 Amplifier:</span>
+                <input type="range" id="ampSlider" min="50" max="300" value="100" style="accent-color:#b388ff;" />
+                <span id="ampVal" style="font-size:0.75rem;color:#d4a0ff;min-width:40px;font-weight:bold;">1.0x</span>
             </div>
 
             <!-- Tombol Aksi -->
@@ -479,7 +486,7 @@
         const SCALE_MINOR = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'A'];
 
         // ============================================================
-        // AUDIO ENGINE DENGAN EFEK (REVERB & DELAY)
+        // AUDIO ENGINE DENGAN MASTER GAIN (AMPLIFIER)
         // ============================================================
 
         let audioCtx = null;
@@ -487,7 +494,10 @@
         let isPlaying = false;
         let playMode = 'single';
 
-        // Node Efek Global
+        // Master Gain (Amplifier)
+        let masterGain = null;
+
+        // Node Efek
         let reverbNode = null;
         let delayNode = null;
         let delayFeedback = null;
@@ -515,7 +525,11 @@
         function setupEffects() {
             if (!audioCtx) return;
 
-            // === REVERB (Convolver dengan Impulse Response sederhana) ===
+            // === MASTER GAIN (AMPLIFIER) ===
+            masterGain = audioCtx.createGain();
+            masterGain.gain.setValueAtTime(1.0, audioCtx.currentTime);
+
+            // === REVERB ===
             reverbNode = audioCtx.createConvolver();
             const impulseLength = 2.0;
             const sampleRate = audioCtx.sampleRate;
@@ -525,7 +539,6 @@
             for (let channel = 0; channel < 2; channel++) {
                 const channelData = impulse.getChannelData(channel);
                 for (let i = 0; i < numSamples; i++) {
-                    // Exponential decay dengan noise
                     const decay = Math.exp(-i / (sampleRate * 0.3));
                     channelData[i] = (Math.random() * 2 - 1) * decay;
                 }
@@ -545,23 +558,35 @@
             delayDryGain = audioCtx.createGain();
             delayWetGain = audioCtx.createGain();
 
-            // Routing: Input -> dryGain -> output
-            //          Input -> delayNode -> delayWetGain -> wetGain -> output
-            //          delayNode -> delayFeedback -> delayNode (loop)
+            // === ROUTING (SEMUA MENUJU MASTER GAIN) ===
+            // Dry
+            dryGain.connect(masterGain);
 
-            // Koneksi Reverb
+            // Reverb
             wetGain.connect(reverbNode);
-            reverbNode.connect(audioCtx.destination);
+            reverbNode.connect(masterGain);
 
-            // Koneksi Delay
+            // Delay
             delayNode.connect(delayWetGain);
-            delayWetGain.connect(audioCtx.destination);
+            delayWetGain.connect(masterGain);
             delayNode.connect(delayFeedback);
             delayFeedback.connect(delayNode);
+            // Dry Delay (direct)
+            delayDryGain.connect(masterGain);
+
+            // Hubungkan masterGain ke output akhir
+            masterGain.connect(audioCtx.destination);
 
             // Set initial mix
             updateReverbMix(reverbMix);
             updateDelayMix(delayMix);
+
+            // Set initial amplifier
+            const ampSlider = document.getElementById('ampSlider');
+            if (ampSlider) {
+                const val = parseInt(ampSlider.value) / 100;
+                masterGain.gain.setValueAtTime(val, audioCtx.currentTime);
+            }
         }
 
         function updateReverbMix(value) {
@@ -585,7 +610,6 @@
             let osc;
 
             if (type === 'organ') {
-                // Organ: Kombinasi Sawtooth + Square untuk suara yang lebih kaya
                 osc = ctx.createOscillator();
                 osc.type = 'sawtooth';
 
@@ -597,8 +621,6 @@
                 gain2.gain.setValueAtTime(0.5, ctx.currentTime);
 
                 osc2.connect(gain2);
-                // Nantinya gain2 akan dihubungkan ke efek
-                // Kita return array untuk handling khusus
                 return { mainOsc: osc, extraOsc: osc2, extraGain: gain2 };
             } else {
                 osc = ctx.createOscillator();
@@ -622,20 +644,17 @@
                 gain.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime + 0.15);
                 gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
 
-                // Routing
+                // Routing ke efek
                 mainOsc.connect(gain);
 
-                // Connect to Dry & Wet (Reverb)
                 gain.connect(dryGain);
                 gain.connect(wetGain);
 
-                // Untuk Delay (kita kirim sinyal ke delay melalui gain terpisah)
                 const delayInputGain = ctx.createGain();
                 gain.connect(delayInputGain);
                 delayInputGain.connect(delayNode);
-                delayInputGain.connect(delayDryGain); // Dry delay
+                delayInputGain.connect(delayDryGain);
 
-                // Handle extra oscillator untuk organ
                 if (oscData.extraOsc) {
                     const extraGain = ctx.createGain();
                     extraGain.gain.setValueAtTime(0.3, ctx.currentTime);
@@ -755,6 +774,8 @@
         const delaySlider = document.getElementById('delayMix');
         const reverbVal = document.getElementById('reverbVal');
         const delayVal = document.getElementById('delayVal');
+        const ampSlider = document.getElementById('ampSlider');
+        const ampVal = document.getElementById('ampVal');
 
         let keyElements = {};
 
@@ -983,6 +1004,17 @@
             updateDelayMix(val / 100);
         });
 
+        // ============================================================
+        // AMPLIFIER (PENGUAT BUNYI) - Master Gain Control
+        // ============================================================
+        ampSlider.addEventListener('input', function() {
+            const val = parseInt(this.value) / 100;
+            ampVal.textContent = val.toFixed(1) + 'x';
+            if (masterGain && audioCtx) {
+                masterGain.gain.setValueAtTime(val, audioCtx.currentTime);
+            }
+        });
+
         // Tombol
         document.getElementById('playMayorBtn').addEventListener('click', () => playScale(SCALE_MAYOR, 4));
         document.getElementById('playMinorBtn').addEventListener('click', () => playScale(SCALE_MINOR, 4));
@@ -1008,7 +1040,7 @@
         });
 
         // ============================================================
-        // TAB KONTEN (singkat)
+        // TAB KONTEN
         // ============================================================
 
         const tabContent = document.getElementById('tabContent');
@@ -1057,8 +1089,9 @@
             tentang: `
                 <h3>📖 Tentang Aplikasi</h3>
                 <p>Berdasarkan karya tulis Sukma Riadi Pakpahan, SST.</p>
-                <p><b>Fitur:</b> 5 instrumen, Reverb, Delay, 3/4/5 oktaf, Akord.</p>
+                <p><b>Fitur:</b> 5 instrumen, Reverb, Delay, <b>Amplifier (Master Gain)</b>, 3/4/5 oktaf, Akord.</p>
                 <p><b>Instrumen:</b> Sine, Square, Sawtooth, Triangle, Organ.</p>
+                <p><b>Amplifier:</b> Mengatur volume keseluruhan (0.5x hingga 3.0x).</p>
             `
         };
 
@@ -1081,15 +1114,17 @@
             singleModeLabel.classList.add('active-mode');
             modeIndicator.textContent = '🎵 Mode: Tunggal';
 
-            // Set default instrumen
             instrumentSelector.value = 'organ';
             currentInstrument = 'organ';
 
-            // Set default efek
             reverbSlider.value = 20;
             reverbVal.textContent = '20%';
             delaySlider.value = 0;
             delayVal.textContent = '0%';
+
+            // Set default Amplifier
+            ampSlider.value = 100;
+            ampVal.textContent = '1.0x';
 
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.addEventListener('click', () => renderTab(btn.dataset.tab));
@@ -1098,9 +1133,8 @@
 
         document.addEventListener('click', initAudio, { once: true });
 
-        console.log('🎵 Aplikasi dengan Instrumen & Efek siap!');
-        console.log('Instrumen: Sine, Square, Sawtooth, Triangle, Organ');
-        console.log('Efek: Reverb, Delay');
+        console.log('🎵 Aplikasi dengan Amplifier siap!');
+        console.log('🔊 Amplifier range: 0.5x - 3.0x (Master Gain)');
     </script>
 </body>
 </html>
