@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Musik 12-TET (20 Nada per Oktaf)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a2e;
+            color: #eee;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            width: 100%;
+            background: #16213e;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+        }
+
+        header {
+            text-align: center;
+            border-bottom: 2px solid #0f3460;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+
+        header h1 {
+            font-size: 2rem;
+            background: linear-gradient(135deg, #e94560, #f5a623);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        header p {
+            color: #aaa;
+            font-size: 0.95rem;
+            margin-top: 5px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+            background: #0d0d1a;
+            border-radius: 12px;
+        }
+
+        .controls label {
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+
+        .controls input[type="radio"] {
+            margin-right: 5px;
+        }
+
+        .btn {
+            padding: 8px 18px;
+            border: none;
+            border-radius: 20px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 0.85rem;
+        }
+
+        .btn-primary { background: #e94560; color: #fff; }
+        .btn-primary:hover { background: #c73652; transform: scale(1.04); }
+        .btn-secondary { background: #0f3460; color: #fff; }
+        .btn-secondary:hover { background: #1a4a7a; }
+        .btn-danger { background: #a04040; color: #fff; }
+        .btn-danger:hover { background: #c05050; }
+        .btn-success { background: #2d7d46; color: #fff; }
+        .btn-success:hover { background: #3a9a5a; }
+
+        .keyboard-wrapper {
+            overflow-x: auto;
+            padding: 15px 0;
+            background: #0d0d1a;
+            border-radius: 12px;
+            margin-bottom: 15px;
+        }
+
+        .keyboard-container {
+            position: relative;
+            min-width: 2800px;
+            height: 230px;
+            margin: 0 auto;
+        }
+
+        .key {
+            position: absolute;
+            cursor: pointer;
+            border-radius: 0 0 6px 6px;
+            transition: all 0.08s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            font-size: 7px;
+            user-select: none;
+            border: 1px solid #333;
+        }
+
+        .key-white {
+            background: #f0f0f0;
+            color: #222;
+            width: 32px;
+            height: 170px;
+            border-bottom: 3px solid #bbb;
+            padding-bottom: 6px;
+            z-index: 1;
+        }
+
+        .key-white:hover { background: #e0e0e0; transform: scale(1.02); }
+        .key-white.active { background: #ffd700; transform: scale(0.97); border-color: #ffaa00; }
+
+        .key-black {
+            background: #222;
+            color: #fff;
+            width: 20px;
+            height: 105px;
+            border-bottom: 3px solid #111;
+            padding-bottom: 4px;
+            z-index: 2;
+            margin-left: -10px;
+        }
+
+        .key-black:hover { background: #444; }
+        .key-black.active { background: #ffd700; color: #222; transform: scale(0.95); }
+
+        .key-label {
+            font-size: 6px;
+            font-weight: 700;
+            text-align: center;
+            line-height: 1.2;
+            pointer-events: none;
+        }
+
+        .key-white .key-label { color: #333; }
+        .key-black .key-label { color: #ddd; }
+
+        .octave-label {
+            position: absolute;
+            bottom: -5px;
+            font-size: 10px;
+            color: #f5a623;
+            font-weight: bold;
+            text-align: center;
+            width: 100%;
+            pointer-events: none;
+        }
+
+        .status {
+            margin-top: 12px;
+            font-size: 0.9rem;
+            color: #aaa;
+            text-align: center;
+            min-height: 24px;
+        }
+
+        .status span { color: #f5a623; font-weight: 600; }
+
+        .info-section {
+            background: #1a1a2e;
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid #2a3a5e;
+            margin-top: 20px;
+        }
+
+        .info-section h2 {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: #f5a623;
+        }
+
+        .info-tabs {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+
+        .tab-btn {
+            padding: 6px 16px;
+            border: none;
+            border-radius: 20px;
+            background: #0f3460;
+            color: #aaa;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: 0.2s;
+        }
+
+        .tab-btn.active { background: #e94560; color: #fff; }
+        .tab-btn:hover { background: #1a4a7a; color: #fff; }
+
+        .tab-content {
+            background: #0d0d1a;
+            border-radius: 12px;
+            padding: 18px;
+            max-height: 350px;
+            overflow-y: auto;
+            font-size: 0.9rem;
+            line-height: 1.7;
+            color: #ccc;
+        }
+
+        .tab-content h3 { color: #f5a623; margin: 10px 0 6px; }
+        .tab-content ul { padding-left: 20px; }
+        .tab-content li { margin-bottom: 4px; }
+        .tab-content .highlight { color: #ffd700; }
+
+        .freq-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.7rem;
+        }
+
+        .freq-table th, .freq-table td {
+            padding: 3px 5px;
+            border: 1px solid #333;
+            text-align: center;
+        }
+
+        .freq-table th { background: #0f3460; color: #f5a623; }
+        .freq-table tr:nth-child(even) { background: #111; }
+        .freq-table .note-name { font-weight: 600; color: #ffd700; }
+        .freq-table .black-note { color: #ff6b6b; }
+
+        .footer-note {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 0.8rem;
+            color: #555;
+            border-top: 1px solid #222;
+            padding-top: 15px;
+        }
+
+        .tab-content::-webkit-scrollbar { width: 6px; }
+        .tab-content::-webkit-scrollbar-track { background: #0d0d1a; }
+        .tab-content::-webkit-scrollbar-thumb { background: #e94560; border-radius: 10px; }
+        .keyboard-wrapper::-webkit-scrollbar { height: 8px; }
+        .keyboard-wrapper::-webkit-scrollbar-track { background: #0d0d1a; }
+        .keyboard-wrapper::-webkit-scrollbar-thumb { background: #e94560; border-radius: 10px; }
+
+        @media (max-width: 600px) {
+            .container { padding: 12px; }
+            header h1 { font-size: 1.4rem; }
+            .key-white { width: 26px; height: 140px; }
+            .key-black { width: 16px; height: 85px; }
+            .keyboard-container { min-width: 2200px; height: 190px; }
+            .controls { gap: 8px; padding: 10px; }
+            .btn { padding: 6px 12px; font-size: 0.75rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎵 Musik 12-TET (20 Nada per Oktaf)</h1>
+            <p>Eksplorasi Mikrotonal — Inovasi Sistem 20 Nada per Oktaf</p>
+        </header>
+
+        <div class="controls">
+            <label><input type="radio" name="playMode" value="single" checked /> Nada Tunggal</label>
+            <label><input type="radio" name="playMode" value="chord" /> Akord</label>
+            <button class="btn btn-primary" id="playMayorBtn">▶ Skala Mayor (E)</button>
+            <button class="btn btn-secondary" id="playMinorBtn">▶ Skala Minor (A)</button>
+            <button class="btn btn-danger" id="stopBtn">⏹ Stop</button>
+            <button class="btn btn-success" id="resetBtn">↺ Reset</button>
+        </div>
+
+        <div class="keyboard-wrapper">
+            <div class="keyboard-container" id="keyboardContainer"></div>
+        </div>
+
+        <div class="status" id="statusDisplay">Klik tuts atau tekan tombol untuk mendengar nada</div>
+
+        <div class="info-section">
+            <h2>📖 Informasi & Referensi</h2>
+            <div class="info-tabs">
+                <button class="tab-btn active" data-tab="teori">Teori</button>
+                <button class="tab-btn" data-tab="freq">Frekuensi</button>
+                <button class="tab-btn" data-tab="skala">Skala</button>
+                <button class="tab-btn" data-tab="tentang">Tentang</button>
+            </div>
+            <div class="tab-content" id="tabContent"></div>
+        </div>
+
+        <div class="footer-note">
+            Berdasarkan Karya Tulis Ilmiah: Eksplorasi Musik Sistem 12-TET (20 Nada per Oktaf) — Sukma Riadi Pakpahan, SST
+        </div>
+    </div>
+
+    <script>
+        // =====================================================
+        // DATA FREKUENSI 12-TET (20 NADA PER OKTAF)
+        // Berdasarkan output Python dari referensi
+        // =====================================================
+
+        // =====================================================
+        // FREKUENSI DARI C2 SAMPAI D5 (sesuai contoh tkinter)
+        // =====================================================
+
+        const FREQ_MAP = {
+            // Oktaf 2
+            'C2': 172.942,
+            'C#2': 182.707,
+            'D2': 193.024,
+            // Oktaf 3
+            'E3': 203.924,
+            'E#3': 215.439,
+            'F3': 227.604,
+            'F#3': 240.456,
+            'G3': 254.034,
+            'G#3': 268.379,
+            'H3': 283.533,
+            'H#3': 299.544,
+            'I3': 316.458,
+            'J3': 334.328,
+            'J#3': 353.206,
+            'K3': 373.151,
+            'K#3': 394.222,
+            'A3': 416.482,
+            'A#3': 440.0,
+            'B3': 464.846,
+            'B#3': 491.094,
+            'C3': 518.825,
+            'C#3': 548.122,
+            'D3': 579.073,
+            // Oktaf 4
+            'E4': 611.771,
+            'E#4': 646.316,
+            'F4': 682.812,
+            'F#4': 721.369,
+            'G4': 762.102,
+            'G#4': 805.136,
+            'H4': 850.6,
+            'H#4': 898.631,
+            'I4': 949.374,
+            'J4': 1002.983,
+            'J#4': 1059.619,
+            'K4': 1119.453,
+            'K#4': 1182.665,
+            'A4': 1249.447,
+            'A#4': 1320.0,
+            'B4': 1394.537,
+            'B#4': 1473.283,
+            'C4': 1556.475,
+            'C#4': 1644.365,
+            'D4': 1737.218,
+            // Oktaf 5
+            'E5': 1835.314,
+            'E#5': 1938.949,
+            'F5': 2048.436,
+            'F#5': 2164.106,
+            'G5': 2286.307,
+            'G#5': 2415.409,
+            'H5': 2551.8,
+            'H#5': 2695.894,
+            'I5': 2848.123,
+            'J5': 3008.949,
+            'J#5': 3178.857,
+            'K5': 3358.358,
+            'K#5': 3547.996,
+            'A5': 3748.341,
+            'A#5': 3960.0,
+            'B5': 4183.611,
+            'B#5': 4419.848,
+            'C5': 4669.425,
+            'C#5': 4933.095,
+            'D5': 5211.653
+        };
+
+        // =====================================================
+        // SKALA MAYOR & MINOR
+        // =====================================================
+
+        const SCALE_MAYOR = ['E', 'F', 'G', 'H', 'I', 'J', 'K', 'A', 'B', 'C', 'D', 'E'];
+        const SCALE_MINOR = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'A'];
+
+        // =====================================================
+        // AUDIO ENGINE
+        // =====================================================
+
+        let audioCtx = null;
+        let activeOscillators = [];
+        let isPlaying = false;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new(window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            return audioCtx;
+        }
+
+        function playFrequency(freq, duration = 0.5) {
+            try {
+                const ctx = initAudio();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, ctx.currentTime);
+
+                gain.gain.setValueAtTime(0.01, ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.4, ctx.currentTime + 0.03);
+                gain.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime + 0.15);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
+
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+
+                osc.start(ctx.currentTime);
+                osc.stop(ctx.currentTime + duration);
+
+                activeOscillators.push(osc);
+                osc.onended = () => {
+                    const idx = activeOscillators.indexOf(osc);
+                    if (idx > -1) activeOscillators.splice(idx, 1);
+                };
+
+                return osc;
+            } catch (e) {
+                console.warn('Audio error:', e);
+                return null;
+            }
+        }
+
+        function stopAllSounds() {
+            activeOscillators.forEach(osc => {
+                try { osc.stop(); } catch (e) {}
+            });
+            activeOscillators = [];
+            isPlaying = false;
+        }
+
+        // =====================================================
+        // MEMBANGUN KEYBOARD - URUTAN DARI C2 SAMPAI D5
+        // =====================================================
+
+        const container = document.getElementById('keyboardContainer');
+        const statusDisplay = document.getElementById('statusDisplay');
+
+        // =====================================================
+        // URUTAN NADA DARI C2 SAMPAI D5 (SESUAI CONTOH TKINTER)
+        // Nada dengan # = tuts hitam, tanpa # = tuts putih
+        // =====================================================
+
+        const NOTE_SEQUENCE = [
+            // Oktaf 2
+            { note: 'C2', isBlack: false },
+            { note: 'C#2', isBlack: true },
+            { note: 'D2', isBlack: false },
+            // Oktaf 3
+            { note: 'E3', isBlack: false },
+            { note: 'E#3', isBlack: true },
+            { note: 'F3', isBlack: false },
+            { note: 'F#3', isBlack: true },
+            { note: 'G3', isBlack: false },
+            { note: 'G#3', isBlack: true },
+            { note: 'H3', isBlack: false },
+            { note: 'H#3', isBlack: true },
+            { note: 'I3', isBlack: false },
+            { note: 'J3', isBlack: false },
+            { note: 'J#3', isBlack: true },
+            { note: 'K3', isBlack: false },
+            { note: 'K#3', isBlack: true },
+            { note: 'A3', isBlack: false },
+            { note: 'A#3', isBlack: true },
+            { note: 'B3', isBlack: false },
+            { note: 'B#3', isBlack: true },
+            { note: 'C3', isBlack: false },
+            { note: 'C#3', isBlack: true },
+            { note: 'D3', isBlack: false },
+            // Oktaf 4
+            { note: 'E4', isBlack: false },
+            { note: 'E#4', isBlack: true },
+            { note: 'F4', isBlack: false },
+            { note: 'F#4', isBlack: true },
+            { note: 'G4', isBlack: false },
+            { note: 'G#4', isBlack: true },
+            { note: 'H4', isBlack: false },
+            { note: 'H#4', isBlack: true },
+            { note: 'I4', isBlack: false },
+            { note: 'J4', isBlack: false },
+            { note: 'J#4', isBlack: true },
+            { note: 'K4', isBlack: false },
+            { note: 'K#4', isBlack: true },
+            { note: 'A4', isBlack: false },
+            { note: 'A#4', isBlack: true },
+            { note: 'B4', isBlack: false },
+            { note: 'B#4', isBlack: true },
+            { note: 'C4', isBlack: false },
+            { note: 'C#4', isBlack: true },
+            { note: 'D4', isBlack: false },
+            // Oktaf 5
+            { note: 'E5', isBlack: false },
+            { note: 'E#5', isBlack: true },
+            { note: 'F5', isBlack: false },
+            { note: 'F#5', isBlack: true },
+            { note: 'G5', isBlack: false },
+            { note: 'G#5', isBlack: true },
+            { note: 'H5', isBlack: false },
+            { note: 'H#5', isBlack: true },
+            { note: 'I5', isBlack: false },
+            { note: 'J5', isBlack: false },
+            { note: 'J#5', isBlack: true },
+            { note: 'K5', isBlack: false },
+            { note: 'K#5', isBlack: true },
+            { note: 'A5', isBlack: false },
+            { note: 'A#5', isBlack: true },
+            { note: 'B5', isBlack: false },
+            { note: 'B#5', isBlack: true },
+            { note: 'C5', isBlack: false },
+            { note: 'C#5', isBlack: true },
+            { note: 'D5', isBlack: false }
+        ];
+
+        let keyElements = {};
+
+        function buildKeyboard() {
+            container.innerHTML = '';
+            keyElements = {};
+
+            const whiteWidth = 32;
+            const whiteHeight = 170;
+            const blackWidth = 20;
+            const blackHeight = 105;
+            const startX = 10;
+            const yWhite = 10;
+
+            let whiteIndex = 0;
+            let currentOctave = 2;
+            let octaveStartX = startX;
+
+            // Buat tuts putih dulu
+            for (let i = 0; i < NOTE_SEQUENCE.length; i++) {
+                const { note, isBlack } = NOTE_SEQUENCE[i];
+                const freq = FREQ_MAP[note] || 0;
+
+                if (!isBlack) {
+                    // Tuts putih
+                    const x = startX + whiteIndex * whiteWidth;
+                    const key = document.createElement('div');
+                    key.className = 'key key-white';
+                    key.style.left = x + 'px';
+                    key.style.top = yWhite + 'px';
+                    key.style.width = whiteWidth + 'px';
+                    key.style.height = whiteHeight + 'px';
+
+                    const label = document.createElement('span');
+                    label.className = 'key-label';
+                    label.textContent = note;
+                    key.appendChild(label);
+
+                    key.dataset.note = note;
+                    key.dataset.freq = freq;
+
+                    key.addEventListener('mousedown', (e) => {
+                        e.preventDefault();
+                        const f = parseFloat(key.dataset.freq);
+                        if (f > 0) {
+                            playFrequency(f);
+                            key.classList.add('active');
+                            statusDisplay.innerHTML = `🎵 Memainkan <span>${key.dataset.note}</span> (${f.toFixed(2)} Hz)`;
+                            setTimeout(() => key.classList.remove('active'), 300);
+                        }
+                    });
+
+                    container.appendChild(key);
+                    keyElements[note] = key;
+                    whiteIndex++;
+                }
+            }
+
+            // Reset whiteIndex untuk hitung posisi tuts hitam
+            whiteIndex = 0;
+            for (let i = 0; i < NOTE_SEQUENCE.length; i++) {
+                const { note, isBlack } = NOTE_SEQUENCE[i];
+                const freq = FREQ_MAP[note] || 0;
+
+                if (!isBlack) {
+                    whiteIndex++;
+                } else {
+                    // Tuts hitam - ditempatkan di antara dua tuts putih
+                    const x = startX + (whiteIndex - 1) * whiteWidth + whiteWidth - 10;
+                    const key = document.createElement('div');
+                    key.className = 'key key-black';
+                    key.style.left = x + 'px';
+                    key.style.top = yWhite + 'px';
+                    key.style.width = blackWidth + 'px';
+                    key.style.height = blackHeight + 'px';
+
+                    const label = document.createElement('span');
+                    label.className = 'key-label';
+                    label.textContent = note;
+                    key.appendChild(label);
+
+                    key.dataset.note = note;
+                    key.dataset.freq = freq;
+
+                    key.addEventListener('mousedown', (e) => {
+                        e.preventDefault();
+                        const f = parseFloat(key.dataset.freq);
+                        if (f > 0) {
+                            playFrequency(f);
+                            key.classList.add('active');
+                            statusDisplay.innerHTML = `🎵 Memainkan <span>${key.dataset.note}</span> (${f.toFixed(2)} Hz)`;
+                            setTimeout(() => key.classList.remove('active'), 300);
+                        }
+                    });
+
+                    container.appendChild(key);
+                    keyElements[note] = key;
+                }
+            }
+
+            // Tambahkan label oktaf
+            let posX = startX;
+            const octaveGroups = [
+                { octave: 2, count: 3 },
+                { octave: 3, count: 23 },
+                { octave: 4, count: 23 },
+                { octave: 5, count: 21 }
+            ];
+
+            for (let group of octaveGroups) {
+                const width = group.count * whiteWidth;
+                const label = document.createElement('div');
+                label.className = 'octave-label';
+                label.style.left = posX + 'px';
+                label.style.top = (yWhite + whiteHeight + 5) + 'px';
+                label.style.width = width + 'px';
+                label.textContent = `Oktaf ${group.octave}`;
+                container.appendChild(label);
+                posX += width;
+            }
+        }
+
+        // =====================================================
+        // FUNGSI MAIN SKALA
+        // =====================================================
+
+        function playScale(scaleNotes, octave = 4) {
+            stopAllSounds();
+            isPlaying = true;
+
+            const notes = [];
+            for (let name of scaleNotes) {
+                const fullName = name + octave;
+                const freq = FREQ_MAP[fullName];
+                if (freq) {
+                    notes.push({ name: fullName, freq });
+                }
+            }
+
+            if (notes.length === 0) return;
+
+            let delay = 0;
+            const duration = 0.4;
+            const gap = 0.1;
+
+            notes.forEach((note, i) => {
+                setTimeout(() => {
+                    if (!isPlaying) return;
+                    playFrequency(note.freq, duration);
+                    const key = keyElements[note.name];
+                    if (key) {
+                        key.classList.add('active');
+                        setTimeout(() => key.classList.remove('active'), duration * 1000);
+                    }
+                    statusDisplay.innerHTML = `🎵 ${note.name} (${note.freq.toFixed(2)} Hz)`;
+                }, delay * 1000);
+                delay += duration + gap;
+            });
+
+            setTimeout(() => {
+                isPlaying = false;
+                statusDisplay.innerHTML = '✅ Skala selesai dimainkan';
+            }, delay * 1000 + 300);
+        }
+
+        // =====================================================
+        // TAB KONTEN
+        // =====================================================
+
+        const tabContent = document.getElementById('tabContent');
+
+        const tabData = {
+            teori: `
+                <h3>🎼 Dasar Teoritis 12-TET (20 Nada per Oktaf)</h3>
+                <p>Sistem 12-TET (20 nada per oktaf) memperluas sistem konvensional dengan membagi oktaf menjadi 20 interval sama besar.</p>
+                <p><strong>Rumus Frekuensi:</strong></p>
+                <p style="background:#111;padding:8px;border-radius:8px;font-family:monospace;color:#ffd700;">
+                    f<sub>n</sub> = f<sub>0</sub> × 3<sup>(n/20)</sup>
+                </p>
+                <p>dengan f<sub>0</sub> = A#4 = 440 Hz (urutan ke-2)</p>
+                <p><strong>Oktaf:</strong> f<sub>oktaf berikutnya</sub> = f<sub>oktaf sebelumnya</sub> × 3</p>
+                <h3>🎵 Skala Mayor Natural (E=1)</h3>
+                <p style="font-family:monospace;color:#ffd700;">E - F - G - H - I - J - K - A - B - C - D - E</p>
+                <p>Interval: 1 1 1 1 ½ 1 1 1 1 1 ½</p>
+                <p style="color:#aaa;">Ekspresi: ceria, happy, uplifting</p>
+                <h3>🎵 Skala Minor Natural (A=1)</h3>
+                <p style="font-family:monospace;color:#ffd700;">A - B - C - D - E - F - G - H - I - J - K - A</p>
+                <p>Interval: 1 1 1 ½ 1 1 1 1 ½ 1 1</p>
+                <p style="color:#aaa;">Ekspresi: melankolis, emosional, mendalam</p>
+            `,
+            freq: `
+                <h3>📊 Frekuensi Nada (Oktaf 2-5)</h3>
+                <table class="freq-table">
+                    <thead><tr><th>Nada</th><th>Frekuensi (Hz)</th><th>Tuts</th></tr></thead>
+                    <tbody>
+                        ${Object.entries(FREQ_MAP).map(([name, freq]) => {
+                            const isBlack = name.includes('#');
+                            return `<tr><td class="note-name ${isBlack ? 'black-note' : ''}">${name}</td><td>${freq.toFixed(2)}</td><td>${isBlack ? '⬛ Hitam' : '⬜ Putih'}</td></tr>`;
+                        }).join('')}
+                    </tbody>
+                </table>
+                <p style="margin-top:10px;font-size:0.8rem;color:#888;">* A#4 = 440 Hz sebagai acuan</p>
+            `,
+            skala: `
+                <h3>🎹 Skala Mayor (E=1)</h3>
+                <p><strong>E</strong> - F - G - H - I - J - K - A - B - C - D - <strong>E</strong></p>
+                <p>Interval: 1 1 1 1 ½ 1 1 1 1 1 ½</p>
+                <p style="color:#ffd700;">Ekspresi: ceria, happy, uplifting</p>
+                <h3 style="margin-top:15px;">🎹 Skala Minor (A=1)</h3>
+                <p><strong>A</strong> - B - C - D - E - F - G - H - I - J - K - <strong>A</strong></p>
+                <p>Interval: 1 1 1 ½ 1 1 1 1 ½ 1 1</p>
+                <p style="color:#ffd700;">Ekspresi: melankolis, emosional, mendalam</p>
+            `,
+            tentang: `
+                <h3>📖 Tentang Aplikasi Ini</h3>
+                <p>Aplikasi web ini dibuat berdasarkan karya tulis ilmiah:</p>
+                <p style="background:#111;padding:10px;border-radius:8px;margin:8px 0;">
+                    <strong>"Eksplorasi Musik Sistem 12-TET (20 Nada per Oktaf): Inovasi dan Peluang dalam Seni Musik Modern"</strong>
+                </p>
+                <p>Oleh: Sukma Riadi Pakpahan, SST</p>
+                <p style="margin-top:10px;">Diajukan kepada Badan Riset dan Inovasi Nasional (BRIN)</p>
+                <h3 style="margin-top:15px;">✨ Fitur</h3>
+                <ul>
+                    <li>Keyboard dari C2 sampai D5 (4 oktaf)</li>
+                    <li>Nada dengan # berada di tuts hitam</li>
+                    <li>Nada tanpa # berada di tuts putih</li>
+                    <li>Mainkan skala Mayor (E=do) & Minor (A=do)</li>
+                </ul>
+            `
+        };
+
+        function renderTab(tabId) {
+            tabContent.innerHTML = tabData[tabId] || '<p>Konten tidak tersedia</p>';
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tab === tabId);
+            });
+        }
+
+        // =====================================================
+        // EVENT LISTENERS
+        // =====================================================
+
+        document.addEventListener('DOMContentLoaded', () => {
+            buildKeyboard();
+            renderTab('teori');
+
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    renderTab(btn.dataset.tab);
+                });
+            });
+
+            document.getElementById('playMayorBtn').addEventListener('click', () => {
+                playScale(SCALE_MAYOR, 4);
+            });
+
+            document.getElementById('playMinorBtn').addEventListener('click', () => {
+                playScale(SCALE_MINOR, 4);
+            });
+
+            document.getElementById('stopBtn').addEventListener('click', () => {
+                stopAllSounds();
+                isPlaying = false;
+                statusDisplay.innerHTML = '⏹ Semua suara dihentikan';
+            });
+
+            document.getElementById('resetBtn').addEventListener('click', () => {
+                stopAllSounds();
+                isPlaying = false;
+                statusDisplay.innerHTML = '↺ Siap memainkan nada';
+                document.querySelectorAll('.key.active').forEach(k => k.classList.remove('active'));
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === ' ' || e.key === 'Escape') {
+                    e.preventDefault();
+                    stopAllSounds();
+                    isPlaying = false;
+                    statusDisplay.innerHTML = '⏹ Dihentikan (keyboard)';
+                }
+            });
+        });
+
+        document.addEventListener('click', () => {
+            initAudio();
+        }, { once: true });
+
+        console.log('🎵 Aplikasi Musik 12-TET (20 Nada per Oktaf) siap!');
+        console.log('✅ Nada dengan # = tuts hitam');
+        console.log('✅ Nada tanpa # = tuts putih');
+    </script>
+</body>
+</html>
