@@ -65,10 +65,25 @@
         .controls label {
             color: #aaa;
             font-size: 0.9rem;
+            cursor: pointer;
+            padding: 5px 12px;
+            border-radius: 15px;
+            transition: 0.2s;
+        }
+
+        .controls label:hover {
+            background: #1a1a3e;
         }
 
         .controls input[type="radio"] {
             margin-right: 5px;
+            accent-color: #e94560;
+        }
+
+        .controls label.active-mode {
+            background: #e94560;
+            color: #fff;
+            border-radius: 15px;
         }
 
         .btn {
@@ -255,6 +270,15 @@
             padding-top: 15px;
         }
 
+        .chord-info {
+            background: #0f3460;
+            padding: 8px 15px;
+            border-radius: 20px;
+            color: #ffd700;
+            font-size: 0.8rem;
+            display: inline-block;
+        }
+
         .tab-content::-webkit-scrollbar { width: 6px; }
         .tab-content::-webkit-scrollbar-track { background: #0d0d1a; }
         .tab-content::-webkit-scrollbar-thumb { background: #e94560; border-radius: 10px; }
@@ -280,27 +304,39 @@
             <p>Eksplorasi Mikrotonal — Inovasi Sistem 20 Nada per Oktaf</p>
         </header>
 
-        <div class="controls">
-            <label><input type="radio" name="playMode" value="single" checked /> Nada Tunggal</label>
-            <label><input type="radio" name="playMode" value="chord" /> Akord</label>
+        <!-- ============ CONTROLS ============ -->
+        <div class="controls" id="controlsContainer">
+            <!-- Radio Button Mode -->
+            <label class="active-mode" id="singleModeLabel">
+                <input type="radio" name="playMode" value="single" checked /> Nada Tunggal
+            </label>
+            <label id="chordModeLabel">
+                <input type="radio" name="playMode" value="chord" /> Akord
+            </label>
+
             <button class="btn btn-primary" id="playMayorBtn">▶ Skala Mayor (E)</button>
             <button class="btn btn-secondary" id="playMinorBtn">▶ Skala Minor (A)</button>
             <button class="btn btn-danger" id="stopBtn">⏹ Stop</button>
             <button class="btn btn-success" id="resetBtn">↺ Reset</button>
+
+            <span class="chord-info" id="modeIndicator">🎵 Mode: Nada Tunggal</span>
         </div>
 
+        <!-- ============ KEYBOARD ============ -->
         <div class="keyboard-wrapper">
             <div class="keyboard-container" id="keyboardContainer"></div>
         </div>
 
         <div class="status" id="statusDisplay">Klik tuts atau tekan tombol untuk mendengar nada</div>
 
+        <!-- ============ INFO PANEL ============ -->
         <div class="info-section">
             <h2>📖 Informasi & Referensi</h2>
             <div class="info-tabs">
                 <button class="tab-btn active" data-tab="teori">Teori</button>
                 <button class="tab-btn" data-tab="freq">Frekuensi</button>
                 <button class="tab-btn" data-tab="skala">Skala</button>
+                <button class="tab-btn" data-tab="chord">Akord</button>
                 <button class="tab-btn" data-tab="tentang">Tentang</button>
             </div>
             <div class="tab-content" id="tabContent"></div>
@@ -312,14 +348,9 @@
     </div>
 
     <script>
-        // =====================================================
+        // ============================================================
         // DATA FREKUENSI 12-TET (20 NADA PER OKTAF)
-        // Berdasarkan output Python dari referensi
-        // =====================================================
-
-        // =====================================================
-        // FREKUENSI DARI C2 SAMPAI D5 (sesuai contoh tkinter)
-        // =====================================================
+        // ============================================================
 
         const FREQ_MAP = {
             // Oktaf 2
@@ -391,20 +422,40 @@
             'D5': 5211.653
         };
 
-        // =====================================================
-        // SKALA MAYOR & MINOR
-        // =====================================================
+        // ============================================================
+        // CHORD DICTIONARY (SESUAI KETENTUAN)
+        // ============================================================
+
+        const CHORD_DICT = {
+            "A2": ["A2", "C#3", "E3"],
+            "B2": ["B2", "D#3", "F#3"],
+            "C3": ["C3", "E3", "G3"],
+            "D3": ["D3", "F#3", "A3"],
+            "E3": ["E3", "G#3", "B3"],
+            "F3": ["F3", "A3", "C4"],
+            "G3": ["G3", "B3", "D4"],
+            "A#2": ["A#2", "C3", "E3"],
+            "C#3": ["C#3", "D#3", "G3"],
+            "D#3": ["D#3", "F3", "A3"],
+            "F#3": ["F#3", "G#3", "C4"],
+            "G#3": ["G#3", "A#3", "D4"]
+        };
+
+        // ============================================================
+        // SKALA
+        // ============================================================
 
         const SCALE_MAYOR = ['E', 'F', 'G', 'H', 'I', 'J', 'K', 'A', 'B', 'C', 'D', 'E'];
         const SCALE_MINOR = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'A'];
 
-        // =====================================================
+        // ============================================================
         // AUDIO ENGINE
-        // =====================================================
+        // ============================================================
 
         let audioCtx = null;
         let activeOscillators = [];
         let isPlaying = false;
+        let playMode = 'single'; // 'single' atau 'chord'
 
         function initAudio() {
             if (!audioCtx) {
@@ -416,7 +467,8 @@
             return audioCtx;
         }
 
-        function playFrequency(freq, duration = 0.5) {
+        // === Mainkan satu nada ===
+        function playSingleNote(freq, duration = 0.5) {
             try {
                 const ctx = initAudio();
                 const osc = ctx.createOscillator();
@@ -449,6 +501,46 @@
             }
         }
 
+        // === Mainkan akord (beberapa nada simultan) ===
+        function playChord(frequencies, duration = 0.8) {
+            try {
+                const ctx = initAudio();
+                const oscillators = [];
+
+                frequencies.forEach((freq) => {
+                    if (freq <= 0) return;
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, ctx.currentTime);
+
+                    gain.gain.setValueAtTime(0.01, ctx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.25, ctx.currentTime + 0.03);
+                    gain.gain.exponentialRampToValueAtTime(0.15, ctx.currentTime + 0.2);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
+
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+
+                    osc.start(ctx.currentTime);
+                    osc.stop(ctx.currentTime + duration);
+
+                    oscillators.push(osc);
+                    activeOscillators.push(osc);
+                    osc.onended = () => {
+                        const idx = activeOscillators.indexOf(osc);
+                        if (idx > -1) activeOscillators.splice(idx, 1);
+                    };
+                });
+
+                return oscillators;
+            } catch (e) {
+                console.warn('Chord audio error:', e);
+                return null;
+            }
+        }
+
         function stopAllSounds() {
             activeOscillators.forEach(osc => {
                 try { osc.stop(); } catch (e) {}
@@ -457,17 +549,9 @@
             isPlaying = false;
         }
 
-        // =====================================================
-        // MEMBANGUN KEYBOARD - URUTAN DARI C2 SAMPAI D5
-        // =====================================================
-
-        const container = document.getElementById('keyboardContainer');
-        const statusDisplay = document.getElementById('statusDisplay');
-
-        // =====================================================
-        // URUTAN NADA DARI C2 SAMPAI D5 (SESUAI CONTOH TKINTER)
-        // Nada dengan # = tuts hitam, tanpa # = tuts putih
-        // =====================================================
+        // ============================================================
+        // URUTAN NADA DARI C2 SAMPAI D5
+        // ============================================================
 
         const NOTE_SEQUENCE = [
             // Oktaf 2
@@ -539,6 +623,16 @@
             { note: 'D5', isBlack: false }
         ];
 
+        // ============================================================
+        // MEMBANGUN KEYBOARD
+        // ============================================================
+
+        const container = document.getElementById('keyboardContainer');
+        const statusDisplay = document.getElementById('statusDisplay');
+        const modeIndicator = document.getElementById('modeIndicator');
+        const singleModeLabel = document.getElementById('singleModeLabel');
+        const chordModeLabel = document.getElementById('chordModeLabel');
+
         let keyElements = {};
 
         function buildKeyboard() {
@@ -553,8 +647,6 @@
             const yWhite = 10;
 
             let whiteIndex = 0;
-            let currentOctave = 2;
-            let octaveStartX = startX;
 
             // Buat tuts putih dulu
             for (let i = 0; i < NOTE_SEQUENCE.length; i++) {
@@ -562,7 +654,6 @@
                 const freq = FREQ_MAP[note] || 0;
 
                 if (!isBlack) {
-                    // Tuts putih
                     const x = startX + whiteIndex * whiteWidth;
                     const key = document.createElement('div');
                     key.className = 'key key-white';
@@ -581,13 +672,7 @@
 
                     key.addEventListener('mousedown', (e) => {
                         e.preventDefault();
-                        const f = parseFloat(key.dataset.freq);
-                        if (f > 0) {
-                            playFrequency(f);
-                            key.classList.add('active');
-                            statusDisplay.innerHTML = `🎵 Memainkan <span>${key.dataset.note}</span> (${f.toFixed(2)} Hz)`;
-                            setTimeout(() => key.classList.remove('active'), 300);
-                        }
+                        handleKeyPress(note);
                     });
 
                     container.appendChild(key);
@@ -605,7 +690,6 @@
                 if (!isBlack) {
                     whiteIndex++;
                 } else {
-                    // Tuts hitam - ditempatkan di antara dua tuts putih
                     const x = startX + (whiteIndex - 1) * whiteWidth + whiteWidth - 10;
                     const key = document.createElement('div');
                     key.className = 'key key-black';
@@ -624,13 +708,7 @@
 
                     key.addEventListener('mousedown', (e) => {
                         e.preventDefault();
-                        const f = parseFloat(key.dataset.freq);
-                        if (f > 0) {
-                            playFrequency(f);
-                            key.classList.add('active');
-                            statusDisplay.innerHTML = `🎵 Memainkan <span>${key.dataset.note}</span> (${f.toFixed(2)} Hz)`;
-                            setTimeout(() => key.classList.remove('active'), 300);
-                        }
+                        handleKeyPress(note);
                     });
 
                     container.appendChild(key);
@@ -660,9 +738,52 @@
             }
         }
 
-        // =====================================================
+        // ============================================================
+        // FUNGSI HANDLE KEY PRESS (Mode Tunggal / Akord)
+        // ============================================================
+
+        function handleKeyPress(note) {
+            const key = keyElements[note];
+            if (!key) return;
+
+            // Highlight tuts
+            key.classList.add('active');
+            setTimeout(() => key.classList.remove('active'), 400);
+
+            if (playMode === 'single') {
+                // Mode Nada Tunggal
+                const freq = FREQ_MAP[note];
+                if (freq) {
+                    playSingleNote(freq);
+                    statusDisplay.innerHTML = `🎵 Memainkan <span>${note}</span> (${freq.toFixed(2)} Hz) [Nada Tunggal]`;
+                }
+            } else {
+                // Mode Akord
+                const chordNotes = CHORD_DICT[note];
+                if (chordNotes && chordNotes.length > 0) {
+                    // Kumpulkan frekuensi untuk semua nada dalam akord
+                    const freqs = chordNotes.map(n => FREQ_MAP[n]).filter(f => f > 0);
+                    if (freqs.length > 0) {
+                        playChord(freqs);
+                        const chordStr = chordNotes.join(' + ');
+                        statusDisplay.innerHTML = `🎵 Akord <span>${note}</span>: ${chordStr} (${freqs.map(f => f.toFixed(2)).join(', ')} Hz)`;
+                    } else {
+                        statusDisplay.innerHTML = `⚠️ Akord untuk ${note} tidak memiliki frekuensi valid`;
+                    }
+                } else {
+                    // Jika tidak ada akord, mainkan nada tunggal sebagai fallback
+                    const freq = FREQ_MAP[note];
+                    if (freq) {
+                        playSingleNote(freq);
+                        statusDisplay.innerHTML = `🎵 ${note} (Tidak ada akord, dimainkan tunggal)`;
+                    }
+                }
+            }
+        }
+
+        // ============================================================
         // FUNGSI MAIN SKALA
-        // =====================================================
+        // ============================================================
 
         function playScale(scaleNotes, octave = 4) {
             stopAllSounds();
@@ -686,7 +807,7 @@
             notes.forEach((note, i) => {
                 setTimeout(() => {
                     if (!isPlaying) return;
-                    playFrequency(note.freq, duration);
+                    playSingleNote(note.freq, duration);
                     const key = keyElements[note.name];
                     if (key) {
                         key.classList.add('active');
@@ -703,9 +824,31 @@
             }, delay * 1000 + 300);
         }
 
-        // =====================================================
+        // ============================================================
+        // RADIO BUTTON - MODE
+        // ============================================================
+
+        document.querySelectorAll('input[name="playMode"]').forEach((radio) => {
+            radio.addEventListener('change', function() {
+                if (this.checked) {
+                    playMode = this.value;
+                    // Update UI label
+                    document.querySelectorAll('.controls label').forEach(l => l.classList.remove('active-mode'));
+                    if (playMode === 'single') {
+                        singleModeLabel.classList.add('active-mode');
+                        modeIndicator.textContent = '🎵 Mode: Nada Tunggal';
+                    } else {
+                        chordModeLabel.classList.add('active-mode');
+                        modeIndicator.textContent = '🎵 Mode: Akord';
+                    }
+                    statusDisplay.innerHTML = `🔄 Mode berubah ke: ${playMode === 'single' ? 'Nada Tunggal' : 'Akord'}`;
+                }
+            });
+        });
+
+        // ============================================================
         // TAB KONTEN
-        // =====================================================
+        // ============================================================
 
         const tabContent = document.getElementById('tabContent');
 
@@ -751,6 +894,22 @@
                 <p>Interval: 1 1 1 ½ 1 1 1 1 ½ 1 1</p>
                 <p style="color:#ffd700;">Ekspresi: melankolis, emosional, mendalam</p>
             `,
+            chord: `
+                <h3>🎵 Daftar Akord yang Tersedia</h3>
+                <p>Berikut adalah akord yang dapat dimainkan saat mode <strong>Akord</strong> aktif:</p>
+                <table class="freq-table">
+                    <thead><tr><th>Root</th><th>Akord (Nada)</th><th>Frekuensi (Hz)</th></tr></thead>
+                    <tbody>
+                        ${Object.entries(CHORD_DICT).map(([root, notes]) => {
+                            const freqs = notes.map(n => FREQ_MAP[n] || 0);
+                            return `<tr><td class="note-name" style="color:#ffd700;">${root}</td>
+                                    <td>${notes.join(' + ')}</td>
+                                    <td>${freqs.map(f => f.toFixed(2)).join(', ')}</td></tr>`;
+                        }).join('')}
+                    </tbody>
+                </table>
+                <p style="margin-top:10px;color:#aaa;">💡 Pilih mode <strong>Akord</strong> di atas, lalu klik tuts yang memiliki akord.</p>
+            `,
             tentang: `
                 <h3>📖 Tentang Aplikasi Ini</h3>
                 <p>Aplikasi web ini dibuat berdasarkan karya tulis ilmiah:</p>
@@ -764,6 +923,7 @@
                     <li>Keyboard dari C2 sampai D5 (4 oktaf)</li>
                     <li>Nada dengan # berada di tuts hitam</li>
                     <li>Nada tanpa # berada di tuts putih</li>
+                    <li><strong>Mode Akord</strong> - mainkan akord sesuai mapping</li>
                     <li>Mainkan skala Mayor (E=do) & Minor (A=do)</li>
                 </ul>
             `
@@ -776,20 +936,27 @@
             });
         }
 
-        // =====================================================
+        // ============================================================
         // EVENT LISTENERS
-        // =====================================================
+        // ============================================================
 
         document.addEventListener('DOMContentLoaded', () => {
             buildKeyboard();
             renderTab('teori');
 
+            // Set mode default
+            playMode = 'single';
+            singleModeLabel.classList.add('active-mode');
+            modeIndicator.textContent = '🎵 Mode: Nada Tunggal';
+
+            // Tab buttons
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     renderTab(btn.dataset.tab);
                 });
             });
 
+            // Play scale buttons
             document.getElementById('playMayorBtn').addEventListener('click', () => {
                 playScale(SCALE_MAYOR, 4);
             });
@@ -826,8 +993,8 @@
         }, { once: true });
 
         console.log('🎵 Aplikasi Musik 12-TET (20 Nada per Oktaf) siap!');
-        console.log('✅ Nada dengan # = tuts hitam');
-        console.log('✅ Nada tanpa # = tuts putih');
+        console.log('✅ Mode Nada Tunggal dan Akord tersedia.');
+        console.log('✅ Akord mapping:', Object.keys(CHORD_DICT).join(', '));
     </script>
 </body>
 </html>
