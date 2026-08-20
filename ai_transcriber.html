@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AI Transcriber - PMD Musik 12 TET</title>
     <style>
-        /* ===== CSS SAMA SEPERTI SEBELUMNYA ===== */
+        /* ===== CSS SAMA ===== */
         * { margin:0; padding:0; box-sizing:border-box; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -222,13 +222,19 @@
             font-size: 0.7rem;
             margin-left: 5px;
         }
+        .warning-text {
+            color: #f5a623;
+            font-size: 0.8rem;
+            text-align: center;
+            margin-top: 8px;
+        }
         @media (max-width:600px) { .container { padding: 15px; } }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>🎤 AI Audio Transcriber <span class="badge">20 Nada/Oktaf</span></h1>
-        <p class="subtitle">Rekam lagu atau suara, AI akan menuliskannya dalam sistem 12-TET 20 nada per oktaf</p>
+        <p class="subtitle">Rekam lagu atau suara (maks. 22 menit), AI akan menuliskannya</p>
 
         <div class="error-message" id="errorMessage">
             ⚠️ <span id="errorText">Terjadi kesalahan. Pastikan browser mengizinkan akses mikrofon.</span>
@@ -236,7 +242,7 @@
 
         <div class="record-area" id="recordArea">
             <button class="record-btn" id="recordBtn">🎤</button>
-            <div class="timer" id="timerDisplay">00:00 / 05:00</div>
+            <div class="timer" id="timerDisplay">00:00 / 22:00</div>
             <div class="waveform" id="waveformContainer">
                 <canvas id="waveformCanvas"></canvas>
             </div>
@@ -260,7 +266,7 @@
             </select>
         </div>
 
-        <div class="status" id="status">🔴 Klik tombol mikrofon untuk mulai merekam (maks. 5 menit)</div>
+        <div class="status" id="status">🔴 Klik tombol mikrofon untuk mulai merekam (maks. 22 menit)</div>
 
         <div class="btn-group">
             <button class="btn btn-success" id="transcribeBtn" disabled>🧠 AI Transcribe</button>
@@ -276,30 +282,27 @@
                 <span style="color:#888;font-size:0.85rem;" id="durationInfo">Durasi rekaman: 0 detik</span>
             </div>
             <div class="info-text">💡 Nada dengan tanda <b>#</b> adalah nada kromatik (tuts hitam).</div>
+            <div class="warning-text">⚠️ Rekaman 22 menit menghasilkan file besar, analisis bisa berlangsung lama.</div>
         </div>
     </div>
 
     <script>
         // ================================================================
         // FREQ_MAP LENGKAP 20 NADA PER OKTAF (12-TET)
-        // Berdasarkan referensi: A#4 = 440 Hz
+        // A#4 = 440 Hz
         // ================================================================
         const FREQ_MAP = {
-            // Oktaf 2 (3 nada awal)
             'C2': 172.942, 'C#2': 182.707, 'D2': 193.024,
-            // Oktaf 3 (20 nada lengkap)
             'E3': 203.924, 'E#3': 215.439, 'F3': 227.604, 'F#3': 240.456,
             'G3': 254.034, 'G#3': 268.379, 'H3': 283.533, 'H#3': 299.544,
             'I3': 316.458, 'J3': 334.328, 'J#3': 353.206, 'K3': 373.151,
             'K#3': 394.222, 'A3': 416.482, 'A#3': 440.0, 'B3': 464.846,
             'B#3': 491.094, 'C3': 518.825, 'C#3': 548.122, 'D3': 579.073,
-            // Oktaf 4 (20 nada lengkap)
             'E4': 611.771, 'E#4': 646.316, 'F4': 682.812, 'F#4': 721.369,
             'G4': 762.102, 'G#4': 805.136, 'H4': 850.6, 'H#4': 898.631,
             'I4': 949.374, 'J4': 1002.983, 'J#4': 1059.619, 'K4': 1119.453,
             'K#4': 1182.665, 'A4': 1249.447, 'A#4': 1320.0, 'B4': 1394.537,
             'B#4': 1473.283, 'C4': 1556.475, 'C#4': 1644.365, 'D4': 1737.218,
-            // Oktaf 5 (20 nada lengkap)
             'E5': 1835.314, 'E#5': 1938.949, 'F5': 2048.436, 'F#5': 2164.106,
             'G5': 2286.307, 'G#5': 2415.409, 'H5': 2551.8, 'H#5': 2695.894,
             'I5': 2848.123, 'J5': 3008.949, 'J#5': 3178.857, 'K5': 3358.358,
@@ -307,10 +310,6 @@
             'B#5': 4419.848, 'C5': 4669.425, 'C#5': 4933.095, 'D5': 5211.653
         };
 
-        // ================================================================
-        // DATA 20 NADA PER OKTAF (untuk lookup)
-        // ================================================================
-        const NOTE_NAMES_20 = ['E','E#','F','F#','G','G#','H','H#','I','J','J#','K','K#','A','A#','B','B#','C','C#','D'];
         const NOTE_FREQS = Object.values(FREQ_MAP);
         const NOTE_NAMES_REV = Object.keys(FREQ_MAP);
 
@@ -328,7 +327,7 @@
         let recordedAudioBuffer = null;
         let transcribedNotes = [];
         let isPlaying = false;
-        const maxRecordSeconds = 300;
+        const MAX_RECORD_SECONDS = 1320; // 22 MENIT
 
         // DOM refs
         const recordBtn = document.getElementById('recordBtn');
@@ -389,7 +388,7 @@
         }
 
         // ================================================================
-        // RECORDING
+        // RECORDING (maks 22 menit)
         // ================================================================
         async function startRecording() {
             try {
@@ -428,16 +427,18 @@
                 isRecording = true;
                 recordArea.classList.add('recording');
                 recordBtn.textContent = '⏹';
-                statusEl.textContent = '🔴 Merekam... (maks. 5 menit)';
+                statusEl.textContent = '🔴 Merekam... (maks. 22 menit)';
                 transcribeBtn.disabled = true;
                 seconds = 0;
-                timerDisplay.textContent = '00:00 / 05:00';
+                timerDisplay.textContent = '00:00 / 22:00';
                 if (recordTimer) clearInterval(recordTimer);
                 recordTimer = setInterval(() => {
                     seconds++;
                     const m = String(Math.floor(seconds/60)).padStart(2,'0');
                     const s = String(seconds%60).padStart(2,'0');
-                    timerDisplay.textContent = `${m}:${s} / 05:00`;
+                    const maxM = String(Math.floor(MAX_RECORD_SECONDS/60)).padStart(2,'0');
+                    const maxS = String(MAX_RECORD_SECONDS%60).padStart(2,'0');
+                    timerDisplay.textContent = `${m}:${s} / ${maxM}:${maxS}`;
                     
                     if (analyser) {
                         analyser.getByteTimeDomainData(dataArray);
@@ -458,9 +459,9 @@
                         ctx.stroke();
                     }
 
-                    if (seconds >= maxRecordSeconds) {
+                    if (seconds >= MAX_RECORD_SECONDS) {
                         stopRecording();
-                        statusEl.textContent = '⏹ Rekaman otomatis berhenti (maks. 5 menit)';
+                        statusEl.textContent = '⏹ Rekaman otomatis berhenti (maks. 22 menit)';
                     }
                 }, 200);
 
@@ -525,7 +526,6 @@
                     closest = f;
                 }
             }
-            // Toleransi 5%
             if (minDiff / closest > 0.05) return null;
             const idx = NOTE_FREQS.indexOf(closest);
             return { name: NOTE_NAMES_REV[idx], freq: closest };
@@ -595,7 +595,6 @@
                     }
                 }
 
-                // Simplify: ambil unique notes berurutan (tanpa batas 20)
                 const uniqueNotes = [];
                 let lastNote = null;
                 for (let n of detected) {
@@ -693,7 +692,7 @@
         // ================================================================
         // INIT
         // ================================================================
-        statusEl.textContent = '🔴 Klik tombol mikrofon untuk mulai merekam (maks. 5 menit)';
+        statusEl.textContent = '🔴 Klik tombol mikrofon untuk mulai merekam (maks. 22 menit)';
         ctx.fillStyle = '#0d0d1a';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = '#555';
