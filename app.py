@@ -68,8 +68,14 @@ def create_minimal_html():
 # TAMPILKAN APLIKASI
 # ============================================================
 
+# app.py (bagian tampilkan aplikasi)
 html_content = load_html()
-st.components.v1.html(html_content, height=700, scrolling=True)
+# Ganti dengan st.iframe
+st.iframe(
+    srcdoc=html_content,
+    height=700,
+    scrolling=True
+)
 
 # ============================================================
 # SIDEBAR - INFORMASI
