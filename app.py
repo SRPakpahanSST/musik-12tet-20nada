@@ -33,7 +33,6 @@ def load_html():
         with open("index.html", "r", encoding="utf-8") as f:
             return f.read()
     except FileNotFoundError:
-        # Jika file tidak ditemukan, gunakan HTML minimal
         return create_minimal_html()
 
 def create_minimal_html():
@@ -69,15 +68,8 @@ def create_minimal_html():
 # TAMPILKAN APLIKASI
 # ============================================================
 
-# Baca HTML
 html_content = load_html()
-
-# Tampilkan dengan komponen HTML
-st.components.v1.html(
-    html_content,
-    height=700,
-    scrolling=True
-)
+st.components.v1.html(html_content, height=700, scrolling=True)
 
 # ============================================================
 # SIDEBAR - INFORMASI
@@ -116,12 +108,10 @@ with st.sidebar:
     
     st.markdown("---")
     
-    # ===== TAMBAHAN: LINK KE HALAMAN AI =====
+    # ===== FITUR AI =====
     st.markdown("### 🤖 Fitur AI")
-    st.markdown("""
-    - [🎵 AI Composer](/ai_composer)
-    - [🎤 AI Transcriber](/ai_transcriber)
-    """)
+    st.markdown("[🎵 AI Composer](/ai_composer)")
+    st.markdown("[🎤 AI Transcriber](/ai_transcriber)")
     
     st.markdown("---")
     
@@ -135,12 +125,6 @@ with st.sidebar:
     st.markdown("---")
     
     st.caption("© 2026 Sukma Riadi Pakpahan, SST")
-
-with st.sidebar:
-    # ... bagian lain
-    st.markdown("### 🤖 Fitur AI")
-    st.markdown("[🎵 AI Composer](/ai_composer)")
-    st.markdown("[🎤 AI Transcriber](/ai_transcriber)")
 
 # ============================================================
 # FOOTER
