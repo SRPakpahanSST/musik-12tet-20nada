@@ -174,13 +174,18 @@
             width: 0%;
             transition: width 0.3s;
         }
+        .warning {
+            color: #f5a623;
+            font-size: 0.8rem;
+            margin-top: 5px;
+        }
         @media (max-width:600px) { .container { padding: 15px; } }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>🎤 AI Audio Transcriber</h1>
-        <p class="subtitle">Bersenandung atau mainkan melodi (maks. 10 detik)</p>
+        <p class="subtitle">Bersenandung atau mainkan melodi (maks. 5 menit)</p>
 
         <div class="error-message" id="errorMessage">
             ⚠️ <span id="errorText">Terjadi kesalahan. Pastikan browser mengizinkan akses mikrofon.</span>
@@ -188,7 +193,7 @@
 
         <div class="record-area" id="recordArea">
             <button class="record-btn" id="recordBtn">🎤</button>
-            <div class="timer" id="timerDisplay">00:00 / 00:10</div>
+            <div class="timer" id="timerDisplay">00:00 / 05:00</div>
             <div class="waveform" id="waveformContainer">
                 <canvas id="waveformCanvas"></canvas>
             </div>
@@ -197,7 +202,7 @@
             </div>
         </div>
 
-        <div class="status" id="status">🔴 Klik tombol mikrofon untuk mulai merekam (maks. 10 detik)</div>
+        <div class="status" id="status">🔴 Klik tombol mikrofon untuk mulai merekam (maks. 5 menit)</div>
 
         <div class="btn-group">
             <button class="btn btn-success" id="transcribeBtn" disabled>🧠 AI Transcribe</button>
@@ -243,7 +248,7 @@
         let recordedAudioBuffer = null;
         let transcribedNotes = [];
         let isPlaying = false;
-        let maxRecordSeconds = 10; // batas rekaman
+        const maxRecordSeconds = 300; // 5 MENIT
 
         const recordBtn = document.getElementById('recordBtn');
         const timerDisplay = document.getElementById('timerDisplay');
@@ -339,10 +344,10 @@
                 isRecording = true;
                 recordArea.classList.add('recording');
                 recordBtn.textContent = '⏹';
-                statusEl.textContent = `🔴 Merekam... (maks. ${maxRecordSeconds} detik)`;
+                statusEl.textContent = `🔴 Merekam... (maks. 5 menit)`;
                 transcribeBtn.disabled = true;
                 seconds = 0;
-                timerDisplay.textContent = `00:00 / 00:${String(maxRecordSeconds).padStart(2,'0')}`;
+                timerDisplay.textContent = `00:00 / 05:00`;
                 if (recordTimer) clearInterval(recordTimer);
                 recordTimer = setInterval(() => {
                     seconds++;
@@ -375,7 +380,7 @@
                     // Auto-stop jika mencapai batas
                     if (seconds >= maxRecordSeconds) {
                         stopRecording();
-                        statusEl.textContent = '⏹ Rekaman otomatis berhenti (maks. 10 detik)';
+                        statusEl.textContent = '⏹ Rekaman otomatis berhenti (maks. 5 menit)';
                     }
                 }, 200);
 
@@ -460,9 +465,9 @@
             setTimeout(() => {
                 const data = recordedAudioBuffer.getChannelData(0);
                 const sampleRate = recordedAudioBuffer.sampleRate;
-                // Optimasi: gunakan window size 30ms (lebih kecil)
-                const windowSize = Math.floor(sampleRate * 0.03);
-                const hopSize = Math.floor(windowSize * 0.4);
+                // Optimasi untuk rekaman panjang: window size 40ms
+                const windowSize = Math.floor(sampleRate * 0.04);
+                const hopSize = Math.floor(windowSize * 0.5);
                 const detected = [];
                 const totalSteps = Math.floor((data.length - windowSize) / hopSize);
                 let stepCount = 0;
@@ -481,7 +486,7 @@
                         sum += Math.abs(data[start + i]);
                     }
                     const rms = Math.sqrt(sum / windowSize);
-                    if (rms < 0.008) continue; // threshold lebih tinggi
+                    if (rms < 0.01) continue; // threshold lebih tinggi
 
                     // Autocorrelation
                     let maxCorr = 0;
@@ -538,7 +543,7 @@
                 transcribeBtn.disabled = false;
                 progressBar.classList.remove('show');
                 progressFill.style.width = '0%';
-            }, 300); // delay untuk UI
+            }, 300);
         }
 
         transcribeBtn.addEventListener('click', transcribeAudio);
@@ -606,7 +611,7 @@
         // ================================================================
         // INIT
         // ================================================================
-        statusEl.textContent = '🔴 Klik tombol mikrofon untuk mulai merekam (maks. 10 detik)';
+        statusEl.textContent = '🔴 Klik tombol mikrofon untuk mulai merekam (maks. 5 menit)';
         ctx.fillStyle = '#0d0d1a';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = '#555';
