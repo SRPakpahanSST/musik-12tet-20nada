@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PMD Musik 12 TET</title>
+    <title>Musik 12-TET (20 Nada per Oktaf)</title>
     <style>
-        /* ===== RESET & BASE ===== */
         * {
             margin: 0;
             padding: 0;
@@ -13,13 +12,12 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: ' UI', Tahoma, Geneva, Verdana, sans-serif;
             background: #1a1a2e;
             color: #eee;
             min-height: 100vh;
             display: flex;
             justify-content: center;
-            align-items: center;
             padding: 20px;
         }
 
@@ -30,93 +28,28 @@
             border-radius: 20px;
             padding: 25px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
-            position: relative;
-            overflow: hidden;
         }
 
-        /* ===== SPLASH SCREEN ===== */
-        #splash {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #0d0d1a;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            transition: opacity 0.8s ease, transform 0.8s ease;
-            border-radius: 20px;
-            padding: 30px;
+        header {
+            text-align: center;
+            border-bottom: 2px solid #0f3460;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
         }
 
-        #splash.hidden {
-            opacity: 0;
-            transform: scale(1.05);
-            pointer-events: none;
-        }
-
-        .splash-image {
-            width: 80%;
-            max-width: 500px;
-            border-radius: 20px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
-            margin-bottom: 30px;
-        }
-
-        .splash-title {
-            font-size: 2.5rem;
-            font-weight: 700;
+        header h1 {
+            font-size: 2rem;
             background: linear-gradient(135deg, #e94560, #f5a623);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            text-align: center;
-            margin-bottom: 10px;
         }
 
-        .splash-sub {
-            font-size: 1.2rem;
+        header p {
             color: #aaa;
-            text-align: center;
-            margin-bottom: 30px;
+            font-size: 0.95rem;
+            margin-top: 5px;
         }
 
-        .splash-btn {
-            padding: 16px 48px;
-            font-size: 1.4rem;
-            font-weight: 700;
-            border: none;
-            border-radius: 50px;
-            background: linear-gradient(135deg, #e94560, #f5a623);
-            color: #fff;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            box-shadow: 0 4px 20px rgba(233, 69, 96, 0.4);
-        }
-
-        .splash-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 8px 30px rgba(233, 69, 96, 0.6);
-        }
-
-        .splash-btn:active {
-            transform: scale(0.95);
-        }
-
-        /* ===== APLIKASI UTAMA ===== */
-        #app {
-            opacity: 0;
-            transition: opacity 0.8s ease;
-            min-height: 600px;
-        }
-
-        #app.show {
-            opacity: 1;
-        }
-
-        /* ===== KONTROL ===== */
         .controls {
             display: flex;
             gap: 12px;
@@ -192,62 +125,17 @@
             font-size: 0.8rem;
         }
 
-        .btn-primary {
-            background: #e94560;
-            color: #fff;
-        }
-        .btn-primary:hover {
-            background: #c73652;
-            transform: scale(1.04);
-        }
-        .btn-secondary {
-            background: #0f3460;
-            color: #fff;
-        }
-        .btn-secondary:hover {
-            background: #1a4a7a;
-        }
-        .btn-danger {
-            background: #a04040;
-            color: #fff;
-        }
-        .btn-danger:hover {
-            background: #c05050;
-        }
-        .btn-success {
-            background: #2d7d46;
-            color: #fff;
-        }
-        .btn-success:hover {
-            background: #3a9a5a;
-        }
-        .btn-purple {
-            background: #6c2bd9;
-            color: #fff;
-        }
-        .btn-purple:hover {
-            background: #5a22b5;
-        }
+        .btn-primary { background: #e94560; color: #fff; }
+        .btn-primary:hover { background: #c73652; transform: scale(1.04); }
+        .btn-secondary { background: #0f3460; color: #fff; }
+        .btn-secondary:hover { background: #1a4a7a; }
+        .btn-danger { background: #a04040; color: #fff; }
+        .btn-danger:hover { background: #c05050; }
+        .btn-success { background: #2d7d46; color: #fff; }
+        .btn-success:hover { background: #3a9a5a; }
+        .btn-purple { background: #6c2bd9; color: #fff; }
+        .btn-purple:hover { background: #5a22b5; }
 
-        .effect-group {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            background: #111;
-            padding: 4px 12px;
-            border-radius: 20px;
-        }
-
-        .chord-info {
-            background: #0f3460;
-            padding: 6px 14px;
-            border-radius: 20px;
-            color: #ffd700;
-            font-size: 0.75rem;
-            display: inline-block;
-        }
-
-        /* ===== KEYBOARD ===== */
         .keyboard-wrapper {
             overflow-x: auto;
             padding: 15px 0;
@@ -288,15 +176,8 @@
             z-index: 1;
         }
 
-        .key-white:hover {
-            background: #e0e0e0;
-            transform: scale(1.02);
-        }
-        .key-white.active {
-            background: #ffd700;
-            transform: scale(0.97);
-            border-color: #ffaa00;
-        }
+        .key-white:hover { background: #e0e0e0; transform: scale(1.02); }
+        .key-white.active { background: #ffd700; transform: scale(0.97); border-color: #ffaa00; }
 
         .key-black {
             background: #222;
@@ -309,14 +190,8 @@
             margin-left: -10px;
         }
 
-        .key-black:hover {
-            background: #444;
-        }
-        .key-black.active {
-            background: #ffd700;
-            color: #222;
-            transform: scale(0.95);
-        }
+        .key-black:hover { background: #444; }
+        .key-black.active { background: #ffd700; color: #222; transform: scale(0.95); }
 
         .key-label {
             font-size: 6px;
@@ -326,12 +201,8 @@
             pointer-events: none;
         }
 
-        .key-white .key-label {
-            color: #333;
-        }
-        .key-black .key-label {
-            color: #ddd;
-        }
+        .key-white .key-label { color: #333; }
+        .key-black .key-label { color: #ddd; }
 
         .octave-label {
             position: absolute;
@@ -352,12 +223,8 @@
             min-height: 24px;
         }
 
-        .status span {
-            color: #f5a623;
-            font-weight: 600;
-        }
+        .status span { color: #f5a623; font-weight: 600; }
 
-        /* ===== INFO PANEL ===== */
         .info-section {
             background: #1a1a2e;
             border-radius: 16px;
@@ -390,14 +257,8 @@
             transition: 0.2s;
         }
 
-        .tab-btn.active {
-            background: #e94560;
-            color: #fff;
-        }
-        .tab-btn:hover {
-            background: #1a4a7a;
-            color: #fff;
-        }
+        .tab-btn.active { background: #e94560; color: #fff; }
+        .tab-btn:hover { background: #1a4a7a; color: #fff; }
 
         .tab-content {
             background: #0d0d1a;
@@ -410,16 +271,9 @@
             color: #ccc;
         }
 
-        .tab-content h3 {
-            color: #f5a623;
-            margin: 10px 0 6px;
-        }
-        .tab-content ul {
-            padding-left: 20px;
-        }
-        .tab-content li {
-            margin-bottom: 4px;
-        }
+        .tab-content h3 { color: #f5a623; margin: 10px 0 6px; }
+        .tab-content ul { padding-left: 20px; }
+        .tab-content li { margin-bottom: 4px; }
 
         .freq-table {
             width: 100%;
@@ -434,20 +288,10 @@
             text-align: center;
         }
 
-        .freq-table th {
-            background: #0f3460;
-            color: #f5a623;
-        }
-        .freq-table tr:nth-child(even) {
-            background: #111;
-        }
-        .freq-table .note-name {
-            font-weight: 600;
-            color: #ffd700;
-        }
-        .freq-table .black-note {
-            color: #ff6b6b;
-        }
+        .freq-table th { background: #0f3460; color: #f5a623; }
+        .freq-table tr:nth-child(even) { background: #111; }
+        .freq-table .note-name { font-weight: 600; color: #ffd700; }
+        .freq-table .black-note { color: #ff6b6b; }
 
         .footer-note {
             margin-top: 20px;
@@ -458,193 +302,138 @@
             padding-top: 15px;
         }
 
-        .tab-content::-webkit-scrollbar {
-            width: 6px;
-        }
-        .tab-content::-webkit-scrollbar-track {
-            background: #0d0d1a;
-        }
-        .tab-content::-webkit-scrollbar-thumb {
-            background: #e94560;
-            border-radius: 10px;
-        }
-        .keyboard-wrapper::-webkit-scrollbar {
-            height: 8px;
-        }
-        .keyboard-wrapper::-webkit-scrollbar-track {
-            background: #0d0d1a;
-        }
-        .keyboard-wrapper::-webkit-scrollbar-thumb {
-            background: #e94560;
-            border-radius: 10px;
+        .chord-info {
+            background: #0f3460;
+            padding: 6px 14px;
+            border-radius: 20px;
+            color: #ffd700;
+            font-size: 0.75rem;
+            display: inline-block;
         }
 
-        /* ===== RESPONSIVE ===== */
+        .effect-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: #111;
+            padding: 4px 12px;
+            border-radius: 20px;
+        }
+
+        .tab-content::-webkit-scrollbar { width: 6px; }
+        .tab-content::-webkit-scrollbar-track { background: #0d0d1a; }
+        .tab-content::-webkit-scrollbar-thumb { background: #e94560; border-radius: 10px; }
+        .keyboard-wrapper::-webkit-scrollbar { height: 8px; }
+        .keyboard-wrapper::-webkit-scrollbar-track { background: #0d0d1a; }
+        .keyboard-wrapper::-webkit-scrollbar-thumb { background: #e94560; border-radius: 10px; }
+
         @media (max-width: 600px) {
-            .container {
-                padding: 12px;
-            }
-            .key-white {
-                width: 26px;
-                height: 140px;
-            }
-            .key-black {
-                width: 16px;
-                height: 85px;
-            }
-            .keyboard-container {
-                min-width: 2200px;
-                height: 190px;
-            }
-            .controls {
-                gap: 6px;
-                padding: 10px;
-            }
-            .btn {
-                padding: 4px 10px;
-                font-size: 0.7rem;
-            }
-            .controls select {
-                font-size: 0.7rem;
-                padding: 3px 8px;
-            }
-            .controls input[type="range"] {
-                width: 60px;
-            }
-            .splash-title {
-                font-size: 1.8rem;
-            }
-            .splash-sub {
-                font-size: 1rem;
-            }
-            .splash-btn {
-                padding: 12px 32px;
-                font-size: 1.1rem;
-            }
-            .splash-image {
-                width: 90%;
-            }
+            .container { padding: 12px; }
+            header h1 { font-size: 1.4rem; }
+            .key-white { width: 26px; height: 140px; }
+            .key-black { width: 16px; height: 85px; }
+            .keyboard-container { min-width: 2200px; height: 190px; }
+            .controls { gap: 6px; padding: 10px; }
+            .btn { padding: 4px 10px; font-size: 0.7rem; }
+            .controls select { font-size: 0.7rem; padding: 3px 8px; }
+            .controls input[type="range"] { width: 60px; }
         }
     </style>
 </head>
 <body>
-    <div class="container" id="mainContainer">
-        <!-- ============ SPLASH SCREEN ============ -->
-        <div id="splash">
-            <img class="splash-image" src="assets/images/img1.jpg" alt="Splash Screen" />
-            <div class="splash-title">🎵 PMD Musik 12 TET</div>
-            <div class="splash-sub">Pedang Mata Dua Musik Digital<br />Mikrotonal 20 Nada per Oktaf</div>
-            <button class="splash-btn" id="startBtn">🚀 Mulai</button>
+    <div class="container">
+        <header>
+            <h1>🎵 Musik 12-TET (20 Nada per Oktaf)</h1>
+            <p>Eksplorasi Mikrotonal — Inovasi Sistem 20 Nada per Oktaf</p>
+        </header>
+
+        <!-- ============ CONTROLS ============ -->
+        <div class="controls" id="controlsContainer">
+            <!-- Mode -->
+            <label class="active-mode" id="singleModeLabel">
+                <input type="radio" name="playMode" value="single" checked /> Nada Tunggal
+            </label>
+            <label id="chordModeLabel">
+                <input type="radio" name="playMode" value="chord" /> Akord
+            </label>
+
+            <!-- Oktaf -->
+            <span class="effect-label">Oktaf:</span>
+            <select id="octaveSelector">
+                <option value="3">3 Oktaf</option>
+                <option value="4" selected>4 Oktaf</option>
+                <option value="5">5 Oktaf</option>
+            </select>
+
+            <!-- Instrumen -->
+            <span class="effect-label">🎹 Instrumen:</span>
+            <select id="instrumentSelector">
+                <option value="sine">Sine</option>
+                <option value="square">Square</option>
+                <option value="sawtooth">Sawtooth</option>
+                <option value="triangle">Triangle</option>
+                <option value="organ" selected>Organ</option>
+            </select>
+
+            <!-- Efek Reverb -->
+            <div class="effect-group">
+                <span class="effect-label">🌊 Reverb:</span>
+                <input type="range" id="reverbMix" min="0" max="100" value="20" />
+                <span id="reverbVal" style="font-size:0.7rem;color:#aaa;min-width:30px;">20%</span>
+            </div>
+
+            <!-- Efek Delay -->
+            <div class="effect-group">
+                <span class="effect-label">⏳ Delay:</span>
+                <input type="range" id="delayMix" min="0" max="100" value="0" />
+                <span id="delayVal" style="font-size:0.7rem;color:#aaa;min-width:30px;">0%</span>
+            </div>
+
+            <!-- ============ AMPLIFIER (PENGUAT BUNYI) ============ -->
+            <div class="effect-group" style="background:#2a1a3e; border:1px solid #6c2bd9;">
+                <span class="effect-label" style="color:#d4a0ff;">🔊 Amplifier:</span>
+                <input type="range" id="ampSlider" min="50" max="300" value="100" style="accent-color:#b388ff;" />
+                <span id="ampVal" style="font-size:0.75rem;color:#d4a0ff;min-width:40px;font-weight:bold;">1.0x</span>
+            </div>
+
+            <!-- Tombol Aksi -->
+            <button class="btn btn-primary" id="playMayorBtn">▶ Mayor</button>
+            <button class="btn btn-secondary" id="playMinorBtn">▶ Minor</button>
+            <button class="btn btn-danger" id="stopBtn">⏹ Stop</button>
+            <button class="btn btn-success" id="resetBtn">↺ Reset</button>
+
+            <span class="chord-info" id="modeIndicator">🎵 Mode: Tunggal</span>
         </div>
 
-        <!-- ============ APLIKASI UTAMA ============ -->
-        <div id="app">
-            <!-- Header -->
-            <header style="text-align:center; border-bottom:2px solid #0f3460; padding-bottom:15px; margin-bottom:25px;">
-                <h1 style="font-size:2rem; background:linear-gradient(135deg,#e94560,#f5a623); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">
-                    🎵 Musik 12-TET (20 Nada per Oktaf)
-                </h1>
-                <p style="color:#aaa; font-size:0.95rem; margin-top:5px;">
-                    Eksplorasi Mikrotonal — Inovasi Sistem 20 Nada per Oktaf
-                </p>
-            </header>
+        <!-- ============ KEYBOARD ============ -->
+        <div class="keyboard-wrapper">
+            <div class="keyboard-container" id="keyboardContainer"></div>
+        </div>
 
-            <!-- Controls -->
-            <div class="controls">
-                <label class="active-mode" id="singleModeLabel">
-                    <input type="radio" name="playMode" value="single" checked /> Nada Tunggal
-                </label>
-                <label id="chordModeLabel">
-                    <input type="radio" name="playMode" value="chord" /> Akord
-                </label>
+        <div class="status" id="statusDisplay">Klik tuts atau tekan tombol untuk mendengar nada</div>
 
-                <span class="effect-label">Oktaf:</span>
-                <select id="octaveSelector">
-                    <option value="3">3 Oktaf</option>
-                    <option value="4" selected>4 Oktaf</option>
-                    <option value="5">5 Oktaf</option>
-                </select>
-
-                <span class="effect-label">🎹 Instrumen:</span>
-                <select id="instrumentSelector">
-                    <option value="sine">Sine</option>
-                    <option value="square">Square</option>
-                    <option value="sawtooth">Sawtooth</option>
-                    <option value="triangle">Triangle</option>
-                    <option value="organ" selected>Organ</option>
-                </select>
-
-                <div class="effect-group">
-                    <span class="effect-label">🌊 Reverb:</span>
-                    <input type="range" id="reverbMix" min="0" max="100" value="20" />
-                    <span id="reverbVal" style="font-size:0.7rem;color:#aaa;min-width:30px;">20%</span>
-                </div>
-
-                <div class="effect-group">
-                    <span class="effect-label">⏳ Delay:</span>
-                    <input type="range" id="delayMix" min="0" max="100" value="0" />
-                    <span id="delayVal" style="font-size:0.7rem;color:#aaa;min-width:30px;">0%</span>
-                </div>
-
-                <div class="effect-group" style="background:#2a1a3e; border:1px solid #6c2bd9;">
-                    <span class="effect-label" style="color:#d4a0ff;">🔊 Amplifier:</span>
-                    <input type="range" id="ampSlider" min="50" max="300" value="100" style="accent-color:#b388ff;" />
-                    <span id="ampVal" style="font-size:0.75rem;color:#d4a0ff;min-width:40px;font-weight:bold;">1.0x</span>
-                </div>
-
-                <button class="btn btn-primary" id="playMayorBtn">▶ Mayor</button>
-                <button class="btn btn-secondary" id="playMinorBtn">▶ Minor</button>
-                <button class="btn btn-danger" id="stopBtn">⏹ Stop</button>
-                <button class="btn btn-success" id="resetBtn">↺ Reset</button>
-
-                <span class="chord-info" id="modeIndicator">🎵 Mode: Tunggal</span>
+        <!-- ============ INFO PANEL ============ -->
+        <div class="info-section">
+            <h2>📖 Informasi & Referensi</h2>
+            <div class="info-tabs">
+                <button class="tab-btn active" data-tab="teori">Teori</button>
+                <button class="tab-btn" data-tab="freq">Frekuensi</button>
+                <button class="tab-btn" data-tab="skala">Skala</button>
+                <button class="tab-btn" data-tab="chord">Akord</button>
+                <button class="tab-btn" data-tab="tentang">Tentang</button>
             </div>
+            <div class="tab-content" id="tabContent"></div>
+        </div>
 
-            <!-- Keyboard -->
-            <div class="keyboard-wrapper">
-                <div class="keyboard-container" id="keyboardContainer"></div>
-            </div>
-
-            <div class="status" id="statusDisplay">Klik tuts atau tekan tombol untuk mendengar nada</div>
-
-            <!-- Info Panel -->
-            <div class="info-section">
-                <h2>📖 Informasi & Referensi</h2>
-                <div class="info-tabs">
-                    <button class="tab-btn active" data-tab="teori">Teori</button>
-                    <button class="tab-btn" data-tab="freq">Frekuensi</button>
-                    <button class="tab-btn" data-tab="skala">Skala</button>
-                    <button class="tab-btn" data-tab="chord">Akord</button>
-                    <button class="tab-btn" data-tab="tentang">Tentang</button>
-                </div>
-                <div class="tab-content" id="tabContent"></div>
-            </div>
-
-            <div class="footer-note">
-                Berdasarkan Karya Tulis Ilmiah: Eksplorasi Musik Sistem 12-TET (20 Nada per Oktaf) — Sukma Riadi Pakpahan, SST
-            </div>
+        <div class="footer-note">
+            Berdasarkan Karya Tulis Ilmiah: Eksplorasi Musik Sistem 12-TET (20 Nada per Oktaf) — Sukma Riadi Pakpahan, SST
         </div>
     </div>
 
     <script>
-        // ================================================================
-        // SPLASH SCREEN LOGIC
-        // ================================================================
-
-        const splash = document.getElementById('splash');
-        const app = document.getElementById('app');
-        const startBtn = document.getElementById('startBtn');
-
-        startBtn.addEventListener('click', () => {
-            splash.classList.add('hidden');
-            app.classList.add('show');
-            // Inisialisasi audio saat pertama kali interaksi
-            initAudio();
-        });
-
-        // ================================================================
+        // ============================================================
         // DATA FREKUENSI 12-TET (20 NADA PER OKTAF) – DARI C2 SAMPAI D6
-        // ================================================================
+        // ============================================================
 
         const FREQ_MAP = {
             'C2': 172.942, 'C#2': 182.707, 'D2': 193.024,
@@ -670,9 +459,9 @@
             'B#6': 13259.544, 'C6': 14008.275, 'C#6': 14799.285, 'D6': 15634.959
         };
 
-        // ================================================================
+        // ============================================================
         // CHORD DICTIONARY
-        // ================================================================
+        // ============================================================
 
         const CHORD_DICT = {
             "A2": ["A2", "C#3", "E3"],
@@ -689,23 +478,26 @@
             "G#3": ["G#3", "A#3", "D4"]
         };
 
-        // ================================================================
+        // ============================================================
         // SKALA
-        // ================================================================
+        // ============================================================
 
         const SCALE_MAYOR = ['E', 'F', 'G', 'H', 'I', 'J', 'K', 'A', 'B', 'C', 'D', 'E'];
         const SCALE_MINOR = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'A'];
 
-        // ================================================================
+        // ============================================================
         // AUDIO ENGINE DENGAN MASTER GAIN (AMPLIFIER)
-        // ================================================================
+        // ============================================================
 
         let audioCtx = null;
         let activeOscillators = [];
         let isPlaying = false;
         let playMode = 'single';
 
+        // Master Gain (Amplifier)
         let masterGain = null;
+
+        // Node Efek
         let reverbNode = null;
         let delayNode = null;
         let delayFeedback = null;
@@ -733,15 +525,17 @@
         function setupEffects() {
             if (!audioCtx) return;
 
+            // === MASTER GAIN (AMPLIFIER) ===
             masterGain = audioCtx.createGain();
             masterGain.gain.setValueAtTime(1.0, audioCtx.currentTime);
 
-            // Reverb
+            // === REVERB ===
             reverbNode = audioCtx.createConvolver();
             const impulseLength = 2.0;
             const sampleRate = audioCtx.sampleRate;
             const numSamples = Math.floor(impulseLength * sampleRate);
             const impulse = audioCtx.createBuffer(2, numSamples, sampleRate);
+
             for (let channel = 0; channel < 2; channel++) {
                 const channelData = impulse.getChannelData(channel);
                 for (let i = 0; i < numSamples; i++) {
@@ -751,30 +545,43 @@
             }
             reverbNode.buffer = impulse;
 
-            // Delay
+            // === DELAY ===
             delayNode = audioCtx.createDelay(2.0);
             delayNode.delayTime.setValueAtTime(0.3, audioCtx.currentTime);
+
             delayFeedback = audioCtx.createGain();
             delayFeedback.gain.setValueAtTime(delayFeedbackValue, audioCtx.currentTime);
 
+            // === GAIN UNTUK MIX ===
             dryGain = audioCtx.createGain();
             wetGain = audioCtx.createGain();
             delayDryGain = audioCtx.createGain();
             delayWetGain = audioCtx.createGain();
 
+            // === ROUTING (SEMUA MENUJU MASTER GAIN) ===
+            // Dry
             dryGain.connect(masterGain);
+
+            // Reverb
             wetGain.connect(reverbNode);
             reverbNode.connect(masterGain);
+
+            // Delay
             delayNode.connect(delayWetGain);
             delayWetGain.connect(masterGain);
             delayNode.connect(delayFeedback);
             delayFeedback.connect(delayNode);
+            // Dry Delay (direct)
             delayDryGain.connect(masterGain);
+
+            // Hubungkan masterGain ke output akhir
             masterGain.connect(audioCtx.destination);
 
+            // Set initial mix
             updateReverbMix(reverbMix);
             updateDelayMix(delayMix);
 
+            // Set initial amplifier
             const ampSlider = document.getElementById('ampSlider');
             if (ampSlider) {
                 const val = parseInt(ampSlider.value) / 100;
@@ -801,14 +608,18 @@
         function createInstrumentOscillator(freq, type) {
             const ctx = audioCtx;
             let osc;
+
             if (type === 'organ') {
                 osc = ctx.createOscillator();
                 osc.type = 'sawtooth';
+
                 const osc2 = ctx.createOscillator();
                 osc2.type = 'square';
                 osc2.frequency.setValueAtTime(freq * 0.999, ctx.currentTime);
+
                 const gain2 = ctx.createGain();
                 gain2.gain.setValueAtTime(0.5, ctx.currentTime);
+
                 osc2.connect(gain2);
                 return { mainOsc: osc, extraOsc: osc2, extraGain: gain2 };
             } else {
@@ -822,16 +633,20 @@
             try {
                 const ctx = initAudio();
                 const type = currentInstrument;
+
                 const oscData = createInstrumentOscillator(freq, type);
                 const mainOsc = oscData.mainOsc;
                 const gain = ctx.createGain();
 
+                // ADSR
                 gain.gain.setValueAtTime(0.001, ctx.currentTime);
                 gain.gain.linearRampToValueAtTime(0.4, ctx.currentTime + 0.03);
                 gain.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime + 0.15);
                 gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
 
+                // Routing ke efek
                 mainOsc.connect(gain);
+
                 gain.connect(dryGain);
                 gain.connect(wetGain);
 
@@ -852,6 +667,7 @@
 
                 mainOsc.start(ctx.currentTime);
                 mainOsc.stop(ctx.currentTime + duration);
+
                 activeOscillators.push(mainOsc);
                 if (oscData.extraOsc) activeOscillators.push(oscData.extraOsc);
 
@@ -859,6 +675,7 @@
                     const idx = activeOscillators.indexOf(mainOsc);
                     if (idx > -1) activeOscillators.splice(idx, 1);
                 };
+
                 return mainOsc;
             } catch (e) {
                 console.warn('Audio error:', e);
@@ -870,22 +687,28 @@
             try {
                 const ctx = initAudio();
                 const type = currentInstrument;
+
                 frequencies.forEach((freq) => {
                     if (freq <= 0) return;
+
                     const oscData = createInstrumentOscillator(freq, type);
                     const mainOsc = oscData.mainOsc;
                     const gain = ctx.createGain();
+
                     gain.gain.setValueAtTime(0.001, ctx.currentTime);
                     gain.gain.linearRampToValueAtTime(0.25, ctx.currentTime + 0.03);
                     gain.gain.exponentialRampToValueAtTime(0.1, ctx.currentTime + 0.2);
                     gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+
                     mainOsc.connect(gain);
                     gain.connect(dryGain);
                     gain.connect(wetGain);
+
                     const delayInputGain = ctx.createGain();
                     gain.connect(delayInputGain);
                     delayInputGain.connect(delayNode);
                     delayInputGain.connect(delayDryGain);
+
                     if (oscData.extraOsc) {
                         const extraGain = ctx.createGain();
                         extraGain.gain.setValueAtTime(0.3, ctx.currentTime);
@@ -895,10 +718,12 @@
                         oscData.extraOsc.stop(ctx.currentTime + duration);
                         activeOscillators.push(oscData.extraOsc);
                     }
+
                     mainOsc.start(ctx.currentTime);
                     mainOsc.stop(ctx.currentTime + duration);
                     activeOscillators.push(mainOsc);
                 });
+
                 return true;
             } catch (e) {
                 console.warn('Chord error:', e);
@@ -907,14 +732,16 @@
         }
 
         function stopAllSounds() {
-            activeOscillators.forEach(osc => { try { osc.stop(); } catch (e) {} });
+            activeOscillators.forEach(osc => {
+                try { osc.stop(); } catch (e) {}
+            });
             activeOscillators = [];
             isPlaying = false;
         }
 
-        // ================================================================
+        // ============================================================
         // GENERATE NOTE SEQUENCE
-        // ================================================================
+        // ============================================================
 
         function generateNoteSequence(octaveCount) {
             const seq = [];
@@ -932,9 +759,9 @@
             return seq;
         }
 
-        // ================================================================
+        // ============================================================
         // MEMBANGUN KEYBOARD
-        // ================================================================
+        // ============================================================
 
         const container = document.getElementById('keyboardContainer');
         const statusDisplay = document.getElementById('statusDisplay');
@@ -1047,13 +874,14 @@
                 `🎹 ${octaveCount} oktaf (C2 sampai D${lastOctave}) — Klik tuts untuk bermain`;
         }
 
-        // ================================================================
+        // ============================================================
         // HANDLE KEY PRESS
-        // ================================================================
+        // ============================================================
 
         function handleKeyPress(note) {
             const key = keyElements[note];
             if (!key) return;
+
             key.classList.add('active');
             setTimeout(() => key.classList.remove('active'), 400);
 
@@ -1086,13 +914,14 @@
             }
         }
 
-        // ================================================================
+        // ============================================================
         // SKALA
-        // ================================================================
+        // ============================================================
 
         function playScale(scaleNotes, octave = 4) {
             stopAllSounds();
             isPlaying = true;
+
             const notes = [];
             for (let name of scaleNotes) {
                 const fullName = name + octave;
@@ -1125,10 +954,11 @@
             }, delay * 1000 + 300);
         }
 
-        // ================================================================
+        // ============================================================
         // EVENT LISTENERS
-        // ================================================================
+        // ============================================================
 
+        // Mode
         document.querySelectorAll('input[name="playMode"]').forEach((radio) => {
             radio.addEventListener('change', function() {
                 if (this.checked) {
@@ -1146,6 +976,7 @@
             });
         });
 
+        // Oktaf
         octaveSelector.addEventListener('change', function() {
             const val = parseInt(this.value);
             stopAllSounds();
@@ -1153,23 +984,29 @@
             statusDisplay.innerHTML = `🔄 Berubah ke ${val} oktaf`;
         });
 
+        // Instrumen
         instrumentSelector.addEventListener('change', function() {
             currentInstrument = this.value;
             statusDisplay.innerHTML = `🎹 Instrumen berubah ke: ${this.options[this.selectedIndex].text}`;
         });
 
+        // Reverb
         reverbSlider.addEventListener('input', function() {
             const val = parseInt(this.value);
             reverbVal.textContent = val + '%';
             updateReverbMix(val / 100);
         });
 
+        // Delay
         delaySlider.addEventListener('input', function() {
             const val = parseInt(this.value);
             delayVal.textContent = val + '%';
             updateDelayMix(val / 100);
         });
 
+        // ============================================================
+        // AMPLIFIER (PENGUAT BUNYI) - Master Gain Control
+        // ============================================================
         ampSlider.addEventListener('input', function() {
             const val = parseInt(this.value) / 100;
             ampVal.textContent = val.toFixed(1) + 'x';
@@ -1178,6 +1015,7 @@
             }
         });
 
+        // Tombol
         document.getElementById('playMayorBtn').addEventListener('click', () => playScale(SCALE_MAYOR, 4));
         document.getElementById('playMinorBtn').addEventListener('click', () => playScale(SCALE_MINOR, 4));
         document.getElementById('stopBtn').addEventListener('click', () => {
@@ -1201,12 +1039,11 @@
             }
         });
 
-        // ================================================================
+        // ============================================================
         // TAB KONTEN
-        // ================================================================
+        // ============================================================
 
         const tabContent = document.getElementById('tabContent');
-
         const tabData = {
             teori: `
                 <h3>🎼 Dasar Teoritis</h3>
@@ -1252,7 +1089,7 @@
             tentang: `
                 <h3>📖 Tentang Aplikasi</h3>
                 <p>Berdasarkan karya tulis Sukma Riadi Pakpahan, SST.</p>
-                <p><b>Fitur:</b> 5 instrumen, Reverb, Delay, Amplifier, 3/4/5 oktaf, Akord.</p>
+                <p><b>Fitur:</b> 5 instrumen, Reverb, Delay, <b>Amplifier (Master Gain)</b>, 3/4/5 oktaf, Akord.</p>
                 <p><b>Instrumen:</b> Sine, Square, Sawtooth, Triangle, Organ.</p>
                 <p><b>Amplifier:</b> Mengatur volume keseluruhan (0.5x hingga 3.0x).</p>
             `
@@ -1265,44 +1102,39 @@
             });
         }
 
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', () => renderTab(btn.dataset.tab));
-        });
-
-        // ================================================================
-        // INISIALISASI
-        // ================================================================
+        // ============================================================
+        // INIT
+        // ============================================================
 
         document.addEventListener('DOMContentLoaded', () => {
-            // Set default: 4 oktaf
             octaveSelector.value = '4';
             buildKeyboard(4);
             renderTab('teori');
-
-            // Mode default
             playMode = 'single';
             singleModeLabel.classList.add('active-mode');
             modeIndicator.textContent = '🎵 Mode: Tunggal';
 
-            // Instrumen default
             instrumentSelector.value = 'organ';
             currentInstrument = 'organ';
 
-            // Efek default
             reverbSlider.value = 20;
             reverbVal.textContent = '20%';
             delaySlider.value = 0;
             delayVal.textContent = '0%';
+
+            // Set default Amplifier
             ampSlider.value = 100;
             ampVal.textContent = '1.0x';
 
-            // Audio akan diinisialisasi saat tombol "Mulai" ditekan
-            // (telah di-handle di event listener startBtn)
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => renderTab(btn.dataset.tab));
+            });
         });
 
-        console.log('🎵 Aplikasi dengan Splash Screen siap!');
-        console.log('📸 Gambar splash: assets/images/img1.jpg');
-        console.log('📸 Gambar di aplikasi: assets/images/img2.jpg (tampil di info panel?)');
+        document.addEventListener('click', initAudio, { once: true });
+
+        console.log('🎵 Aplikasi dengan Amplifier siap!');
+        console.log('🔊 Amplifier range: 0.5x - 3.0x (Master Gain)');
     </script>
 </body>
 </html>
