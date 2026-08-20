@@ -8,12 +8,6 @@ st.markdown("*Bersenandung atau mainkan melodi, AI akan menuliskannya*")
 try:
     with open("ai_transcriber.html", "r", encoding="utf-8") as f:
         html = f.read()
-    # Gunakan st.iframe dengan izin mikrofon
-    st.iframe(
-        srcdoc=html,
-        height=800,
-        scrolling=True,
-        allow="microphone; autoplay"
-    )
+    st.components.v1.html(html, height=800, scrolling=True)
 except FileNotFoundError:
     st.error("⚠️ File ai_transcriber.html tidak ditemukan. Pastikan file ada di root.")
