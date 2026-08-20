@@ -136,6 +136,12 @@ with st.sidebar:
     
     st.caption("© 2026 Sukma Riadi Pakpahan, SST")
 
+with st.sidebar:
+    # ... bagian lain
+    st.markdown("### 🤖 Fitur AI")
+    st.markdown("[🎵 AI Composer](/ai_composer)")
+    st.markdown("[🎤 AI Transcriber](/ai_transcriber)")
+
 # ============================================================
 # FOOTER
 # ============================================================
