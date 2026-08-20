@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AI Transcriber - PMD Musik 12 TET</title>
     <style>
+        /* ===== CSS SAMA SEPERTI SEBELUMNYA ===== */
         * { margin:0; padding:0; box-sizing:border-box; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -212,13 +213,22 @@
             text-align: center;
             margin-top: 5px;
         }
+        .badge {
+            display: inline-block;
+            background: #e94560;
+            color: #fff;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            margin-left: 5px;
+        }
         @media (max-width:600px) { .container { padding: 15px; } }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🎤 AI Audio Transcriber</h1>
-        <p class="subtitle">Rekam lagu atau suara, AI akan menuliskannya</p>
+        <h1>🎤 AI Audio Transcriber <span class="badge">20 Nada/Oktaf</span></h1>
+        <p class="subtitle">Rekam lagu atau suara, AI akan menuliskannya dalam sistem 12-TET 20 nada per oktaf</p>
 
         <div class="error-message" id="errorMessage">
             ⚠️ <span id="errorText">Terjadi kesalahan. Pastikan browser mengizinkan akses mikrofon.</span>
@@ -235,19 +245,18 @@
             </div>
         </div>
 
-        <!-- Kontrol -->
         <div class="control-row">
             <label>🎯 Mode:</label>
             <select id="modeSelect">
                 <option value="vocal">Vokal (200-800 Hz)</option>
                 <option value="instrument">Instrumental (80-1200 Hz)</option>
-                <option value="full">Full Range (60-1800 Hz)</option>
+                <option value="full" selected>Full Range (60-1800 Hz)</option>
             </select>
             <label>🎚️ Sensitivitas:</label>
             <select id="sensitivitySelect">
-                <option value="0.015">Tinggi (lebih sensitif)</option>
-                <option value="0.02" selected>Sedang</option>
-                <option value="0.03">Rendah (kurang noise)</option>
+                <option value="0.01">Tinggi (lebih sensitif)</option>
+                <option value="0.015" selected>Sedang</option>
+                <option value="0.025">Rendah (kurang noise)</option>
             </select>
         </div>
 
@@ -260,34 +269,54 @@
         </div>
 
         <div class="result-area" id="resultArea">
-            <h3>📝 Hasil Transkripsi</h3>
+            <h3>📝 Hasil Transkripsi (20 Nada per Oktaf)</h3>
             <div class="transcribed-notes" id="transcribedDisplay">-</div>
             <div style="display:flex; gap:20px; flex-wrap:wrap; justify-content:center;">
                 <span style="color:#888;font-size:0.85rem;" id="transcribeInfo">Jumlah nada: 0</span>
                 <span style="color:#888;font-size:0.85rem;" id="durationInfo">Durasi rekaman: 0 detik</span>
             </div>
-            <div class="info-text">💡 Jika hasil sedikit, coba mode "Vokal" dan rekam hanya melodi utama.</div>
+            <div class="info-text">💡 Nada dengan tanda <b>#</b> adalah nada kromatik (tuts hitam).</div>
         </div>
     </div>
 
     <script>
         // ================================================================
-        // DATA FREKUENSI 12-TET
+        // FREQ_MAP LENGKAP 20 NADA PER OKTAF (12-TET)
+        // Berdasarkan referensi: A#4 = 440 Hz
         // ================================================================
         const FREQ_MAP = {
-            'E3':203.924,'F3':227.604,'G3':254.034,'H3':283.533,
-            'I3':316.458,'J3':334.328,'K3':373.151,'A3':416.482,
-            'B3':464.846,'C3':518.825,'D3':579.073,
-            'E4':611.771,'F4':682.812,'G4':762.102,'H4':850.6,
-            'I4':949.374,'J4':1002.983,'K4':1119.453,'A4':1249.447,
-            'B4':1394.537,'C4':1556.475,'D4':1737.218,
-            'E5':1835.314,'F5':2048.436,'G5':2286.307,'H5':2551.8,
-            'I5':2848.123,'J5':3008.949,'K5':3358.358,'A5':3748.341,
-            'B5':4183.611,'C5':4669.425,'D5':5211.653
+            // Oktaf 2 (3 nada awal)
+            'C2': 172.942, 'C#2': 182.707, 'D2': 193.024,
+            // Oktaf 3 (20 nada lengkap)
+            'E3': 203.924, 'E#3': 215.439, 'F3': 227.604, 'F#3': 240.456,
+            'G3': 254.034, 'G#3': 268.379, 'H3': 283.533, 'H#3': 299.544,
+            'I3': 316.458, 'J3': 334.328, 'J#3': 353.206, 'K3': 373.151,
+            'K#3': 394.222, 'A3': 416.482, 'A#3': 440.0, 'B3': 464.846,
+            'B#3': 491.094, 'C3': 518.825, 'C#3': 548.122, 'D3': 579.073,
+            // Oktaf 4 (20 nada lengkap)
+            'E4': 611.771, 'E#4': 646.316, 'F4': 682.812, 'F#4': 721.369,
+            'G4': 762.102, 'G#4': 805.136, 'H4': 850.6, 'H#4': 898.631,
+            'I4': 949.374, 'J4': 1002.983, 'J#4': 1059.619, 'K4': 1119.453,
+            'K#4': 1182.665, 'A4': 1249.447, 'A#4': 1320.0, 'B4': 1394.537,
+            'B#4': 1473.283, 'C4': 1556.475, 'C#4': 1644.365, 'D4': 1737.218,
+            // Oktaf 5 (20 nada lengkap)
+            'E5': 1835.314, 'E#5': 1938.949, 'F5': 2048.436, 'F#5': 2164.106,
+            'G5': 2286.307, 'G#5': 2415.409, 'H5': 2551.8, 'H#5': 2695.894,
+            'I5': 2848.123, 'J5': 3008.949, 'J#5': 3178.857, 'K5': 3358.358,
+            'K#5': 3547.996, 'A5': 3748.341, 'A#5': 3960.0, 'B5': 4183.611,
+            'B#5': 4419.848, 'C5': 4669.425, 'C#5': 4933.095, 'D5': 5211.653
         };
+
+        // ================================================================
+        // DATA 20 NADA PER OKTAF (untuk lookup)
+        // ================================================================
+        const NOTE_NAMES_20 = ['E','E#','F','F#','G','G#','H','H#','I','J','J#','K','K#','A','A#','B','B#','C','C#','D'];
         const NOTE_FREQS = Object.values(FREQ_MAP);
         const NOTE_NAMES_REV = Object.keys(FREQ_MAP);
 
+        // ================================================================
+        // VARIABEL GLOBAL
+        // ================================================================
         let audioCtx = null;
         let analyser = null;
         let dataArray = null;
@@ -484,7 +513,7 @@
         }
 
         // ================================================================
-        // AI TRANSCRIBE (dengan output semua nada)
+        // AI TRANSCRIBE (dengan 20 nada per oktaf)
         // ================================================================
         function findClosestNote(freq) {
             let closest = NOTE_FREQS[0];
@@ -496,6 +525,7 @@
                     closest = f;
                 }
             }
+            // Toleransi 5%
             if (minDiff / closest > 0.05) return null;
             const idx = NOTE_FREQS.indexOf(closest);
             return { name: NOTE_NAMES_REV[idx], freq: closest };
@@ -507,7 +537,7 @@
                 return;
             }
 
-            statusEl.textContent = '🧠 AI sedang menganalisis audio...';
+            statusEl.textContent = '🧠 AI sedang menganalisis audio... (20 nada per oktaf)';
             statusEl.className = 'status loading';
             transcribeBtn.disabled = true;
             progressBar.classList.add('show');
@@ -518,11 +548,9 @@
                 const duration = data.length / sampleRate;
                 durationInfo.textContent = `Durasi rekaman: ${duration.toFixed(1)} detik`;
 
-                // Ambil mode dan sensitivitas
                 const mode = modeSelect.value;
                 const sensitivity = parseFloat(sensitivitySelect.value);
                 
-                // Rentang frekuensi berdasarkan mode
                 let minFreq = 60, maxFreq = 1800;
                 if (mode === 'vocal') { minFreq = 200; maxFreq = 800; }
                 else if (mode === 'instrument') { minFreq = 80; maxFreq = 1200; }
@@ -567,8 +595,7 @@
                     }
                 }
 
-                // Tampilkan SEMUA nada yang terdeteksi (tanpa batas 20)
-                // Tapi simplifikasi: ambil unique notes berurutan
+                // Simplify: ambil unique notes berurutan (tanpa batas 20)
                 const uniqueNotes = [];
                 let lastNote = null;
                 for (let n of detected) {
@@ -585,16 +612,14 @@
                     transcribeInfo.textContent = 'Jumlah nada: 0';
                 } else {
                     const names = uniqueNotes.map(n => n.name).join(' → ');
-                    // Tampilkan semua nada (bisa panjang)
                     transcribedDisplay.textContent = names;
                     transcribeInfo.textContent = `Jumlah nada: ${uniqueNotes.length}`;
                     resultArea.classList.add('show');
                     playResultBtn.disabled = false;
-                    // Scroll ke atas hasil
                     transcribedDisplay.scrollTop = 0;
                 }
 
-                statusEl.textContent = `✅ Transkripsi selesai! ${uniqueNotes.length} nada ditemukan.`;
+                statusEl.textContent = `✅ Transkripsi selesai! ${uniqueNotes.length} nada ditemukan (20 nada per oktaf).`;
                 statusEl.className = 'status';
                 transcribeBtn.disabled = false;
                 progressBar.classList.remove('show');
