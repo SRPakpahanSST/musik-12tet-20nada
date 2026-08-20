@@ -68,12 +68,11 @@ def create_minimal_html():
 # TAMPILKAN APLIKASI
 # ============================================================
 
-# app.py (bagian tampilkan aplikasi)
 html_content = load_html()
-# Ganti dengan st.iframe
+# Gunakan st.iframe untuk kompatibilitas terbaik
 st.iframe(
     srcdoc=html_content,
-    height=700,
+    height=750,
     scrolling=True
 )
 
@@ -114,10 +113,10 @@ with st.sidebar:
     
     st.markdown("---")
     
-    # ===== FITUR AI =====
+    # ===== FITUR AI (gunakan st.page_link untuk navigasi handal) =====
     st.markdown("### 🤖 Fitur AI")
-    st.markdown("[🎵 AI Composer](/ai_composer)")
-    st.markdown("[🎤 AI Transcriber](/ai_transcriber)")
+    st.page_link("pages/ai_composer.py", label="🎵 AI Composer")
+    st.page_link("pages/ai_transcriber.py", label="🎤 AI Transcriber")
     
     st.markdown("---")
     
