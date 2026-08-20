@@ -68,10 +68,10 @@ def create_minimal_html():
 # TAMPILKAN APLIKASI
 # ============================================================
 
+# TAMPILKAN APLIKASI
 html_content = load_html()
-# Gunakan st.iframe untuk kompatibilitas terbaik
-st.iframe(
-    srcdoc=html_content,
+st.components.v1.html(
+    html_content,
     height=750,
     scrolling=True
 )
