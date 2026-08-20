@@ -436,36 +436,19 @@
 
         </div> <!-- penutup container -->
 
- <!-- ===== MENU AI (di luar container, tapi di dalam #app) ===== -->
-<div style="margin-top:25px; display:flex; gap:15px; flex-wrap:wrap; justify-content:center; padding:10px;">
-    <a href="/ai_composer" target="_top" rel="noopener" 
-       style="padding:14px 35px; background:linear-gradient(135deg,#e94560,#f5a623); color:#fff; border-radius:30px; text-decoration:none; font-weight:700; transition:0.2s; box-shadow:0 4px 20px rgba(233,69,96,0.3); display:inline-block;"
-       onclick="return navigateTo('/ai_composer');">
-        🎵 AI Composer
-    </a>
-    <a href="/ai_transcriber" target="_top" rel="noopener" 
-       style="padding:14px 35px; background:linear-gradient(135deg,#6c2bd9,#a855f7); color:#fff; border-radius:30px; text-decoration:none; font-weight:700; transition:0.2s; box-shadow:0 4px 20px rgba(108,43,217,0.3); display:inline-block;"
-       onclick="return navigateTo('/ai_transcriber');">
-        🎤 AI Transcriber
-    </a>
-</div>
-
-<script>
-function navigateTo(path) {
-    // Coba berbagai metode untuk navigasi keluar dari iframe
-    if (window.top && window.top !== window) {
-        try {
-            window.top.location.href = path;
-            return false; // prevent default a tag
-        } catch(e) {
-            // jika gagal, coba method lain
-        }
-    }
-    // fallback: buka di tab baru
-    window.open(path, '_top');
-    return false;
-}
-</script>
+        <!-- ===== MENU AI (di luar container, tapi di dalam #app) ===== -->
+        <div style="margin-top:25px; display:flex; gap:15px; flex-wrap:wrap; justify-content:center; padding:10px;">
+            <a href="/ai_composer" target="_top" rel="noopener" 
+               style="padding:14px 35px; background:linear-gradient(135deg,#e94560,#f5a623); color:#fff; border-radius:30px; text-decoration:none; font-weight:700; transition:0.2s; box-shadow:0 4px 20px rgba(233,69,96,0.3); display:inline-block;"
+               onclick="return navigateTo(this, '/ai_composer');">
+                🎵 AI Composer
+            </a>
+            <a href="/ai_transcriber" target="_top" rel="noopener" 
+               style="padding:14px 35px; background:linear-gradient(135deg,#6c2bd9,#a855f7); color:#fff; border-radius:30px; text-decoration:none; font-weight:700; transition:0.2s; box-shadow:0 4px 20px rgba(108,43,217,0.3); display:inline-block;"
+               onclick="return navigateTo(this, '/ai_transcriber');">
+                🎤 AI Transcriber
+            </a>
+        </div>
 
     </div> <!-- penutup #app -->
 
@@ -482,6 +465,32 @@ function navigateTo(path) {
             app.classList.add('show');
             initAudio(); // dari bagian audio
         });
+
+        // ================================================================
+        // NAVIGASI AI (diperbaiki agar lebih robust di HP)
+        // ================================================================
+        function navigateTo(el, path) {
+            try {
+                // Coba ke top window (jika di dalam iframe)
+                if (window.top && window.top !== window) {
+                    window.top.location.href = path;
+                    return false;
+                }
+                // Coba ke parent
+                if (window.parent && window.parent !== window) {
+                    window.parent.location.href = path;
+                    return false;
+                }
+                // Terakhir, langsung
+                window.location.href = path;
+                return false;
+            } catch (e) {
+                // Jika semua gagal, buka di tab baru
+                console.warn('Navigasi gagal, mencoba membuka tab baru:', e);
+                window.open(path, '_blank');
+                return false;
+            }
+        }
 
         // ================================================================
         // DATA FREKUENSI 12-TET (20 NADA PER OKTAF) – C2 s/d D6
@@ -984,7 +993,7 @@ function navigateTo(path) {
             octaveSelector.value = '4';
             buildKeyboard(4);
             renderTab('teori');
-            playMode = 'single'; // perbaiki dari '' menjadi 'single'
+            playMode = 'single';
             singleModeLabel.classList.add('active-mode');
             modeIndicator.textContent = '🎵 Mode: Tunggal';
             instrumentSelector.value = 'organ';
