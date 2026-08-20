@@ -1,24 +1,21 @@
 import tkinter as tk
 from tkinter import messagebox
 import os
-import sys
 import webbrowser
+import sys
 
 # ============================================================
-# KONFIGURASI PATH (AMAN UNTUK SEGALA LINGKUNGAN)
+# KONFIGURASI PATH (GAMBAR DI ROOT)
 # ============================================================
 
-# Ambil direktori tempat file script ini berada
-try:
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-except NameError:
-    # Jika __file__ tidak tersedia (misal di interactive shell)
-    BASE_DIR = os.getcwd()
+# Ambil direktori tempat file ini berada
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# Path ke gambar splash
-IMAGE_PATH = os.path.join(BASE_DIR, "assets", "images", "img1.jpg")
+# Path gambar splash (di root)
+IMAGE_SPLASH = os.path.join(BASE_DIR, "img1.jpg")   # untuk splash screen
+IMAGE_APP = os.path.join(BASE_DIR, "img2.jpg")      # untuk halaman utama (opsional)
 
-# Path ke file aplikasi utama (index.html)
+# Path file index.html (aplikasi utama)
 HTML_PATH = os.path.join(BASE_DIR, "index.html")
 
 # Ukuran jendela splash
@@ -28,7 +25,7 @@ SPLASH_HEIGHT = 1000
 print("=" * 50)
 print("🎵 PMD Musik 12 TET - Splash Screen")
 print(f"📂 BASE_DIR: {BASE_DIR}")
-print(f"🖼️  IMAGE_PATH: {IMAGE_PATH}")
+print(f"🖼️  IMAGE_SPLASH: {IMAGE_SPLASH}")
 print(f"🌐 HTML_PATH: {HTML_PATH}")
 print("=" * 50)
 
@@ -36,52 +33,41 @@ print("=" * 50)
 # FUNGSI CEK FILE
 # ============================================================
 
-def check_file(path, name):
-    if os.path.exists(path):
-        print(f"✅ {name} ditemukan: {path}")
-        return True
-    else:
-        print(f"❌ {name} TIDAK ditemukan: {path}")
-        return False
+def file_exists(path):
+    return os.path.exists(path)
 
 # ============================================================
 # FUNGSI MEMBUKA APLIKASI
 # ============================================================
 
 def open_app():
-    """Menutup splash screen dan membuka index.html di browser"""
-    splash.destroy()  # Tutup jendela splash
-
-    # Cek apakah file index.html ada
-    if os.path.exists(HTML_PATH):
-        # Buka di browser default
-        print(f"🌐 Membuka: {HTML_PATH}")
+    """Menutup splash dan membuka index.html di browser"""
+    splash.destroy()
+    if file_exists(HTML_PATH):
         webbrowser.open("file://" + HTML_PATH)
     else:
-        # Tampilkan pesan error jika file tidak ditemukan
         messagebox.showerror(
             "File Tidak Ditemukan",
             f"File index.html tidak ditemukan!\n\nPastikan file index.html berada di:\n{HTML_PATH}"
         )
-        print(f"❌ Error: File '{HTML_PATH}' tidak ditemukan!")
+        print(f"❌ Error: '{HTML_PATH}' tidak ditemukan!")
 
 # ============================================================
-# FUNGSI MEMUAT GAMBAR
+# FUNGSI MEMUAT GAMBAR (DENGAN FALLBACK)
 # ============================================================
 
-def load_splash_image():
-    """Mencoba memuat gambar, jika gagal return None"""
+def load_image(path, width, height):
     try:
         from PIL import Image, ImageTk
-        if os.path.exists(IMAGE_PATH):
-            image = Image.open(IMAGE_PATH)
-            resized_image = image.resize((SPLASH_WIDTH, SPLASH_HEIGHT), Image.LANCZOS)
-            return ImageTk.PhotoImage(resized_image)
+        if file_exists(path):
+            img = Image.open(path)
+            img = img.resize((width, height), Image.LANCZOS)
+            return ImageTk.PhotoImage(img)
         else:
-            print(f"⚠️  File gambar tidak ditemukan: {IMAGE_PATH}")
+            print(f"⚠️  Gambar tidak ditemukan: {path}")
             return None
     except ImportError:
-        print("⚠️  Pustaka PIL (Pillow) tidak terinstall. Gunakan 'pip install Pillow'")
+        print("⚠️  Pustaka Pillow tidak terinstall. Gunakan 'pip install Pillow'")
         return None
     except Exception as e:
         print(f"⚠️  Gagal memuat gambar: {e}")
@@ -91,71 +77,47 @@ def load_splash_image():
 # MEMBUAT SPLASH SCREEN
 # ============================================================
 
-splash = None  # Global agar bisa diakses di fungsi
+splash = None
 
 def create_splash():
     global splash
     splash = tk.Tk()
     splash.title("PMD Musik 12 TET")
-    splash.overrideredirect(True)  # Hilangkan border/title bar
-    splash.attributes('-topmost', True)  # Selalu di atas jendela lain
+    splash.overrideredirect(True)          # tanpa border
+    splash.attributes('-topmost', True)    # selalu di atas
 
-    # Atur ukuran dan posisi di tengah layar
-    screen_width = splash.winfo_screenwidth()
-    screen_height = splash.winfo_screenheight()
-    x_pos = (screen_width // 2) - (SPLASH_WIDTH // 2)
-    y_pos = (screen_height // 2) - (SPLASH_HEIGHT // 2)
-    splash.geometry(f"{SPLASH_WIDTH}x{SPLASH_HEIGHT}+{x_pos}+{y_pos}")
+    # Posisi tengah layar
+    sw = splash.winfo_screenwidth()
+    sh = splash.winfo_screenheight()
+    x = (sw - SPLASH_WIDTH) // 2
+    y = (sh - SPLASH_HEIGHT) // 2
+    splash.geometry(f"{SPLASH_WIDTH}x{SPLASH_HEIGHT}+{x}+{y}")
 
-    # === BACKGROUND ===
-    img_tk = load_splash_image()
+    # --- Muat gambar splash ---
+    img = load_image(IMAGE_SPLASH, SPLASH_WIDTH, SPLASH_HEIGHT)
 
-    if img_tk:
-        # Jika gambar berhasil dimuat
-        label_bg = tk.Label(splash, image=img_tk)
-        label_bg.pack(fill="both", expand=True)
-        label_bg.image = img_tk  # Simpan referensi
+    if img:
+        # Tampilkan gambar sebagai background
+        label = tk.Label(splash, image=img)
+        label.pack(fill="both", expand=True)
+        label.image = img  # simpan referensi
     else:
-        # Jika gambar gagal dimuat, buat background berwarna dengan teks
-        canvas = tk.Canvas(
-            splash,
-            width=SPLASH_WIDTH,
-            height=SPLASH_HEIGHT,
-            bg="#1a1a2e",
-            highlightthickness=0
-        )
+        # Fallback: canvas dengan teks
+        canvas = tk.Canvas(splash, width=SPLASH_WIDTH, height=SPLASH_HEIGHT,
+                           bg="#1a1a2e", highlightthickness=0)
         canvas.pack(fill="both", expand=True)
+        canvas.create_text(SPLASH_WIDTH//2, SPLASH_HEIGHT//2 - 60,
+                           text="🎵 PMD Musik 12 TET",
+                           font=("Arial", 36, "bold"), fill="#f5a623")
+        canvas.create_text(SPLASH_WIDTH//2, SPLASH_HEIGHT//2 + 20,
+                           text="Pedang Mata Dua Musik Digital\nMikrotonal 20 Nada per Oktaf",
+                           font=("Arial", 18), fill="#cccccc", justify="center")
+        canvas.create_text(SPLASH_WIDTH//2, SPLASH_HEIGHT//2 + 130,
+                           text="(Gambar tidak ditemukan, mode teks)",
+                           font=("Arial", 12), fill="#666666")
 
-        # Teks judul
-        canvas.create_text(
-            SPLASH_WIDTH // 2,
-            SPLASH_HEIGHT // 2 - 50,
-            text="🎵 PMD Musik 12 TET",
-            font=("Arial", 36, "bold"),
-            fill="#f5a623",
-            anchor="center"
-        )
-        canvas.create_text(
-            SPLASH_WIDTH // 2,
-            SPLASH_HEIGHT // 2 + 30,
-            text="Pedang Mata Dua Musik Digital\nMikrotonal 20 Nada per Oktaf",
-            font=("Arial", 18),
-            fill="#cccccc",
-            anchor="center",
-            justify="center"
-        )
-        canvas.create_text(
-            SPLASH_WIDTH // 2,
-            SPLASH_HEIGHT // 2 + 120,
-            text="(Gambar tidak ditemukan, menggunakan mode teks)",
-            font=("Arial", 12),
-            fill="#666666",
-            anchor="center"
-        )
-        label_bg = canvas  # Untuk referensi
-
-    # === TOMBOL MULAI ===
-    btn_start = tk.Button(
+    # --- Tombol Mulai ---
+    btn = tk.Button(
         splash,
         text="🚀 Mulai",
         font=("Arial", 20, "bold"),
@@ -168,25 +130,19 @@ def create_splash():
         command=open_app,
         activebackground="#c73652",
         activeforeground="white",
-        bd=0,
-        highlightthickness=0
+        bd=0
     )
+    btn.place(relx=0.5, rely=0.92, anchor="center")
 
-    # Tempatkan tombol di bagian bawah (92% dari tinggi)
-    btn_start.place(relx=0.5, rely=0.92, anchor="center")
-
-    # Efek hover sederhana
+    # Efek hover
     def on_enter(e):
-        btn_start.config(bg="#c73652")
-
+        btn.config(bg="#c73652")
     def on_leave(e):
-        btn_start.config(bg="#e94560")
+        btn.config(bg="#e94560")
+    btn.bind("<Enter>", on_enter)
+    btn.bind("<Leave>", on_leave)
 
-    btn_start.bind("<Enter>", on_enter)
-    btn_start.bind("<Leave>", on_leave)
-
-    # === TOMBOL KELUAR (Opsional) ===
-    # Tombol kecil di pojok kanan atas untuk keluar
+    # --- Tombol keluar (opsional) ---
     btn_exit = tk.Button(
         splash,
         text="✕",
@@ -196,33 +152,30 @@ def create_splash():
         relief="flat",
         cursor="hand2",
         command=lambda: splash.destroy(),
-        bd=0,
-        highlightthickness=0
+        bd=0
     )
     btn_exit.place(x=SPLASH_WIDTH - 40, y=10)
 
-    # === MENJALANKAN ===
     splash.mainloop()
 
 # ============================================================
-# EKSEKUSI DENGAN HANDLING ERROR GLOBAL
+# EKSEKUSI
 # ============================================================
 
 if __name__ == "__main__":
     try:
         create_splash()
     except Exception as e:
-        # Jika terjadi error fatal, tampilkan di console dan messagebox
         print(f"❌ ERROR FATAL: {e}")
         import traceback
         traceback.print_exc()
+        # Tampilkan pesan error dengan tkinter jika memungkinkan
         try:
             root_err = tk.Tk()
-            root_err.withdraw()  # Sembunyikan jendela utama
+            root_err.withdraw()
             messagebox.showerror(
                 "Error Fatal",
-                f"Terjadi error saat menjalankan splash screen:\n\n{str(e)}\n\n"
-                "Pastikan semua file dan dependensi terinstall dengan benar."
+                f"Terjadi error:\n\n{str(e)}\n\nPastikan semua file dan dependensi terinstall."
             )
             root_err.destroy()
         except:
