@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AI Transcriber - PMD Musik 12 TET</title>
     <style>
-        /* ===== CSS SAMA ===== */
         * { margin:0; padding:0; box-sizing:border-box; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -222,6 +221,15 @@
             font-size: 0.7rem;
             margin-left: 5px;
         }
+        .quality-badge {
+            display: inline-block;
+            background: #2d7d46;
+            color: #fff;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            margin-left: 5px;
+        }
         .warning-text {
             color: #f5a623;
             font-size: 0.8rem;
@@ -233,8 +241,12 @@
 </head>
 <body>
     <div class="container">
-        <h1>🎤 AI Audio Transcriber <span class="badge">20 Nada/Oktaf</span></h1>
-        <p class="subtitle">Rekam lagu atau suara (maks. 22 menit), AI akan menuliskannya</p>
+        <h1>
+            🎤 AI Audio Transcriber
+            <span class="badge">20 Nada/Oktaf</span>
+            <span class="quality-badge">✨ YIN Algoritma</span>
+        </h1>
+        <p class="subtitle">Rekam lagu atau suara (maks. 22 menit) dengan akurasi tinggi</p>
 
         <div class="error-message" id="errorMessage">
             ⚠️ <span id="errorText">Terjadi kesalahan. Pastikan browser mengizinkan akses mikrofon.</span>
@@ -260,16 +272,22 @@
             </select>
             <label>🎚️ Sensitivitas:</label>
             <select id="sensitivitySelect">
-                <option value="0.01">Tinggi (lebih sensitif)</option>
-                <option value="0.015" selected>Sedang</option>
-                <option value="0.025">Rendah (kurang noise)</option>
+                <option value="0.008">Sangat Tinggi</option>
+                <option value="0.012" selected>Tinggi</option>
+                <option value="0.018">Sedang</option>
+                <option value="0.03">Rendah (kurang noise)</option>
+            </select>
+            <label>🧹 Filter:</label>
+            <select id="filterSelect">
+                <option value="highpass" selected>High-pass (kurangi noise)</option>
+                <option value="none">Tanpa filter</option>
             </select>
         </div>
 
         <div class="status" id="status">🔴 Klik tombol mikrofon untuk mulai merekam (maks. 22 menit)</div>
 
         <div class="btn-group">
-            <button class="btn btn-success" id="transcribeBtn" disabled>🧠 AI Transcribe</button>
+            <button class="btn btn-success" id="transcribeBtn" disabled>🧠 AI Transcribe (YIN)</button>
             <button class="btn btn-secondary" id="playResultBtn" disabled>▶ Play Hasil</button>
             <button class="btn btn-danger" id="clearBtn">🗑️ Clear</button>
         </div>
@@ -280,16 +298,16 @@
             <div style="display:flex; gap:20px; flex-wrap:wrap; justify-content:center;">
                 <span style="color:#888;font-size:0.85rem;" id="transcribeInfo">Jumlah nada: 0</span>
                 <span style="color:#888;font-size:0.85rem;" id="durationInfo">Durasi rekaman: 0 detik</span>
+                <span style="color:#2d7d46;font-size:0.85rem;" id="qualityInfo">Algoritma: YIN</span>
             </div>
             <div class="info-text">💡 Nada dengan tanda <b>#</b> adalah nada kromatik (tuts hitam).</div>
-            <div class="warning-text">⚠️ Rekaman 22 menit menghasilkan file besar, analisis bisa berlangsung lama.</div>
+            <div class="warning-text">⚠️ Rekaman panjang membutuhkan waktu analisis lebih lama.</div>
         </div>
     </div>
 
     <script>
         // ================================================================
-        // FREQ_MAP LENGKAP 20 NADA PER OKTAF (12-TET)
-        // A#4 = 440 Hz
+        // FREQ_MAP LENGKAP 20 NADA PER OKTAF (12-TET) – A#4 = 440 Hz
         // ================================================================
         const FREQ_MAP = {
             'C2': 172.942, 'C#2': 182.707, 'D2': 193.024,
@@ -312,6 +330,117 @@
 
         const NOTE_FREQS = Object.values(FREQ_MAP);
         const NOTE_NAMES_REV = Object.keys(FREQ_MAP);
+
+        // ================================================================
+        // YIN PITCH DETECTION ALGORITHM
+        // ================================================================
+        function yinPitchDetection(signal, sampleRate, minFreq, maxFreq) {
+            const bufferSize = signal.length;
+            const minLag = Math.floor(sampleRate / maxFreq);
+            const maxLag = Math.floor(sampleRate / minFreq);
+            if (maxLag >= bufferSize) return 0;
+
+            const autocorr = new Float32Array(maxLag + 1);
+            for (let lag = minLag; lag <= maxLag; lag++) {
+                let sum = 0;
+                for (let i = 0; i < bufferSize - lag; i++) {
+                    sum += signal[i] * signal[i + lag];
+                }
+                autocorr[lag] = sum;
+            }
+
+            const diff = new Float32Array(maxLag + 1);
+            let runningSum = 0;
+            for (let lag = minLag; lag <= maxLag; lag++) {
+                let sum = 0;
+                for (let i = 0; i < bufferSize - lag; i++) {
+                    sum += Math.pow(signal[i] - signal[i + lag], 2);
+                }
+                const tau = lag;
+                runningSum += sum;
+                if (runningSum > 0) {
+                    diff[lag] = sum / (runningSum / tau);
+                } else {
+                    diff[lag] = 1;
+                }
+            }
+
+            const threshold = 0.1;
+            for (let lag = minLag; lag <= maxLag; lag++) {
+                if (diff[lag] < threshold) {
+                    let betterLag = lag;
+                    if (lag > minLag && lag < maxLag) {
+                        const a = diff[lag - 1];
+                        const b = diff[lag];
+                        const c = diff[lag + 1];
+                        if (a > 0 && c > 0) {
+                            betterLag = lag + (a - c) / (2 * (a - 2 * b + c));
+                        }
+                    }
+                    const pitch = sampleRate / betterLag;
+                    if (pitch > minFreq && pitch < maxFreq) {
+                        return pitch;
+                    }
+                }
+            }
+
+            let minDiff = 1;
+            let bestLag = minLag;
+            for (let lag = minLag; lag <= maxLag; lag++) {
+                if (diff[lag] < minDiff) {
+                    minDiff = diff[lag];
+                    bestLag = lag;
+                }
+            }
+            return sampleRate / bestLag;
+        }
+
+        // ================================================================
+        // HIGH-PASS FILTER
+        // ================================================================
+        function highPassFilter(signal, sampleRate, cutoff = 80) {
+            const alpha = 0.95;
+            const result = new Float32Array(signal.length);
+            let prev = 0;
+            for (let i = 0; i < signal.length; i++) {
+                result[i] = alpha * (prev + signal[i] - (signal[i-1] || 0));
+                prev = result[i];
+            }
+            return result;
+        }
+
+        // ================================================================
+        // NORMALISASI GAIN
+        // ================================================================
+        function normalizeAudio(data) {
+            let max = 0.001;
+            for (let i = 0; i < data.length; i++) {
+                if (Math.abs(data[i]) > max) max = Math.abs(data[i]);
+            }
+            const gain = 0.9 / max;
+            const result = new Float32Array(data.length);
+            for (let i = 0; i < data.length; i++) {
+                result[i] = data[i] * gain;
+            }
+            return result;
+        }
+
+        // ================================================================
+        // MEDIAN FILTER
+        // ================================================================
+        function medianFilter(notes, windowSize = 5) {
+            if (notes.length < windowSize) return notes;
+            const result = [];
+            const half = Math.floor(windowSize / 2);
+            for (let i = 0; i < notes.length; i++) {
+                const start = Math.max(0, i - half);
+                const end = Math.min(notes.length, i + half + 1);
+                const slice = notes.slice(start, end);
+                const sorted = [...slice].sort();
+                result.push(sorted[Math.floor(sorted.length / 2)]);
+            }
+            return result;
+        }
 
         // ================================================================
         // VARIABEL GLOBAL
@@ -340,6 +469,7 @@
         const transcribedDisplay = document.getElementById('transcribedDisplay');
         const transcribeInfo = document.getElementById('transcribeInfo');
         const durationInfo = document.getElementById('durationInfo');
+        const qualityInfo = document.getElementById('qualityInfo');
         const recordArea = document.getElementById('recordArea');
         const canvas = document.getElementById('waveformCanvas');
         const ctx = canvas.getContext('2d');
@@ -349,6 +479,7 @@
         const progressFill = document.getElementById('progressFill');
         const modeSelect = document.getElementById('modeSelect');
         const sensitivitySelect = document.getElementById('sensitivitySelect');
+        const filterSelect = document.getElementById('filterSelect');
 
         // ================================================================
         // UTILITY
@@ -388,7 +519,7 @@
         }
 
         // ================================================================
-        // RECORDING (maks 22 menit)
+        // RECORDING
         // ================================================================
         async function startRecording() {
             try {
@@ -417,7 +548,7 @@
                     const arrayBuffer = await blob.arrayBuffer();
                     const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
                     recordedAudioBuffer = audioBuffer;
-                    statusEl.textContent = '✅ Rekaman selesai! Klik "AI Transcribe" untuk analisis.';
+                    statusEl.textContent = '✅ Rekaman selesai! Klik "AI Transcribe (YIN)" untuk analisis.';
                     transcribeBtn.disabled = false;
                     recordArea.classList.remove('recording');
                     progressBar.classList.remove('show');
@@ -514,7 +645,7 @@
         }
 
         // ================================================================
-        // AI TRANSCRIBE (dengan 20 nada per oktaf)
+        // FIND CLOSEST NOTE
         // ================================================================
         function findClosestNote(freq) {
             let closest = NOTE_FREQS[0];
@@ -526,27 +657,36 @@
                     closest = f;
                 }
             }
-            if (minDiff / closest > 0.05) return null;
+            if (minDiff / closest > 0.04) return null;
             const idx = NOTE_FREQS.indexOf(closest);
             return { name: NOTE_NAMES_REV[idx], freq: closest };
         }
 
+        // ================================================================
+        // AI TRANSCRIBE
+        // ================================================================
         function transcribeAudio() {
             if (!recordedAudioBuffer) {
                 statusEl.textContent = '❌ Tidak ada rekaman. Rekam dulu!';
                 return;
             }
 
-            statusEl.textContent = '🧠 AI sedang menganalisis audio... (20 nada per oktaf)';
+            statusEl.textContent = '🧠 AI menganalisis dengan YIN algorithm... (20 nada per oktaf)';
             statusEl.className = 'status loading';
             transcribeBtn.disabled = true;
             progressBar.classList.add('show');
+            qualityInfo.textContent = 'Algoritma: YIN + Median Filter';
 
             setTimeout(() => {
-                const data = recordedAudioBuffer.getChannelData(0);
+                let data = recordedAudioBuffer.getChannelData(0);
                 const sampleRate = recordedAudioBuffer.sampleRate;
                 const duration = data.length / sampleRate;
                 durationInfo.textContent = `Durasi rekaman: ${duration.toFixed(1)} detik`;
+
+                data = normalizeAudio(data);
+                if (filterSelect.value === 'highpass') {
+                    data = highPassFilter(data, sampleRate, 80);
+                }
 
                 const mode = modeSelect.value;
                 const sensitivity = parseFloat(sensitivitySelect.value);
@@ -555,8 +695,8 @@
                 if (mode === 'vocal') { minFreq = 200; maxFreq = 800; }
                 else if (mode === 'instrument') { minFreq = 80; maxFreq = 1200; }
 
-                const windowSize = Math.floor(sampleRate * 0.05);
-                const hopSize = Math.floor(windowSize * 0.5);
+                const windowSize = Math.floor(sampleRate * 0.06);
+                const hopSize = Math.floor(windowSize * 0.3);
                 const detected = [];
                 const totalSteps = Math.floor((data.length - windowSize) / hopSize);
                 let stepCount = 0;
@@ -568,46 +708,46 @@
                         progressFill.style.width = pct + '%';
                     }
 
+                    const windowData = data.slice(start, start + windowSize);
                     let sum = 0;
                     for (let i=0; i<windowSize; i++) {
-                        sum += Math.abs(data[start + i]);
+                        sum += Math.abs(windowData[i]);
                     }
                     const rms = Math.sqrt(sum / windowSize);
                     if (rms < sensitivity) continue;
 
-                    let maxCorr = 0;
-                    let pitch = 0;
-                    const minLag = Math.floor(sampleRate / maxFreq);
-                    const maxLag = Math.floor(sampleRate / minFreq);
-                    for (let lag = minLag; lag < maxLag; lag++) {
-                        let corr = 0;
-                        for (let i=0; i<windowSize-lag; i++) {
-                            corr += data[start+i] * data[start+i+lag];
-                        }
-                        if (corr > maxCorr) {
-                            maxCorr = corr;
-                            pitch = sampleRate / lag;
-                        }
-                    }
+                    const pitch = yinPitchDetection(windowData, sampleRate, minFreq, maxFreq);
                     if (pitch > minFreq && pitch < maxFreq) {
                         const note = findClosestNote(pitch);
                         if (note) detected.push(note);
                     }
                 }
 
+                const noteNames = detected.map(n => n.name);
+                const smoothed = medianFilter(noteNames, 5);
                 const uniqueNotes = [];
                 let lastNote = null;
-                for (let n of detected) {
-                    if (!lastNote || n.name !== lastNote.name) {
-                        if (lastNote) uniqueNotes.push(lastNote);
+                for (let n of smoothed) {
+                    if (n !== lastNote) {
+                        if (lastNote) {
+                            const freqKey = Object.keys(FREQ_MAP).find(k => k === lastNote);
+                            if (freqKey) {
+                                uniqueNotes.push({ name: lastNote, freq: FREQ_MAP[freqKey] });
+                            }
+                        }
                         lastNote = n;
                     }
                 }
-                if (lastNote) uniqueNotes.push(lastNote);
+                if (lastNote) {
+                    const freqKey = Object.keys(FREQ_MAP).find(k => k === lastNote);
+                    if (freqKey) {
+                        uniqueNotes.push({ name: lastNote, freq: FREQ_MAP[freqKey] });
+                    }
+                }
 
                 transcribedNotes = uniqueNotes;
                 if (uniqueNotes.length === 0) {
-                    transcribedDisplay.textContent = '(Tidak ada nada terdeteksi. Coba mode yang berbeda atau periksa rekaman)';
+                    transcribedDisplay.textContent = '(Tidak ada nada terdeteksi. Coba mode/sensitivitas berbeda)';
                     transcribeInfo.textContent = 'Jumlah nada: 0';
                 } else {
                     const names = uniqueNotes.map(n => n.name).join(' → ');
@@ -618,7 +758,7 @@
                     transcribedDisplay.scrollTop = 0;
                 }
 
-                statusEl.textContent = `✅ Transkripsi selesai! ${uniqueNotes.length} nada ditemukan (20 nada per oktaf).`;
+                statusEl.textContent = `✅ Transkripsi selesai! ${uniqueNotes.length} nada ditemukan (YIN algorithm).`;
                 statusEl.className = 'status';
                 transcribeBtn.disabled = false;
                 progressBar.classList.remove('show');
@@ -673,6 +813,7 @@
             transcribedDisplay.textContent = '-';
             transcribeInfo.textContent = 'Jumlah nada: 0';
             durationInfo.textContent = 'Durasi rekaman: 0 detik';
+            qualityInfo.textContent = 'Algoritma: YIN';
             resultArea.classList.remove('show');
             playResultBtn.disabled = true;
             transcribeBtn.disabled = true;
