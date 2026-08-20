@@ -437,14 +437,16 @@
         </div> <!-- penutup container -->
 
         <!-- ===== MENU AI (di luar container, tapi di dalam #app) ===== -->
-        <div style="margin-top:25px; display:flex; gap:15px; flex-wrap:wrap; justify-content:center; padding:10px;">
-            <a href="/ai_composer" target="_top" style="padding:14px 35px; background:linear-gradient(135deg,#e94560,#f5a623); color:#fff; border-radius:30px; text-decoration:none; font-weight:700; transition:0.2s; box-shadow:0 4px 20px rgba(233,69,96,0.3); display:inline-block;">
-                🎵 AI Composer
-            </a>
-            <a href="/ai_transcriber" target="_top" style="padding:14px 35px; background:linear-gradient(135deg,#6c2bd9,#a855f7); color:#fff; border-radius:30px; text-decoration:none; font-weight:700; transition:0.2s; box-shadow:0 4px 20px rgba(108,43,217,0.3); display:inline-block;">
-                🎤 AI Transcriber
-            </a>
-        </div>
+<div style="margin-top:25px; display:flex; gap:15px; flex-wrap:wrap; justify-content:center; padding:10px;">
+    <button onclick="window.top.location.href='/ai_composer'" 
+            style="padding:14px 35px; background:linear-gradient(135deg,#e94560,#f5a623); color:#fff; border-radius:30px; border:none; font-weight:700; font-size:1rem; cursor:pointer; transition:0.2s; box-shadow:0 4px 20px rgba(233,69,96,0.3);">
+        🎵 AI Composer
+    </button>
+    <button onclick="window.top.location.href='/ai_transcriber'" 
+            style="padding:14px 35px; background:linear-gradient(135deg,#6c2bd9,#a855f7); color:#fff; border-radius:30px; border:none; font-weight:700; font-size:1rem; cursor:pointer; transition:0.2s; box-shadow:0 4px 20px rgba(108,43,217,0.3);">
+        🎤 AI Transcriber
+    </button>
+</div>
 
     </div> <!-- penutup #app -->
 
