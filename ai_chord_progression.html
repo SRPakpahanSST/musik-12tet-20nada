@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chord Progression Generator - PMD Musik 12 TET</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a2e;
+            color: #eee;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            width: 100%;
+            background: #16213e;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+        }
+        h1 {
+            text-align: center;
+            font-size: 2rem;
+            background: linear-gradient(135deg, #e94560, #f5a623);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #aaa;
+            margin-bottom: 30px;
+        }
+        .back-btn {
+            display: inline-block;
+            padding: 8px 20px;
+            background: #0f3460;
+            color: #fff;
+            border-radius: 20px;
+            text-decoration: none;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            transition: 0.2s;
+        }
+        .back-btn:hover { background: #1a4a7a; }
+
+        .input-area {
+            background: #0d0d1a;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .input-area label {
+            display: block;
+            color: #aaa;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+        .input-area textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: none;
+            border-radius: 10px;
+            background: #1a1a2e;
+            color: #fff;
+            font-size: 1rem;
+            font-family: monospace;
+            resize: vertical;
+            min-height: 80px;
+            outline: none;
+            border: 1px solid #2a3a5e;
+        }
+        .input-area textarea:focus {
+            border-color: #e94560;
+        }
+        .input-area .hint {
+            color: #666;
+            font-size: 0.8rem;
+            margin-top: 5px;
+        }
+
+        .control-row {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .control-row label {
+            color: #aaa;
+            font-size: 0.85rem;
+        }
+        .control-row select {
+            background: #0f3460;
+            color: #fff;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .btn {
+            padding: 10px 25px;
+            border: none;
+            border-radius: 30px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 0.9rem;
+        }
+        .btn-primary { background: #e94560; color: #fff; }
+        .btn-primary:hover { background: #c73652; transform: scale(1.02); }
+        .btn-secondary { background: #0f3460; color: #fff; }
+        .btn-secondary:hover { background: #1a4a7a; }
+        .btn-success { background: #2d7d46; color: #fff; }
+        .btn-success:hover { background: #3a9a5a; }
+        .btn-danger { background: #a04040; color: #fff; }
+        .btn-danger:hover { background: #c05050; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-group { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 15px; }
+
+        .result-area {
+            margin-top: 20px;
+            padding: 20px;
+            background: #0d0d1a;
+            border-radius: 12px;
+            display: none;
+        }
+        .result-area.show { display: block; }
+        .result-area h3 {
+            color: #f5a623;
+            margin-bottom: 15px;
+        }
+
+        .chord-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .chord-card {
+            background: #1a1a2e;
+            border-radius: 12px;
+            padding: 15px;
+            border: 1px solid #2a3a5e;
+            text-align: center;
+            transition: 0.2s;
+        }
+        .chord-card:hover {
+            border-color: #e94560;
+            transform: translateY(-3px);
+        }
+        .chord-card .chord-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #ffd700;
+        }
+        .chord-card .chord-notes {
+            font-size: 0.85rem;
+            color: #aaa;
+            margin-top: 5px;
+        }
+        .chord-card .chord-function {
+            font-size: 0.75rem;
+            color: #888;
+            margin-top: 3px;
+        }
+
+        .key-result {
+            background: #0f3460;
+            border-radius: 12px;
+            padding: 15px 20px;
+            margin-bottom: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: center;
+            justify-content: center;
+        }
+        .key-result .key-label {
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+        .key-result .key-value {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #ffd700;
+        }
+        .key-result .scale-value {
+            font-size: 1.1rem;
+            color: #f5a623;
+        }
+
+        .note-analysis {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin: 10px 0;
+        }
+        .note-pill {
+            background: #0f3460;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            color: #ddd;
+        }
+        .note-pill.highlight {
+            background: #e94560;
+            color: #fff;
+        }
+
+        .info-text {
+            color: #888;
+            font-size: 0.8rem;
+            text-align: center;
+            margin-top: 10px;
+        }
+        .badge {
+            display: inline-block;
+            background: #e94560;
+            color: #fff;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            margin-left: 5px;
+        }
+
+        @media (max-width:600px) { .container { padding: 15px; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-btn">← Kembali ke Aplikasi Utama</a>
+        <h1>🎵 Chord Progression Generator <span class="badge">20 Nada/Oktaf</span></h1>
+        <p class="subtitle">Ubah hasil transkripsi nada menjadi progresi akord</p>
+
+        <div class="input-area">
+            <label>📝 Masukkan Hasil Transkripsi Nada:</label>
+            <textarea id="noteInput" placeholder="Contoh: E3 → G3 → H3 → E3 → G3 → H3 → E3 ..."></textarea>
+            <div class="hint">💡 Copy hasil transkripsi dari AI Transcriber, atau tulis manual dengan format: <strong>NamaNada</strong> (pisahkan dengan spasi atau tanda panah)</div>
+        </div>
+
+        <div class="control-row">
+            <label>🎯 Mode Analisis:</label>
+            <select id="analysisMode">
+                <option value="auto">Otomatis (Deteksi)</option>
+                <option value="mayor">Mayor</option>
+                <option value="minor">Minor</option>
+            </select>
+            <label>📊 Jumlah Akord:</label>
+            <select id="chordCount">
+                <option value="4">4 Akord (Sederhana)</option>
+                <option value="6">6 Akord</option>
+                <option value="8" selected>8 Akord (Lengkap)</option>
+            </select>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn btn-primary" id="generateBtn">🎵 Generate Progresi</button>
+            <button class="btn btn-secondary" id="clearBtn">🗑️ Clear</button>
+        </div>
+
+        <div class="result-area" id="resultArea">
+            <h3>🎶 Hasil Analisis & Progresi Akord</h3>
+
+            <div class="key-result" id="keyResult">
+                <span><span class="key-label">🎯 Nada Dasar:</span> <span class="key-value" id="detectedKey">-</span></span>
+                <span><span class="key-label">🎼 Skala:</span> <span class="scale-value" id="detectedScale">-</span></span>
+                <span><span class="key-label">📊 Nada Terdeteksi:</span> <span id="noteCount">0</span></span>
+            </div>
+
+            <div style="margin-bottom:15px;">
+                <span style="color:#888;font-size:0.85rem;">📌 Analisis Nada:</span>
+                <div class="note-analysis" id="noteAnalysis"></div>
+            </div>
+
+            <div style="margin-bottom:10px;">
+                <span style="color:#888;font-size:0.85rem;">🎹 Progresi Akord yang Disarankan:</span>
+            </div>
+            <div class="chord-grid" id="chordGrid"></div>
+
+            <div class="info-text" id="resultInfo">💡 Akord disusun berdasarkan nada yang dominan dalam melodi.</div>
+        </div>
+    </div>
+
+    <script>
+        // ================================================================
+        // DATA 20 NADA PER OKTAF (12-TET)
+        // ================================================================
+        const NOTE_NAMES_20 = ['E','E#','F','F#','G','G#','H','H#','I','J','J#','K','K#','A','A#','B','B#','C','C#','D'];
+
+        // Mapping nama nada ke indeks (untuk perhitungan interval)
+        const NOTE_TO_INDEX = {
+            'E': 0, 'E#': 1, 'F': 2, 'F#': 3, 'G': 4, 'G#': 5,
+            'H': 6, 'H#': 7, 'I': 8, 'J': 9, 'J#': 10, 'K': 11,
+            'K#': 12, 'A': 13, 'A#': 14, 'B': 15, 'B#': 16,
+            'C': 17, 'C#': 18, 'D': 19
+        };
+
+        // Skala Mayor 20 nada (dimulai dari E=1)
+        const SCALE_MAYOR_20 = ['E','F','G','H','I','J','K','A','B','C','D','E'];
+        // Skala Minor 20 nada (dimulai dari A=1)
+        const SCALE_MINOR_20 = ['A','B','C','D','E','F','G','H','I','J','K','A'];
+
+        // Akord dasar untuk setiap nada (triad)
+        // Mayor: 1-3-5, Minor: 1-b3-5
+        function getChordNotes(root, type) {
+            const idx = NOTE_TO_INDEX[root];
+            if (idx === undefined) return null;
+            
+            const notes20 = NOTE_NAMES_20;
+            const third = type === 'mayor' ? 4 : 3; // 4 step untuk mayor, 3 untuk minor
+            const fifth = 7;
+            
+            const rootIdx = idx;
+            const thirdIdx = (idx + third) % 20;
+            const fifthIdx = (idx + fifth) % 20;
+            
+            return [notes20[rootIdx], notes20[thirdIdx], notes20[fifthIdx]];
+        }
+
+        // ================================================================
+        // FUNGSI ANALISIS
+        // ================================================================
+        function extractNotes(text) {
+            // Hapus oktaf (angka) dan bersihkan
+            const cleaned = text.replace(/[0-9]/g, '').replace(/[→,]/g, ' ');
+            const tokens = cleaned.split(/\s+/).filter(t => t.length > 0);
+            
+            // Ambil hanya nama nada yang valid
+            const validNotes = [];
+            for (let t of tokens) {
+                // Cek apakah t adalah nama nada valid (dengan atau tanpa #)
+                const base = t.replace('#', '');
+                if (NOTE_TO_INDEX[t] !== undefined) {
+                    validNotes.push(t);
+                } else if (NOTE_TO_INDEX[base] !== undefined) {
+                    validNotes.push(base);
+                }
+            }
+            return validNotes;
+        }
+
+        function countNotes(notes) {
+            const count = {};
+            for (let n of notes) {
+                count[n] = (count[n] || 0) + 1;
+            }
+            return count;
+        }
+
+        function findKey(notes, mode) {
+            const count = countNotes(notes);
+            // Cari nada paling dominan
+            let maxCount = 0;
+            let dominant = 'E';
+            for (let [n, c] of Object.entries(count)) {
+                if (c > maxCount) {
+                    maxCount = c;
+                    dominant = n;
+                }
+            }
+            return dominant;
+        }
+
+        function detectScale(notes) {
+            // Cek apakah melodi cenderung Mayor atau Minor
+            // Mayor: E, F, G, H, I, J, K, A, B, C, D, E
+            // Minor: A, B, C, D, E, F, G, H, I, J, K, A
+            
+            const scaleMayor = new Set(SCALE_MAYOR_20);
+            const scaleMinor = new Set(SCALE_MINOR_20);
+            
+            let mayorMatch = 0;
+            let minorMatch = 0;
+            
+            const uniqueNotes = new Set(notes);
+            for (let n of uniqueNotes) {
+                if (scaleMayor.has(n)) mayorMatch++;
+                if (scaleMinor.has(n)) minorMatch++;
+            }
+            
+            // Jika mayorMatch >= minorMatch, maka Mayor
+            return mayorMatch >= minorMatch ? 'Mayor' : 'Minor';
+        }
+
+        function getChordProgression(root, scaleType, count) {
+            const idx = NOTE_TO_INDEX[root];
+            if (idx === undefined) return [];
+            
+            const notes20 = NOTE_NAMES_20;
+            const chords = [];
+            
+            // Tentukan skala berdasarkan root dan tipe
+            let scaleNotes = [];
+            if (scaleType === 'Mayor') {
+                // Mayor: E=1, F=2, G=3, H=4, I=5, J=6, K=7, A=1, ...
+                // Cari posisi root di skala Mayor
+                const mayorScale = SCALE_MAYOR_20;
+                const scaleIdx = mayorScale.indexOf(root);
+                if (scaleIdx === -1) {
+                    // Jika root tidak di skala Mayor, coba gunakan skala Minor
+                    return getChordProgression(root, 'Minor', count);
+                }
+                // Ambil 7 nada dari skala (mulai dari root)
+                for (let i = 0; i < 7; i++) {
+                    const note = mayorScale[(scaleIdx + i) % mayorScale.length];
+                    scaleNotes.push(note);
+                }
+            } else {
+                // Minor: A=1, B=2, C=3, D=4, E=5, F=6, G=7, H=1, ...
+                const minorScale = SCALE_MINOR_20;
+                const scaleIdx = minorScale.indexOf(root);
+                if (scaleIdx === -1) {
+                    return getChordProgression(root, 'Mayor', count);
+                }
+                for (let i = 0; i < 7; i++) {
+                    const note = minorScale[(scaleIdx + i) % minorScale.length];
+                    scaleNotes.push(note);
+                }
+            }
+            
+            // Buat akord untuk setiap nada di skala (triad)
+            const chordTypes = scaleType === 'Mayor' 
+                ? ['mayor', 'minor', 'minor', 'mayor', 'mayor', 'minor', 'diminished']
+                : ['minor', 'diminished', 'mayor', 'minor', 'minor', 'mayor', 'mayor'];
+            
+            const romanNumerals = scaleType === 'Mayor'
+                ? ['I', 'ii', 'iii', 'IV', 'V', 'vi', 'vii°']
+                : ['i', 'ii°', 'III', 'iv', 'v', 'VI', 'VII'];
+            
+            const chordNames = [];
+            for (let i = 0; i < Math.min(scaleNotes.length, count); i++) {
+                const note = scaleNotes[i];
+                const type = chordTypes[i] || 'mayor';
+                const chordNotes = getChordNotes(note, type);
+                if (chordNotes) {
+                    chordNames.push({
+                        root: note,
+                        type: type,
+                        notes: chordNotes,
+                        roman: romanNumerals[i] || '',
+                        function: getChordFunction(i, scaleType)
+                    });
+                }
+            }
+            
+            return chordNames;
+        }
+
+        function getChordFunction(index, scaleType) {
+            const funcs = scaleType === 'Mayor'
+                ? ['Tonic', 'Supertonic', 'Mediant', 'Subdominant', 'Dominant', 'Submediant', 'Leading Tone']
+                : ['Tonic', 'Supertonic', 'Mediant', 'Subdominant', 'Dominant', 'Submediant', 'Leading Tone'];
+            return funcs[index] || '';
+        }
+
+        function getScaleNotes(root, scaleType) {
+            if (scaleType === 'Mayor') {
+                const mayorScale = SCALE_MAYOR_20;
+                const idx = mayorScale.indexOf(root);
+                if (idx === -1) return [];
+                const result = [];
+                for (let i = 0; i < 7; i++) {
+                    result.push(mayorScale[(idx + i) % mayorScale.length]);
+                }
+                return result;
+            } else {
+                const minorScale = SCALE_MINOR_20;
+                const idx = minorScale.indexOf(root);
+                if (idx === -1) return [];
+                const result = [];
+                for (let i = 0; i < 7; i++) {
+                    result.push(minorScale[(idx + i) % minorScale.length]);
+                }
+                return result;
+            }
+        }
+
+        // ================================================================
+        // UI LOGIC
+        // ================================================================
+        const noteInput = document.getElementById('noteInput');
+        const generateBtn = document.getElementById('generateBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const resultArea = document.getElementById('resultArea');
+        const detectedKey = document.getElementById('detectedKey');
+        const detectedScale = document.getElementById('detectedScale');
+        const noteCount = document.getElementById('noteCount');
+        const noteAnalysis = document.getElementById('noteAnalysis');
+        const chordGrid = document.getElementById('chordGrid');
+        const resultInfo = document.getElementById('resultInfo');
+        const analysisMode = document.getElementById('analysisMode');
+        const chordCount = document.getElementById('chordCount');
+
+        function generateProgression() {
+            const text = noteInput.value.trim();
+            if (!text) {
+                alert('Masukkan hasil transkripsi nada terlebih dahulu!');
+                return;
+            }
+
+            // Ekstrak nada
+            const notes = extractNotes(text);
+            if (notes.length < 3) {
+                alert('Minimal 3 nada untuk analisis!');
+                return;
+            }
+
+            // Analisis
+            const mode = analysisMode.value;
+            const count = parseInt(chordCount.value);
+
+            // Deteksi key dan scale
+            const key = findKey(notes, mode);
+            let scaleType = '';
+            if (mode === 'auto') {
+                scaleType = detectScale(notes);
+            } else {
+                scaleType = mode === 'mayor' ? 'Mayor' : 'Minor';
+            }
+
+            // Tampilkan hasil
+            resultArea.classList.add('show');
+
+            // Key & Scale
+            detectedKey.textContent = key;
+            detectedScale.textContent = scaleType;
+            noteCount.textContent = notes.length;
+
+            // Analisis nada
+            const countMap = countNotes(notes);
+            const sorted = Object.entries(countMap).sort((a, b) => b[1] - a[1]);
+            noteAnalysis.innerHTML = sorted.map(([n, c]) => 
+                `<span class="note-pill ${n === key ? 'highlight' : ''}">${n} (${c}x)</span>`
+            ).join('');
+
+            // Generate progresi akord
+            const chords = getChordProgression(key, scaleType, Math.min(count, 8));
+            
+            if (chords.length === 0) {
+                chordGrid.innerHTML = '<p style="color:#e94560;">❌ Tidak dapat menghasilkan progresi. Coba masukkan nada yang berbeda.</p>';
+                return;
+            }
+
+            // Tampilkan akord
+            chordGrid.innerHTML = chords.map((ch, i) => {
+                const typeSymbol = ch.type === 'mayor' ? '' : 'm';
+                const displayName = ch.root + typeSymbol;
+                const notesDisplay = ch.notes.join(' + ');
+                return `
+                    <div class="chord-card">
+                        <div class="chord-name">${displayName}</div>
+                        <div class="chord-notes">${notesDisplay}</div>
+                        <div class="chord-function">${ch.roman} · ${ch.function}</div>
+                    </div>
+                `;
+            }).join('');
+
+            // Info tambahan
+            const scaleNotes = getScaleNotes(key, scaleType);
+            resultInfo.textContent = `💡 Skala ${scaleType} (${key}): ${scaleNotes.join(' → ')}. Akord disusun berdasarkan progresi standar.`;
+
+            // Scroll ke hasil
+            resultArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // ================================================================
+        // EVENT LISTENERS
+        // ================================================================
+        generateBtn.addEventListener('click', generateProgression);
+
+        clearBtn.addEventListener('click', function() {
+            noteInput.value = '';
+            resultArea.classList.remove('show');
+            resultArea.scrollIntoView({ behavior: 'smooth' });
+        });
+
+        // Contoh data jika user ingin test
+        const exampleData = 'E3 → G3 → H3 → E3 → G3 → H3 → E3 → F3 → G3 → H3 → I3 → J3 → K3 → A3 → B3 → C3 → D3 → E4';
+
+        // Jika input kosong, isi dengan contoh
+        noteInput.placeholder = 'Contoh: E3 → G3 → H3 → E3 → G3 → H3 → E3 ...';
+
+        // Shortcut: Ctrl+Enter untuk generate
+        noteInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                generateBtn.click();
+            }
+        });
+
+        // Tombol Generate juga bisa dipicu dengan Enter di input
+        // (tapi biarkan user menekan Ctrl+Enter untuk newline)
+        console.log('🎵 Chord Progression Generator siap!');
+        console.log('📝 Masukkan hasil transkripsi nada dan klik Generate.');
+    </script>
+</body>
+</html>
