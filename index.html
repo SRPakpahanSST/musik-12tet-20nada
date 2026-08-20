@@ -306,6 +306,7 @@
         .freq-table tr:nth-child(even) { background: #111; }
         .freq-table .note-name { font-weight: 600; color: #ffd700; }
         .freq-table .black-note { color: #ff6b6b; }
+
         .footer-note {
             margin-top: 20px;
             text-align: center;
@@ -428,29 +429,24 @@
                 <div class="tab-content" id="tabContent"></div>
             </div>
 
-<!-- ===== MENU AI ===== -->
-
-
-    </div> <!-- penutup container -->
-
-    <!-- ===== MENU AI (di luar container) ===== -->
-    <div style="margin-top:25px; display:flex; gap:15px; flex-wrap:wrap; justify-content:center; padding:10px;">
-        <a href="/ai_composer" target="_top" style="padding:14px 35px; background:linear-gradient(135deg,#e94560,#f5a623); color:#fff; border-radius:30px; text-decoration:none; font-weight:700; transition:0.2s; box-shadow:0 4px 20px rgba(233,69,96,0.3); display:inline-block;">
-            🎵 AI Composer
-        </a>
-        <a href="/ai_transcriber" target="_top" style="padding:14px 35px; background:linear-gradient(135deg,#6c2bd9,#a855f7); color:#fff; border-radius:30px; text-decoration:none; font-weight:700; transition:0.2s; box-shadow:0 4px 20px rgba(108,43,217,0.3); display:inline-block;">
-            🎤 AI Transcriber
-        </a>
-    </div>
-
-</div> <!-- penutup #app -->
-
+            <!-- FOOTER NOTE (di dalam container) -->
             <div class="footer-note">
                 Berdasarkan Karya Tulis Ilmiah: Eksplorasi Musik Sistem 12-TET (20 Nada per Oktaf) — Sukma Riadi Pakpahan, SST
             </div>
 
+        </div> <!-- penutup container -->
+
+        <!-- ===== MENU AI (di luar container, tapi di dalam #app) ===== -->
+        <div style="margin-top:25px; display:flex; gap:15px; flex-wrap:wrap; justify-content:center; padding:10px;">
+            <a href="/ai_composer" target="_top" style="padding:14px 35px; background:linear-gradient(135deg,#e94560,#f5a623); color:#fff; border-radius:30px; text-decoration:none; font-weight:700; transition:0.2s; box-shadow:0 4px 20px rgba(233,69,96,0.3); display:inline-block;">
+                🎵 AI Composer
+            </a>
+            <a href="/ai_transcriber" target="_top" style="padding:14px 35px; background:linear-gradient(135deg,#6c2bd9,#a855f7); color:#fff; border-radius:30px; text-decoration:none; font-weight:700; transition:0.2s; box-shadow:0 4px 20px rgba(108,43,217,0.3); display:inline-block;">
+                🎤 AI Transcriber
+            </a>
         </div>
-    </div>
+
+    </div> <!-- penutup #app -->
 
     <script>
         // ================================================================
@@ -967,7 +963,7 @@
             octaveSelector.value = '4';
             buildKeyboard(4);
             renderTab('teori');
-            playMode = 'single';
+            playMode = 'single'; // perbaiki dari '' menjadi 'single'
             singleModeLabel.classList.add('active-mode');
             modeIndicator.textContent = '🎵 Mode: Tunggal';
             instrumentSelector.value = 'organ';
@@ -983,4 +979,3 @@
     </script>
 </body>
 </html>
-
