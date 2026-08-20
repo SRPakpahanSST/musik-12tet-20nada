@@ -158,6 +158,15 @@
             color: #fff;
             background: #e94560;
         }
+        .badge {
+            display: inline-block;
+            background: #2d7d46;
+            color: #fff;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            margin-left: 5px;
+        }
         @media (max-width:600px) {
             .form-row { grid-template-columns: 1fr; }
             .container { padding: 15px; }
@@ -167,8 +176,8 @@
 <body>
     <div class="container">
         <a href="index.html" class="back-btn">← Kembali ke Aplikasi Utama</a>
-        <h1>🎵 AI Music Composer</h1>
-        <p class="subtitle">Ciptakan melodi otomatis dengan kecerdasan buatan</p>
+        <h1>🎵 AI Music Composer <span class="badge">20 Nada/Oktaf</span></h1>
+        <p class="subtitle">Ciptakan melodi otomatis dengan kecerdasan buatan (A4 = 440 Hz)</p>
 
         <div class="form-group">
             <label>🎭 Mood / Suasana</label>
@@ -225,19 +234,77 @@
 
     <script>
         // ================================================================
-        // DATA 12-TET (sama seperti aplikasi utama)
+        // DATA FREKUENSI 12-TET (20 NADA PER OKTAF)
+        // A4 = 440 Hz (acuan)
+        // Rumus: f_n = 440 × 3^(n/20) dengan n=0 untuk A4
         // ================================================================
         const FREQ_MAP = {
-            'E3': 203.924, 'F3': 227.604, 'G3': 254.034, 'H3': 283.533,
-            'I3': 316.458, 'J3': 334.328, 'K3': 373.151, 'A3': 416.482,
-            'B3': 464.846, 'C3': 518.825, 'D3': 579.073,
-            'E4': 611.771, 'F4': 682.812, 'G4': 762.102, 'H4': 850.6,
-            'I4': 949.374, 'J4': 1002.983, 'K4': 1119.453, 'A4': 1249.447,
-            'B4': 1394.537, 'C4': 1556.475, 'D4': 1737.218,
-            'E5': 1835.314, 'F5': 2048.436, 'G5': 2286.307, 'H5': 2551.8,
-            'I5': 2848.123, 'J5': 3008.949, 'K5': 3358.358, 'A5': 3748.341,
-            'B5': 4183.611, 'C5': 4669.425, 'D5': 5211.653
+            // Oktaf 3
+            'E3': 71.813,
+            'E#3': 75.868,
+            'F3': 80.152,
+            'F#3': 84.678,
+            'G3': 89.46,
+            'G#3': 94.511,
+            'H3': 99.848,
+            'H#3': 105.486,
+            'I3': 111.443,
+            'J3': 117.735,
+            'J#3': 124.384,
+            'K3': 131.407,
+            'K#3': 138.827,
+            'A3': 146.667,
+            'A#3': 154.949,
+            'B3': 163.698,
+            'B#3': 172.942,
+            'C3': 182.707,
+            'C#3': 193.024,
+            'D3': 203.924,
+            // Oktaf 4 (A4 = 440 Hz)
+            'E4': 215.439,
+            'E#4': 227.604,
+            'F4': 240.456,
+            'F#4': 254.034,
+            'G4': 268.379,
+            'G#4': 283.533,
+            'H4': 299.544,
+            'H#4': 316.458,
+            'I4': 334.328,
+            'J4': 353.206,
+            'J#4': 373.151,
+            'K4': 394.222,
+            'K#4': 416.482,
+            'A4': 440.0,
+            'A#4': 464.846,
+            'B4': 491.094,
+            'B#4': 518.825,
+            'C4': 548.122,
+            'C#4': 579.073,
+            'D4': 611.771,
+            // Oktaf 5
+            'E5': 646.316,
+            'E#5': 682.812,
+            'F5': 721.369,
+            'F#5': 762.102,
+            'G5': 805.136,
+            'G#5': 850.6,
+            'H5': 898.631,
+            'H#5': 949.374,
+            'I5': 1002.983,
+            'J5': 1059.619,
+            'J#5': 1119.453,
+            'K5': 1182.665,
+            'K#5': 1249.447,
+            'A5': 1320.0,
+            'A#5': 1394.537,
+            'B5': 1473.283,
+            'B#5': 1556.475,
+            'C5': 1644.365,
+            'C#5': 1737.218,
+            'D5': 1835.314
         };
+
+        // Nama-nama nada dasar untuk skala
         const NOTE_NAMES = ['E','F','G','H','I','J','K','A','B','C','D'];
 
         // ================================================================
@@ -289,7 +356,7 @@
         }
 
         // ================================================================
-        // AI COMPOSER (simulasi generative)
+        // AI COMPOSER
         // ================================================================
         function getScaleNotes(type) {
             if (type === 'mayor') return ['E','F','G','H','I','J','K','A','B','C','D','E'];
@@ -298,11 +365,8 @@
 
         function generateMelody(mood, scaleType, tempo, prompt) {
             const scale = getScaleNotes(scaleType);
-            // Ambil 7 nada dari skala (nada dasar)
             const baseNotes = scale.slice(0, 7);
-            const octaves = [3, 4, 5];
             
-            // Parameter berdasarkan mood
             const moodParams = {
                 'happy': { stepRange: 4, repeatChance: 0.3, noteLength: 0.3, range: 3, direction: 1 },
                 'sad': { stepRange: 3, repeatChance: 0.5, noteLength: 0.6, range: 2, direction: -1 },
@@ -313,13 +377,12 @@
             };
             const params = moodParams[mood] || moodParams['happy'];
             
-            const numNotes = Math.floor(Math.random() * 16) + 12; // 12-28 nada
+            const numNotes = Math.floor(Math.random() * 16) + 12;
             const melody = [];
             let currentIndex = Math.floor(Math.random() * 7);
             let currentOctave = 4;
             
             for (let i = 0; i < numNotes; i++) {
-                // Pilih langkah
                 let step = 0;
                 if (Math.random() < params.repeatChance) {
                     step = 0;
@@ -328,16 +391,13 @@
                     if (Math.random() < 0.5) step = -step;
                 }
                 
-                // Arah bias
                 if (params.direction > 0 && Math.random() < 0.3) step = Math.abs(step);
                 if (params.direction < 0 && Math.random() < 0.3) step = -Math.abs(step);
                 
                 let newIndex = currentIndex + step;
-                // Batasi dalam range
                 if (newIndex < 0) newIndex = 0;
                 if (newIndex >= baseNotes.length) newIndex = baseNotes.length - 1;
                 
-                // Cek range oktaf
                 let octave = currentOctave;
                 if (newIndex - currentIndex > 3 && octave < 5) octave++;
                 if (newIndex - currentIndex < -3 && octave > 3) octave--;
@@ -373,7 +433,6 @@
         let selectedMood = 'happy';
         let generatedMelody = [];
 
-        // Mood tags
         moodTags.forEach(tag => {
             tag.addEventListener('click', function() {
                 moodTags.forEach(t => t.classList.remove('active'));
@@ -382,7 +441,6 @@
             });
         });
 
-        // Generate
         generateBtn.addEventListener('click', function() {
             this.disabled = true;
             this.textContent = '⏳ Generating...';
@@ -390,7 +448,6 @@
             resultArea.classList.remove('show');
             stopAllSounds();
 
-            // Simulasi proses AI (delay untuk efek)
             setTimeout(() => {
                 const scale = scaleSelect.value;
                 const tempo = parseInt(tempoSelect.value);
@@ -398,7 +455,6 @@
                 
                 generatedMelody = generateMelody(selectedMood, scale, tempo, prompt);
                 
-                // Tampilkan hasil
                 const noteNames = generatedMelody.map(n => n.note).join(' → ');
                 melodyDisplay.textContent = noteNames || '(tidak ada nada)';
                 noteCountInfo.textContent = `Jumlah nada: ${generatedMelody.length}`;
@@ -413,7 +469,6 @@
             }, 800 + Math.random() * 600);
         });
 
-        // Play
         playBtn.addEventListener('click', function() {
             if (generatedMelody.length === 0) return;
             if (isPlaying) {
@@ -429,7 +484,7 @@
             statusEl.textContent = '🎵 Memutar melodi...';
             
             const tempo = parseInt(tempoSelect.value);
-            const baseDuration = 60000 / tempo / 2; // 1/8 note
+            const baseDuration = 60000 / tempo / 2;
             
             let delay = 0;
             generatedMelody.forEach((note, i) => {
@@ -437,11 +492,6 @@
                 setTimeout(() => {
                     if (!isPlaying) return;
                     playNote(note.freq, dur);
-                    // Highlight di display
-                    const parts = melodyDisplay.textContent.split(' → ');
-                    if (i < parts.length) {
-                        // update visual sederhana
-                    }
                 }, delay * 1000);
                 delay += note.duration * baseDuration / 1000 + 0.05;
             });
@@ -459,7 +509,6 @@
             statusEl.textContent = '⏹ Dihentikan';
         });
 
-        // Initial status
         statusEl.textContent = '💡 Pilih mood dan klik Generate';
     </script>
 </body>
