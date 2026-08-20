@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Transcriber - PMD Musik 12 TET</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a2e;
+            color: #eee;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: #16213e;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+        }
+        h1 {
+            text-align: center;
+            font-size: 2rem;
+            background: linear-gradient(135deg, #e94560, #f5a623);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #aaa;
+            margin-bottom: 30px;
+        }
+        .back-btn {
+            display: inline-block;
+            padding: 8px 20px;
+            background: #0f3460;
+            color: #fff;
+            border-radius: 20px;
+            text-decoration: none;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+        .back-btn:hover { background: #1a4a7a; }
+        .record-area {
+            text-align: center;
+            padding: 30px;
+            background: #0d0d1a;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 2px dashed #2a3a5e;
+        }
+        .record-area.recording {
+            border-color: #e94560;
+            background: #1a0d1a;
+        }
+        .record-btn {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: none;
+            font-size: 2.5rem;
+            cursor: pointer;
+            transition: 0.2s;
+            background: #e94560;
+            color: #fff;
+        }
+        .record-btn:hover { transform: scale(1.05); }
+        .record-btn.recording {
+            background: #a04040;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(233,69,96,0.4); }
+            50% { transform: scale(1.05); box-shadow: 0 0 20px 10px rgba(233,69,96,0.2); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(233,69,96,0); }
+        }
+        .timer {
+            font-size: 1.5rem;
+            color: #f5a623;
+            margin-top: 10px;
+            font-family: monospace;
+        }
+        .status {
+            color: #aaa;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            min-height: 24px;
+        }
+        .waveform {
+            width: 100%;
+            height: 80px;
+            background: #0d0d1a;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #555;
+            font-size: 0.8rem;
+            overflow: hidden;
+        }
+        .waveform canvas {
+            width: 100%;
+            height: 100%;
+        }
+        .result-area {
+            margin-top: 20px;
+            padding: 20px;
+            background: #0d0d1a;
+            border-radius: 12px;
+            display: none;
+        }
+        .result-area.show { display: block; }
+        .result-area h3 {
+            color: #f5a623;
+            margin-bottom: 10px;
+        }
+        .transcribed-notes {
+            font-family: monospace;
+            font-size: 1.2rem;
+            color: #ffd700;
+            background: #111;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            min-height: 40px;
+        }
+        .btn {
+            padding: 10px 25px;
+            border: none;
+            border-radius: 30px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 0.9rem;
+        }
+        .btn-primary { background: #e94560; color: #fff; }
+        .btn-primary:hover { background: #c73652; }
+        .btn-secondary { background: #0f3460; color: #fff; }
+        .btn-secondary:hover { background: #1a4a7a; }
+        .btn-success { background: #2d7d46; color: #fff; }
+        .btn-success:hover { background: #3a9a5a; }
+        .btn-danger { background: #a04040; color: #fff; }
+        .btn-danger:hover { background: #c05050; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-group { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px; }
+        @media (max-width:600px) { .container { padding: 15px; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-btn">← Kembali ke Aplikasi Utama</a>
+        <h1>🎤 AI Audio Transcriber</h1>
+        <p class="subtitle">Bersenandung atau mainkan melodi, AI akan menuliskannya</p>
+
+        <div class="record-area" id="recordArea">
+            <button class="record-btn" id="recordBtn">🎤</button>
+            <div class="timer" id="timerDisplay">00:00</div>
+            <div class="waveform" id="waveformContainer">
+                <canvas id="waveformCanvas"></canvas>
+            </div>
+        </div>
+
+        <div class="status" id="status">🔴 Klik tombol mikrofon untuk mulai merekam</div>
+
+        <div class="btn-group">
+            <button class="btn btn-success" id="transcribeBtn" disabled>🧠 AI Transcribe</button>
+            <button class="btn btn-secondary" id="playResultBtn" disabled>▶ Play Hasil</button>
+            <button class="btn btn-danger" id="clearBtn">🗑️ Clear</button>
+        </div>
+
+        <div class="result-area" id="resultArea">
+            <h3>📝 Hasil Transkripsi</h3>
+            <div class="transcribed-notes" id="transcribedDisplay">-</div>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <span style="color:#888;font-size:0.85rem;" id="transcribeInfo">Jumlah nada: 0</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ================================================================
+        // AUDIO RECORDER + PITCH DETECTION (simulasi AI)
+        // ================================================================
+        const FREQ_MAP = {
+            'E3':203.924,'F3':227.604,'G3':254.034,'H3':283.533,
+            'I3':316.458,'J3':334.328,'K3':373.151,'A3':416.482,
+            'B3':464.846,'C3':518.825,'D3':579.073,
+            'E4':611.771,'F4':682.812,'G4':762.102,'H4':850.6,
+            'I4':949.374,'J4':1002.983,'K4':1119.453,'A4':1249.447,
+            'B4':1394.537,'C4':1556.475,'D4':1737.218,
+            'E5':1835.314,'F5':2048.436,'G5':2286.307,'H5':2551.8,
+            'I5':2848.123,'J5':3008.949,'K5':3358.358,'A5':3748.341,
+            'B5':4183.611,'C5':4669.425,'D5':5211.653
+        };
+        const NOTE_NAMES = ['E','F','G','H','I','J','K','A','B','C','D'];
+        const NOTE_FREQS = Object.values(FREQ_MAP);
+        const NOTE_NAMES_REV = Object.keys(FREQ_MAP);
+
+        let audioCtx = null;
+        let analyser = null;
+        let dataArray = null;
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let isRecording = false;
+        let recordTimer = null;
+        let seconds = 0;
+        let recordedAudioBuffer = null;
+        let transcribedNotes = [];
+        let isPlaying = false;
+
+        const recordBtn = document.getElementById('recordBtn');
+        const timerDisplay = document.getElementById('timerDisplay');
+        const statusEl = document.getElementById('status');
+        const transcribeBtn = document.getElementById('transcribeBtn');
+        const playResultBtn = document.getElementById('playResultBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const resultArea = document.getElementById('resultArea');
+        const transcribedDisplay = document.getElementById('transcribedDisplay');
+        const transcribeInfo = document.getElementById('transcribeInfo');
+        const recordArea = document.getElementById('recordArea');
+        const canvas = document.getElementById('waveformCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width || 600;
+            canvas.height = 80;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // ================================================================
+        // AUDIO ENGINE
+        // ================================================================
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new(window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            return audioCtx;
+        }
+
+        function playNote(freq, duration = 0.4) {
+            try {
+                const ctx = initAudio();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, ctx.currentTime);
+                gain.gain.setValueAtTime(0.001, ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.02);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(ctx.currentTime);
+                osc.stop(ctx.currentTime + duration);
+                return osc;
+            } catch(e) { console.warn(e); return null; }
+        }
+
+        // ================================================================
+        // RECORDING
+        // ================================================================
+        async function startRecording() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const ctx = initAudio();
+                const source = ctx.createMediaStreamSource(stream);
+                analyser = ctx.createAnalyser();
+                analyser.fftSize = 2048;
+                source.connect(analyser);
+                dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) audioChunks.push(event.data);
+                };
+                mediaRecorder.onstop = async () => {
+                    const blob = new Blob(audioChunks, { type: 'audio/wav' });
+                    const arrayBuffer = await blob.arrayBuffer();
+                    const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+                    recordedAudioBuffer = audioBuffer;
+                    statusEl.textContent = '✅ Rekaman selesai! Klik "AI Transcribe" untuk analisis.';
+                    transcribeBtn.disabled = false;
+                    recordArea.classList.remove('recording');
+                };
+
+                mediaRecorder.start();
+                isRecording = true;
+                recordArea.classList.add('recording');
+                recordBtn.textContent = '⏹';
+                statusEl.textContent = '🔴 Merekam... bicara atau bersenandung';
+                transcribeBtn.disabled = true;
+                seconds = 0;
+                timerDisplay.textContent = '00:00';
+                if (recordTimer) clearInterval(recordTimer);
+                recordTimer = setInterval(() => {
+                    seconds++;
+                    const m = String(Math.floor(seconds/60)).padStart(2,'0');
+                    const s = String(seconds%60).padStart(2,'0');
+                    timerDisplay.textContent = `${m}:${s}`;
+                    // Draw waveform
+                    if (analyser) {
+                        analyser.getByteTimeDomainData(dataArray);
+                        ctx.fillStyle = '#0d0d1a';
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        ctx.lineWidth = 2;
+                        ctx.strokeStyle = '#e94560';
+                        ctx.beginPath();
+                        const sliceWidth = canvas.width / dataArray.length;
+                        let x = 0;
+                        for (let i=0; i<dataArray.length; i++) {
+                            const v = dataArray[i] / 128.0;
+                            const y = v * canvas.height / 2;
+                            if (i===0) ctx.moveTo(x, y);
+                            else ctx.lineTo(x, y);
+                            x += sliceWidth;
+                        }
+                        ctx.stroke();
+                    }
+                }, 200);
+
+            } catch(e) {
+                statusEl.textContent = '❌ Gagal akses mikrofon: ' + e.message;
+            }
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && isRecording) {
+                mediaRecorder.stop();
+                isRecording = false;
+                if (recordTimer) clearInterval(recordTimer);
+                recordTimer = null;
+                recordBtn.textContent = '🎤';
+                // stop semua track
+                mediaRecorder.stream.getTracks().forEach(t => t.stop());
+            }
+        }
+
+        recordBtn.addEventListener('click', function() {
+            if (isRecording) {
+                stopRecording();
+            } else {
+                startRecording();
+            }
+        });
+
+        // ================================================================
+        // AI TRANSCRIBE (pitch detection sederhana)
+        // ================================================================
+        function findClosestNote(freq) {
+            let closest = NOTE_FREQS[0];
+            let minDiff = Math.abs(freq - closest);
+            for (let f of NOTE_FREQS) {
+                const diff = Math.abs(freq - f);
+                if (diff < minDiff) {
+                    minDiff = diff;
+                    closest = f;
+                }
+            }
+            // toleransi 5%
+            if (minDiff / closest > 0.05) return null;
+            const idx = NOTE_FREQS.indexOf(closest);
+            return { name: NOTE_NAMES_REV[idx], freq: closest };
+        }
+
+        function transcribeAudio() {
+            if (!recordedAudioBuffer) {
+                statusEl.textContent = '❌ Tidak ada rekaman. Rekam dulu!';
+                return;
+            }
+
+            statusEl.textContent = '🧠 AI sedang menganalisis audio...';
+            transcribeBtn.disabled = true;
+
+            // Simulasi proses AI
+            setTimeout(() => {
+                const data = recordedAudioBuffer.getChannelData(0);
+                const sampleRate = recordedAudioBuffer.sampleRate;
+                const windowSize = Math.floor(sampleRate * 0.05); // 50ms window
+                const hopSize = Math.floor(windowSize * 0.5);
+                
+                const detected = [];
+                for (let start=0; start < data.length - windowSize; start += hopSize) {
+                    let sum = 0;
+                    for (let i=0; i<windowSize; i++) {
+                        sum += Math.abs(data[start + i]);
+                    }
+                    const rms = Math.sqrt(sum / windowSize);
+                    if (rms < 0.005) continue; // hening
+                    
+                    // Deteksi frekuensi dengan autocorrelation
+                    let maxCorr = 0;
+                    let pitch = 0;
+                    for (let lag = Math.floor(sampleRate/5000); lag < Math.floor(sampleRate/50); lag++) {
+                        let corr = 0;
+                        for (let i=0; i<windowSize-lag; i++) {
+                            corr += data[start+i] * data[start+i+lag];
+                        }
+                        if (corr > maxCorr) {
+                            maxCorr = corr;
+                            pitch = sampleRate / lag;
+                        }
+                    }
+                    if (pitch > 50 && pitch < 2000) {
+                        const note = findClosestNote(pitch);
+                        if (note) {
+                            detected.push(note);
+                        }
+                    }
+                }
+
+                // Simplify: ambil unique notes dengan durasi
+                const uniqueNotes = [];
+                let lastNote = null;
+                for (let n of detected) {
+                    if (!lastNote || n.name !== lastNote.name) {
+                        if (lastNote) uniqueNotes.push(lastNote);
+                        lastNote = n;
+                    }
+                }
+                if (lastNote) uniqueNotes.push(lastNote);
+
+                // Jika terlalu banyak, ambil sample
+                let result = uniqueNotes;
+                if (result.length > 20) {
+                    // ambil rata-rata 20 nada
+                    const step = Math.floor(result.length / 20);
+                    result = result.filter((_, i) => i % step === 0).slice(0, 20);
+                }
+
+                transcribedNotes = result;
+                if (result.length === 0) {
+                    transcribedDisplay.textContent = '(Tidak ada nada terdeteksi. Coba rekam dengan suara lebih jelas)';
+                    transcribeInfo.textContent = 'Jumlah nada: 0';
+                } else {
+                    const names = result.map(n => n.name).join(' → ');
+                    transcribedDisplay.textContent = names;
+                    transcribeInfo.textContent = `Jumlah nada: ${result.length}`;
+                    resultArea.classList.add('show');
+                    playResultBtn.disabled = false;
+                }
+                statusEl.textContent = `✅ Transkripsi selesai! ${result.length} nada ditemukan.`;
+                transcribeBtn.disabled = false;
+            }, 1000);
+        }
+
+        transcribeBtn.addEventListener('click', transcribeAudio);
+
+        // ================================================================
+        // PLAY RESULT
+        // ================================================================
+        function playTranscribed() {
+            if (transcribedNotes.length === 0 || isPlaying) return;
+            isPlaying = true;
+            playResultBtn.textContent = '⏹ Playing...';
+            statusEl.textContent = '🎵 Memutar hasil transkripsi...';
+
+            const ctx = initAudio();
+            let delay = 0;
+            const duration = 0.3;
+            transcribedNotes.forEach((note, i) => {
+                setTimeout(() => {
+                    if (!isPlaying) return;
+                    playNote(note.freq, duration);
+                }, delay * 1000);
+                delay += duration + 0.05;
+            });
+            setTimeout(() => {
+                isPlaying = false;
+                playResultBtn.textContent = '▶ Play Hasil';
+                statusEl.textContent = '✅ Selesai diputar';
+            }, delay * 1000 + 200);
+        }
+
+        playResultBtn.addEventListener('click', function() {
+            if (isPlaying) {
+                isPlaying = false;
+                this.textContent = '▶ Play Hasil';
+                statusEl.textContent = '⏹ Dihentikan';
+                return;
+            }
+            playTranscribed();
+        });
+
+        // ================================================================
+        // CLEAR
+        // ================================================================
+        clearBtn.addEventListener('click', function() {
+            isPlaying = false;
+            recordedAudioBuffer = null;
+            transcribedNotes = [];
+            transcribedDisplay.textContent = '-';
+            transcribeInfo.textContent = 'Jumlah nada: 0';
+            resultArea.classList.remove('show');
+            playResultBtn.disabled = true;
+            transcribeBtn.disabled = true;
+            statusEl.textContent = '🗑️ Dihapus. Rekam ulang untuk transkripsi.';
+            // reset waveform
+            ctx.fillStyle = '#0d0d1a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#555';
+            ctx.font = '14px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('Tunggu rekaman...', canvas.width/2, canvas.height/2 + 5);
+        });
+
+        // ================================================================
+        // INIT
+        // ================================================================
+        statusEl.textContent = '🔴 Klik tombol mikrofon untuk mulai merekam';
+        ctx.fillStyle = '#0d0d1a';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#555';
+        ctx.font = '14px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Tunggu rekaman...', canvas.width/2, canvas.height/2 + 5);
+    </script>
+</body>
+</html>
