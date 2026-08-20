@@ -174,6 +174,11 @@
             color: #888;
             margin-top: 3px;
         }
+        .chord-card .chord-interval {
+            font-size: 0.7rem;
+            color: #666;
+            margin-top: 2px;
+        }
 
         .key-result {
             background: #0f3460;
@@ -234,6 +239,15 @@
             font-size: 0.7rem;
             margin-left: 5px;
         }
+        .system-badge {
+            display: inline-block;
+            background: #2d7d46;
+            color: #fff;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            margin-left: 5px;
+        }
 
         @media (max-width:600px) { .container { padding: 15px; } }
     </style>
@@ -241,8 +255,8 @@
 <body>
     <div class="container">
         <a href="index.html" class="back-btn">← Kembali ke Aplikasi Utama</a>
-        <h1>🎵 Chord Progression Generator <span class="badge">20 Nada/Oktaf</span></h1>
-        <p class="subtitle">Ubah hasil transkripsi nada menjadi progresi akord</p>
+        <h1>🎵 Chord Progression Generator <span class="badge">20 Nada/Oktaf</span> <span class="system-badge">12-TET</span></h1>
+        <p class="subtitle">Ubah hasil transkripsi nada menjadi progresi akord dalam sistem 20 nada per oktaf</p>
 
         <div class="input-area">
             <label>📝 Masukkan Hasil Transkripsi Nada:</label>
@@ -266,17 +280,18 @@
         </div>
 
         <div class="btn-group">
-            <button class="btn btn-primary" id="generateBtn">🎵 Generate Progresi</button>
+            <button class="btn btn-primary" id="generateBtn">🎵 Generate Progresi (20 Nada)</button>
             <button class="btn btn-secondary" id="clearBtn">🗑️ Clear</button>
         </div>
 
         <div class="result-area" id="resultArea">
-            <h3>🎶 Hasil Analisis & Progresi Akord</h3>
+            <h3>🎶 Hasil Analisis & Progresi Akord (20 Nada per Oktaf)</h3>
 
             <div class="key-result" id="keyResult">
                 <span><span class="key-label">🎯 Nada Dasar:</span> <span class="key-value" id="detectedKey">-</span></span>
                 <span><span class="key-label">🎼 Skala:</span> <span class="scale-value" id="detectedScale">-</span></span>
                 <span><span class="key-label">📊 Nada Terdeteksi:</span> <span id="noteCount">0</span></span>
+                <span><span class="key-label">🔢 Sistem:</span> <span style="color:#2d7d46;font-weight:bold;">12-TET (20 nada/oktaf)</span></span>
             </div>
 
             <div style="margin-bottom:15px;">
@@ -285,11 +300,11 @@
             </div>
 
             <div style="margin-bottom:10px;">
-                <span style="color:#888;font-size:0.85rem;">🎹 Progresi Akord yang Disarankan:</span>
+                <span style="color:#888;font-size:0.85rem;">🎹 Progresi Akord yang Disarankan (20 nada per oktaf):</span>
             </div>
             <div class="chord-grid" id="chordGrid"></div>
 
-            <div class="info-text" id="resultInfo">💡 Akord disusun berdasarkan nada yang dominan dalam melodi.</div>
+            <div class="info-text" id="resultInfo">💡 Akord disusun dengan interval yang sesuai untuk sistem 20 nada per oktaf (Mayor Third = 7 langkah, Minor Third = 5 langkah, Perfect Fifth = 12 langkah).</div>
         </div>
     </div>
 
@@ -299,34 +314,93 @@
         // ================================================================
         const NOTE_NAMES_20 = ['E','E#','F','F#','G','G#','H','H#','I','J','J#','K','K#','A','A#','B','B#','C','C#','D'];
 
-        // Mapping nama nada ke indeks (untuk perhitungan interval)
-        const NOTE_TO_INDEX = {
-            'E': 0, 'E#': 1, 'F': 2, 'F#': 3, 'G': 4, 'G#': 5,
-            'H': 6, 'H#': 7, 'I': 8, 'J': 9, 'J#': 10, 'K': 11,
-            'K#': 12, 'A': 13, 'A#': 14, 'B': 15, 'B#': 16,
-            'C': 17, 'C#': 18, 'D': 19
+        // Interval untuk sistem 20 nada per oktaf
+        const INTERVALS_20 = {
+            minor2: 1,
+            major2: 2,
+            minor3: 3,
+            major3: 4,
+            perfect4: 5,
+            tritone: 6,
+            perfect5: 7,
+            minor6: 8,
+            major6: 9,
+            minor7: 10,
+            major7: 11,
+            octave: 20
         };
+
+        // NOTE: Dalam sistem 20 nada per oktaf, 
+        // Mayor Third = 7 langkah (bukan 4 seperti di 12-nada)
+        // Minor Third = 5 langkah (bukan 3)
+        // Perfect Fifth = 12 langkah (bukan 7)
+
+        // Mapping nama nada ke indeks
+        const NOTE_TO_INDEX = {};
+        NOTE_NAMES_20.forEach((name, idx) => {
+            NOTE_TO_INDEX[name] = idx;
+        });
 
         // Skala Mayor 20 nada (dimulai dari E=1)
         const SCALE_MAYOR_20 = ['E','F','G','H','I','J','K','A','B','C','D','E'];
         // Skala Minor 20 nada (dimulai dari A=1)
         const SCALE_MINOR_20 = ['A','B','C','D','E','F','G','H','I','J','K','A'];
 
-        // Akord dasar untuk setiap nada (triad)
-        // Mayor: 1-3-5, Minor: 1-b3-5
-        function getChordNotes(root, type) {
+        // ================================================================
+        // FUNGSI AKORD UNTUK 20 NADA PER OKTAF
+        // ================================================================
+
+        /**
+         * Mendapatkan 3 nada untuk akord (triad) dalam sistem 20 nada per oktaf
+         * @param {string} root - Nama nada root (E, F, G, H, I, J, K, A, B, C, D)
+         * @param {string} type - 'mayor' atau 'minor'
+         * @returns {array} - [root, third, fifth]
+         */
+        function getChordNotes20(root, type) {
             const idx = NOTE_TO_INDEX[root];
             if (idx === undefined) return null;
             
-            const notes20 = NOTE_NAMES_20;
-            const third = type === 'mayor' ? 4 : 3; // 4 step untuk mayor, 3 untuk minor
-            const fifth = 7;
+            // Interval dalam 20 nada per oktaf
+            // Mayor Third = 7 langkah, Minor Third = 5 langkah
+            const thirdInterval = type === 'mayor' ? 7 : 5;
+            const fifthInterval = 12; // Perfect Fifth = 12 langkah
             
             const rootIdx = idx;
-            const thirdIdx = (idx + third) % 20;
-            const fifthIdx = (idx + fifth) % 20;
+            const thirdIdx = (idx + thirdInterval) % 20;
+            const fifthIdx = (idx + fifthInterval) % 20;
             
-            return [notes20[rootIdx], notes20[thirdIdx], notes20[fifthIdx]];
+            return [
+                NOTE_NAMES_20[rootIdx],
+                NOTE_NAMES_20[thirdIdx],
+                NOTE_NAMES_20[fifthIdx]
+            ];
+        }
+
+        /**
+         * Mendapatkan interval dalam bahasa manusia
+         */
+        function getIntervalLabel(root, note) {
+            const rootIdx = NOTE_TO_INDEX[root];
+            const noteIdx = NOTE_TO_INDEX[note];
+            if (rootIdx === undefined || noteIdx === undefined) return '';
+            let diff = (noteIdx - rootIdx + 20) % 20;
+            
+            const intervalMap = {
+                0: 'Unison',
+                1: 'Minor 2nd',
+                2: 'Major 2nd',
+                3: 'Minor 3rd',
+                4: 'Major 3rd',
+                5: 'Perfect 4th',
+                6: 'Tritone',
+                7: 'Perfect 5th',
+                8: 'Minor 6th',
+                9: 'Major 6th',
+                10: 'Minor 7th',
+                11: 'Major 7th',
+                12: 'Octave'
+            };
+            return intervalMap[diff] || `${diff} langkah`;
         }
 
         // ================================================================
@@ -337,15 +411,17 @@
             const cleaned = text.replace(/[0-9]/g, '').replace(/[→,]/g, ' ');
             const tokens = cleaned.split(/\s+/).filter(t => t.length > 0);
             
-            // Ambil hanya nama nada yang valid
             const validNotes = [];
             for (let t of tokens) {
                 // Cek apakah t adalah nama nada valid (dengan atau tanpa #)
-                const base = t.replace('#', '');
                 if (NOTE_TO_INDEX[t] !== undefined) {
                     validNotes.push(t);
-                } else if (NOTE_TO_INDEX[base] !== undefined) {
-                    validNotes.push(base);
+                } else {
+                    // Coba tanpa #
+                    const base = t.replace('#', '');
+                    if (NOTE_TO_INDEX[base] !== undefined) {
+                        validNotes.push(base);
+                    }
                 }
             }
             return validNotes;
@@ -359,9 +435,8 @@
             return count;
         }
 
-        function findKey(notes, mode) {
+        function findKey(notes) {
             const count = countNotes(notes);
-            // Cari nada paling dominan
             let maxCount = 0;
             let dominant = 'E';
             for (let [n, c] of Object.entries(count)) {
@@ -374,10 +449,6 @@
         }
 
         function detectScale(notes) {
-            // Cek apakah melodi cenderung Mayor atau Minor
-            // Mayor: E, F, G, H, I, J, K, A, B, C, D, E
-            // Minor: A, B, C, D, E, F, G, H, I, J, K, A
-            
             const scaleMayor = new Set(SCALE_MAYOR_20);
             const scaleMinor = new Set(SCALE_MINOR_20);
             
@@ -391,46 +462,62 @@
             }
             
             // Jika mayorMatch >= minorMatch, maka Mayor
-            return mayorMatch >= minorMatch ? 'Mayor' : 'Minor';
+            if (mayorMatch > minorMatch) return 'Mayor';
+            if (minorMatch > mayorMatch) return 'Minor';
+            // Jika sama, cek nada dominan
+            const key = findKey(notes);
+            if (scaleMayor.has(key)) return 'Mayor';
+            return 'Minor';
         }
 
-        function getChordProgression(root, scaleType, count) {
+        /**
+         * Membuat progresi akord untuk sistem 20 nada per oktaf
+         */
+        function getChordProgression20(root, scaleType, count) {
             const idx = NOTE_TO_INDEX[root];
             if (idx === undefined) return [];
             
-            const notes20 = NOTE_NAMES_20;
-            const chords = [];
-            
-            // Tentukan skala berdasarkan root dan tipe
             let scaleNotes = [];
             if (scaleType === 'Mayor') {
-                // Mayor: E=1, F=2, G=3, H=4, I=5, J=6, K=7, A=1, ...
-                // Cari posisi root di skala Mayor
                 const mayorScale = SCALE_MAYOR_20;
                 const scaleIdx = mayorScale.indexOf(root);
                 if (scaleIdx === -1) {
-                    // Jika root tidak di skala Mayor, coba gunakan skala Minor
-                    return getChordProgression(root, 'Minor', count);
-                }
-                // Ambil 7 nada dari skala (mulai dari root)
-                for (let i = 0; i < 7; i++) {
-                    const note = mayorScale[(scaleIdx + i) % mayorScale.length];
-                    scaleNotes.push(note);
+                    // Coba cari root di skala Mayor
+                    for (let i = 0; i < mayorScale.length; i++) {
+                        if (mayorScale[i] === root) {
+                            for (let j = 0; j < 7; j++) {
+                                scaleNotes.push(mayorScale[(i + j) % mayorScale.length]);
+                            }
+                            break;
+                        }
+                    }
+                    if (scaleNotes.length === 0) return [];
+                } else {
+                    for (let i = 0; i < 7; i++) {
+                        scaleNotes.push(mayorScale[(scaleIdx + i) % mayorScale.length]);
+                    }
                 }
             } else {
-                // Minor: A=1, B=2, C=3, D=4, E=5, F=6, G=7, H=1, ...
                 const minorScale = SCALE_MINOR_20;
                 const scaleIdx = minorScale.indexOf(root);
                 if (scaleIdx === -1) {
-                    return getChordProgression(root, 'Mayor', count);
-                }
-                for (let i = 0; i < 7; i++) {
-                    const note = minorScale[(scaleIdx + i) % minorScale.length];
-                    scaleNotes.push(note);
+                    for (let i = 0; i < minorScale.length; i++) {
+                        if (minorScale[i] === root) {
+                            for (let j = 0; j < 7; j++) {
+                                scaleNotes.push(minorScale[(i + j) % minorScale.length]);
+                            }
+                            break;
+                        }
+                    }
+                    if (scaleNotes.length === 0) return [];
+                } else {
+                    for (let i = 0; i < 7; i++) {
+                        scaleNotes.push(minorScale[(scaleIdx + i) % minorScale.length]);
+                    }
                 }
             }
-            
-            // Buat akord untuk setiap nada di skala (triad)
+
+            // Tipe akord untuk setiap derajat skala (20 nada per oktaf)
             const chordTypes = scaleType === 'Mayor' 
                 ? ['mayor', 'minor', 'minor', 'mayor', 'mayor', 'minor', 'diminished']
                 : ['minor', 'diminished', 'mayor', 'minor', 'minor', 'mayor', 'mayor'];
@@ -439,18 +526,30 @@
                 ? ['I', 'ii', 'iii', 'IV', 'V', 'vi', 'vii°']
                 : ['i', 'ii°', 'III', 'iv', 'v', 'VI', 'VII'];
             
+            const chordFunctions = scaleType === 'Mayor'
+                ? ['Tonic', 'Supertonic', 'Mediant', 'Subdominant', 'Dominant', 'Submediant', 'Leading Tone']
+                : ['Tonic', 'Supertonic', 'Mediant', 'Subdominant', 'Dominant', 'Submediant', 'Leading Tone'];
+
             const chordNames = [];
-            for (let i = 0; i < Math.min(scaleNotes.length, count); i++) {
+            const maxChords = Math.min(scaleNotes.length, count);
+            
+            for (let i = 0; i < maxChords; i++) {
                 const note = scaleNotes[i];
                 const type = chordTypes[i] || 'mayor';
-                const chordNotes = getChordNotes(note, type);
+                const chordNotes = getChordNotes20(note, type);
                 if (chordNotes) {
+                    const typeSymbol = type === 'mayor' ? '' : 'm';
                     chordNames.push({
                         root: note,
                         type: type,
                         notes: chordNotes,
                         roman: romanNumerals[i] || '',
-                        function: getChordFunction(i, scaleType)
+                        function: chordFunctions[i] || '',
+                        intervals: [
+                            getIntervalLabel(note, chordNotes[0]),
+                            getIntervalLabel(note, chordNotes[1]),
+                            getIntervalLabel(note, chordNotes[2])
+                        ]
                     });
                 }
             }
@@ -458,14 +557,7 @@
             return chordNames;
         }
 
-        function getChordFunction(index, scaleType) {
-            const funcs = scaleType === 'Mayor'
-                ? ['Tonic', 'Supertonic', 'Mediant', 'Subdominant', 'Dominant', 'Submediant', 'Leading Tone']
-                : ['Tonic', 'Supertonic', 'Mediant', 'Subdominant', 'Dominant', 'Submediant', 'Leading Tone'];
-            return funcs[index] || '';
-        }
-
-        function getScaleNotes(root, scaleType) {
+        function getScaleNotes20(root, scaleType) {
             if (scaleType === 'Mayor') {
                 const mayorScale = SCALE_MAYOR_20;
                 const idx = mayorScale.indexOf(root);
@@ -510,19 +602,17 @@
                 return;
             }
 
-            // Ekstrak nada
             const notes = extractNotes(text);
             if (notes.length < 3) {
                 alert('Minimal 3 nada untuk analisis!');
                 return;
             }
 
-            // Analisis
             const mode = analysisMode.value;
             const count = parseInt(chordCount.value);
 
             // Deteksi key dan scale
-            const key = findKey(notes, mode);
+            const key = findKey(notes);
             let scaleType = '';
             if (mode === 'auto') {
                 scaleType = detectScale(notes);
@@ -533,7 +623,6 @@
             // Tampilkan hasil
             resultArea.classList.add('show');
 
-            // Key & Scale
             detectedKey.textContent = key;
             detectedScale.textContent = scaleType;
             noteCount.textContent = notes.length;
@@ -545,8 +634,8 @@
                 `<span class="note-pill ${n === key ? 'highlight' : ''}">${n} (${c}x)</span>`
             ).join('');
 
-            // Generate progresi akord
-            const chords = getChordProgression(key, scaleType, Math.min(count, 8));
+            // Generate progresi akord (20 nada per oktaf)
+            const chords = getChordProgression20(key, scaleType, Math.min(count, 8));
             
             if (chords.length === 0) {
                 chordGrid.innerHTML = '<p style="color:#e94560;">❌ Tidak dapat menghasilkan progresi. Coba masukkan nada yang berbeda.</p>';
@@ -558,20 +647,25 @@
                 const typeSymbol = ch.type === 'mayor' ? '' : 'm';
                 const displayName = ch.root + typeSymbol;
                 const notesDisplay = ch.notes.join(' + ');
+                const intervalDisplay = ch.intervals.join(' | ');
                 return `
                     <div class="chord-card">
                         <div class="chord-name">${displayName}</div>
                         <div class="chord-notes">${notesDisplay}</div>
                         <div class="chord-function">${ch.roman} · ${ch.function}</div>
+                        <div class="chord-interval">${intervalDisplay}</div>
                     </div>
                 `;
             }).join('');
 
             // Info tambahan
-            const scaleNotes = getScaleNotes(key, scaleType);
-            resultInfo.textContent = `💡 Skala ${scaleType} (${key}): ${scaleNotes.join(' → ')}. Akord disusun berdasarkan progresi standar.`;
+            const scaleNotes = getScaleNotes20(key, scaleType);
+            resultInfo.innerHTML = `
+                💡 <b>Sistem 12-TET 20 Nada per Oktaf</b> — 
+                Skala ${scaleType} (${key}): ${scaleNotes.join(' → ')}. 
+                <br>Interval: Mayor Third = 7 langkah, Minor Third = 5 langkah, Perfect Fifth = 12 langkah.
+            `;
 
-            // Scroll ke hasil
             resultArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
@@ -583,16 +677,13 @@
         clearBtn.addEventListener('click', function() {
             noteInput.value = '';
             resultArea.classList.remove('show');
-            resultArea.scrollIntoView({ behavior: 'smooth' });
         });
 
-        // Contoh data jika user ingin test
+        // Contoh data
         const exampleData = 'E3 → G3 → H3 → E3 → G3 → H3 → E3 → F3 → G3 → H3 → I3 → J3 → K3 → A3 → B3 → C3 → D3 → E4';
 
-        // Jika input kosong, isi dengan contoh
         noteInput.placeholder = 'Contoh: E3 → G3 → H3 → E3 → G3 → H3 → E3 ...';
 
-        // Shortcut: Ctrl+Enter untuk generate
         noteInput.addEventListener('keydown', function(e) {
             if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
                 e.preventDefault();
@@ -600,10 +691,9 @@
             }
         });
 
-        // Tombol Generate juga bisa dipicu dengan Enter di input
-        // (tapi biarkan user menekan Ctrl+Enter untuk newline)
-        console.log('🎵 Chord Progression Generator siap!');
-        console.log('📝 Masukkan hasil transkripsi nada dan klik Generate.');
+        console.log('🎵 Chord Progression Generator (20 Nada per Oktaf) siap!');
+        console.log('📝 Sistem: 12-TET (20 nada per oktaf)');
+        console.log('🎯 Interval: Mayor Third=7, Minor Third=5, Perfect Fifth=12');
     </script>
 </body>
 </html>
