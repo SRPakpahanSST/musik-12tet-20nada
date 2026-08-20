@@ -37,17 +37,6 @@
             color: #aaa;
             margin-bottom: 30px;
         }
-        .back-btn {
-            display: inline-block;
-            padding: 8px 20px;
-            background: #0f3460;
-            color: #fff;
-            border-radius: 20px;
-            text-decoration: none;
-            margin-bottom: 20px;
-            font-size: 0.9rem;
-        }
-        .back-btn:hover { background: #1a4a7a; }
         .record-area {
             text-align: center;
             padding: 30px;
@@ -92,6 +81,9 @@
             font-size: 0.9rem;
             margin-top: 10px;
             min-height: 24px;
+        }
+        .status.error {
+            color: #e94560;
         }
         .waveform {
             width: 100%;
@@ -150,15 +142,28 @@
         .btn-danger { background: #a04040; color: #fff; }
         .btn-danger:hover { background: #c05050; }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .btn-group { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px; }
+        .btn-group { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px; justify-content: center; }
+        .error-message {
+            background: #2a0d0d;
+            border: 1px solid #e94560;
+            color: #e94560;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: none;
+        }
+        .error-message.show { display: block; }
         @media (max-width:600px) { .container { padding: 15px; } }
     </style>
 </head>
 <body>
     <div class="container">
-        <a href="index.html" class="back-btn">← Kembali ke Aplikasi Utama</a>
         <h1>🎤 AI Audio Transcriber</h1>
         <p class="subtitle">Bersenandung atau mainkan melodi, AI akan menuliskannya</p>
+
+        <div class="error-message" id="errorMessage">
+            ⚠️ <span id="errorText">Terjadi kesalahan. Pastikan browser mengizinkan akses mikrofon.</span>
+        </div>
 
         <div class="record-area" id="recordArea">
             <button class="record-btn" id="recordBtn">🎤</button>
@@ -187,7 +192,7 @@
 
     <script>
         // ================================================================
-        // AUDIO RECORDER + PITCH DETECTION (simulasi AI)
+        // DATA FREKUENSI (sama seperti sebelumnya)
         // ================================================================
         const FREQ_MAP = {
             'E3':203.924,'F3':227.604,'G3':254.034,'H3':283.533,
@@ -228,6 +233,8 @@
         const recordArea = document.getElementById('recordArea');
         const canvas = document.getElementById('waveformCanvas');
         const ctx = canvas.getContext('2d');
+        const errorMessage = document.getElementById('errorMessage');
+        const errorText = document.getElementById('errorText');
 
         function resizeCanvas() {
             const rect = canvas.parentElement.getBoundingClientRect();
@@ -271,7 +278,18 @@
         // ================================================================
         async function startRecording() {
             try {
+                // Periksa apakah browser mendukung getUserMedia
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    showError('Browser tidak mendukung akses mikrofon.');
+                    return;
+                }
+
+                // Minta izin mikrofon
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                
+                // Jika berhasil, sembunyikan error
+                hideError();
+
                 const ctx = initAudio();
                 const source = ctx.createMediaStreamSource(stream);
                 analyser = ctx.createAnalyser();
@@ -308,7 +326,6 @@
                     const m = String(Math.floor(seconds/60)).padStart(2,'0');
                     const s = String(seconds%60).padStart(2,'0');
                     timerDisplay.textContent = `${m}:${s}`;
-                    // Draw waveform
                     if (analyser) {
                         analyser.getByteTimeDomainData(dataArray);
                         ctx.fillStyle = '#0d0d1a';
@@ -329,8 +346,19 @@
                     }
                 }, 200);
 
-            } catch(e) {
-                statusEl.textContent = '❌ Gagal akses mikrofon: ' + e.message;
+            } catch (e) {
+                console.error('Mikrofon error:', e);
+                let msg = 'Gagal akses mikrofon. ';
+                if (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError') {
+                    msg += 'Izin mikrofon ditolak. Berikan izin mikrofon di pengaturan browser.';
+                } else if (e.name === 'NotFoundError' || e.name === 'DevicesNotFoundError') {
+                    msg += 'Tidak ada mikrofon terdeteksi.';
+                } else {
+                    msg += 'Error: ' + e.message;
+                }
+                showError(msg);
+                statusEl.textContent = '❌ ' + msg;
+                statusEl.className = 'status error';
             }
         }
 
@@ -341,7 +369,6 @@
                 if (recordTimer) clearInterval(recordTimer);
                 recordTimer = null;
                 recordBtn.textContent = '🎤';
-                // stop semua track
                 mediaRecorder.stream.getTracks().forEach(t => t.stop());
             }
         }
@@ -355,7 +382,19 @@
         });
 
         // ================================================================
-        // AI TRANSCRIBE (pitch detection sederhana)
+        // ERROR HANDLING
+        // ================================================================
+        function showError(msg) {
+            errorText.textContent = msg;
+            errorMessage.classList.add('show');
+        }
+        function hideError() {
+            errorMessage.classList.remove('show');
+            statusEl.className = 'status';
+        }
+
+        // ================================================================
+        // AI TRANSCRIBE (sama seperti sebelumnya)
         // ================================================================
         function findClosestNote(freq) {
             let closest = NOTE_FREQS[0];
@@ -367,7 +406,6 @@
                     closest = f;
                 }
             }
-            // toleransi 5%
             if (minDiff / closest > 0.05) return null;
             const idx = NOTE_FREQS.indexOf(closest);
             return { name: NOTE_NAMES_REV[idx], freq: closest };
@@ -382,23 +420,21 @@
             statusEl.textContent = '🧠 AI sedang menganalisis audio...';
             transcribeBtn.disabled = true;
 
-            // Simulasi proses AI
             setTimeout(() => {
                 const data = recordedAudioBuffer.getChannelData(0);
                 const sampleRate = recordedAudioBuffer.sampleRate;
-                const windowSize = Math.floor(sampleRate * 0.05); // 50ms window
+                const windowSize = Math.floor(sampleRate * 0.05);
                 const hopSize = Math.floor(windowSize * 0.5);
-                
                 const detected = [];
+
                 for (let start=0; start < data.length - windowSize; start += hopSize) {
                     let sum = 0;
                     for (let i=0; i<windowSize; i++) {
                         sum += Math.abs(data[start + i]);
                     }
                     const rms = Math.sqrt(sum / windowSize);
-                    if (rms < 0.005) continue; // hening
-                    
-                    // Deteksi frekuensi dengan autocorrelation
+                    if (rms < 0.005) continue;
+
                     let maxCorr = 0;
                     let pitch = 0;
                     for (let lag = Math.floor(sampleRate/5000); lag < Math.floor(sampleRate/50); lag++) {
@@ -413,13 +449,10 @@
                     }
                     if (pitch > 50 && pitch < 2000) {
                         const note = findClosestNote(pitch);
-                        if (note) {
-                            detected.push(note);
-                        }
+                        if (note) detected.push(note);
                     }
                 }
 
-                // Simplify: ambil unique notes dengan durasi
                 const uniqueNotes = [];
                 let lastNote = null;
                 for (let n of detected) {
@@ -430,10 +463,8 @@
                 }
                 if (lastNote) uniqueNotes.push(lastNote);
 
-                // Jika terlalu banyak, ambil sample
                 let result = uniqueNotes;
                 if (result.length > 20) {
-                    // ambil rata-rata 20 nada
                     const step = Math.floor(result.length / 20);
                     result = result.filter((_, i) => i % step === 0).slice(0, 20);
                 }
@@ -465,7 +496,6 @@
             playResultBtn.textContent = '⏹ Playing...';
             statusEl.textContent = '🎵 Memutar hasil transkripsi...';
 
-            const ctx = initAudio();
             let delay = 0;
             const duration = 0.3;
             transcribedNotes.forEach((note, i) => {
@@ -505,13 +535,13 @@
             playResultBtn.disabled = true;
             transcribeBtn.disabled = true;
             statusEl.textContent = '🗑️ Dihapus. Rekam ulang untuk transkripsi.';
-            // reset waveform
             ctx.fillStyle = '#0d0d1a';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = '#555';
             ctx.font = '14px sans-serif';
             ctx.textAlign = 'center';
             ctx.fillText('Tunggu rekaman...', canvas.width/2, canvas.height/2 + 5);
+            hideError();
         });
 
         // ================================================================
@@ -524,6 +554,18 @@
         ctx.font = '14px sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText('Tunggu rekaman...', canvas.width/2, canvas.height/2 + 5);
+
+        // ================================================================
+        // MENANGANI ERROR MIKROFON DI AWAL (jika sudah ditolak)
+        // ================================================================
+        // Coba deteksi apakah mikrofon diizinkan dengan memeriksa status izin
+        if (navigator.permissions && navigator.permissions.query) {
+            navigator.permissions.query({ name: 'microphone' }).then(result => {
+                if (result.state === 'denied') {
+                    showError('Izin mikrofon telah ditolak. Mohon izinkan akses mikrofon di pengaturan browser.');
+                }
+            }).catch(() => {});
+        }
     </script>
 </body>
 </html>
