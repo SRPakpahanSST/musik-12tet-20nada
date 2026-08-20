@@ -373,7 +373,10 @@
                     <option value="square">Square</option>
                     <option value="sawtooth">Sawtooth</option>
                     <option value="triangle">Triangle</option>
-                    <option value="organ" selected>Organ</option>
+                    <option value="organ">Organ</option>
+                    <option value="piano">🎹 Piano</option>
+                    <option value="flute">🎵 Flute</option>
+                    <option value="trumpet">🎺 Trumpet</option>
                 </select>
 
                 <div class="effect-group">
@@ -679,25 +682,96 @@
             }
         }
 
+        // ================================================================
+        // CREATE INSTRUMENT OSCILLATOR (dengan Piano, Flute, Trumpet)
+        // ================================================================
         function createInstrumentOscillator(freq, type) {
             const ctx = audioCtx;
-            if (type === 'organ') {
-                const osc = ctx.createOscillator();
-                osc.type = 'sawtooth';
-                const osc2 = ctx.createOscillator();
-                osc2.type = 'square';
-                osc2.frequency.setValueAtTime(freq * 0.999, ctx.currentTime);
-                const gain2 = ctx.createGain();
-                gain2.gain.setValueAtTime(0.5, ctx.currentTime);
-                osc2.connect(gain2);
-                return { mainOsc: osc, extraOsc: osc2, extraGain: gain2 };
-            } else {
-                const osc = ctx.createOscillator();
-                osc.type = type;
-                return { mainOsc: osc };
+            const now = ctx.currentTime;
+            let osc, osc2, osc3, gain2, gain3;
+
+            switch(type) {
+                case 'organ':
+                    osc = ctx.createOscillator();
+                    osc.type = 'sawtooth';
+                    osc2 = ctx.createOscillator();
+                    osc2.type = 'square';
+                    osc2.frequency.setValueAtTime(freq * 0.999, now);
+                    gain2 = ctx.createGain();
+                    gain2.gain.setValueAtTime(0.5, now);
+                    osc2.connect(gain2);
+                    return { mainOsc: osc, extraOsc: osc2, extraGain: gain2 };
+
+                case 'piano':
+                    // Piano: Triangle + 2 Sine harmonics dengan envelope cepat
+                    osc = ctx.createOscillator();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, now);
+                    
+                    osc2 = ctx.createOscillator();
+                    osc2.type = 'sine';
+                    osc2.frequency.setValueAtTime(freq * 2.0, now);
+                    gain2 = ctx.createGain();
+                    gain2.gain.setValueAtTime(0.08, now);
+                    osc2.connect(gain2);
+                    
+                    osc3 = ctx.createOscillator();
+                    osc3.type = 'sine';
+                    osc3.frequency.setValueAtTime(freq * 3.0, now);
+                    gain3 = ctx.createGain();
+                    gain3.gain.setValueAtTime(0.04, now);
+                    osc3.connect(gain3);
+                    
+                    return { mainOsc: osc, extraOsc: osc2, extraOsc2: osc3, extraGain: gain2, extraGain2: gain3 };
+
+                case 'flute':
+                    // Flute: Sine wave dengan harmonik halus
+                    osc = ctx.createOscillator();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, now);
+                    
+                    osc2 = ctx.createOscillator();
+                    osc2.type = 'sine';
+                    osc2.frequency.setValueAtTime(freq * 1.003, now);
+                    gain2 = ctx.createGain();
+                    gain2.gain.setValueAtTime(0.15, now);
+                    osc2.connect(gain2);
+                    
+                    return { mainOsc: osc, extraOsc: osc2, extraGain: gain2 };
+
+                case 'trumpet':
+                    // Trumpet: Sawtooth + Square dengan brass character
+                    osc = ctx.createOscillator();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(freq, now);
+                    
+                    osc2 = ctx.createOscillator();
+                    osc2.type = 'square';
+                    osc2.frequency.setValueAtTime(freq * 0.999, now);
+                    gain2 = ctx.createGain();
+                    gain2.gain.setValueAtTime(0.4, now);
+                    osc2.connect(gain2);
+                    
+                    osc3 = ctx.createOscillator();
+                    osc3.type = 'sawtooth';
+                    osc3.frequency.setValueAtTime(freq * 2.0, now);
+                    gain3 = ctx.createGain();
+                    gain3.gain.setValueAtTime(0.1, now);
+                    osc3.connect(gain3);
+                    
+                    return { mainOsc: osc, extraOsc: osc2, extraOsc2: osc3, extraGain: gain2, extraGain2: gain3 };
+
+                default:
+                    // Sine, Square, Sawtooth, Triangle
+                    osc = ctx.createOscillator();
+                    osc.type = type;
+                    return { mainOsc: osc };
             }
         }
 
+        // ================================================================
+        // PLAY SINGLE NOTE (dengan envelope khusus per instrumen)
+        // ================================================================
         function playSingleNote(freq, duration = 0.6) {
             try {
                 const ctx = initAudio();
@@ -706,10 +780,32 @@
                 const mainOsc = oscData.mainOsc;
                 const gain = ctx.createGain();
 
-                gain.gain.setValueAtTime(0.001, ctx.currentTime);
-                gain.gain.linearRampToValueAtTime(0.4, ctx.currentTime + 0.03);
-                gain.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime + 0.15);
-                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+                const now = ctx.currentTime;
+                gain.gain.setValueAtTime(0.001, now);
+                
+                // Envelope per instrumen
+                let attack = 0.03, decay = 0.15, sustain = 0.2, release = 0.01;
+                
+                if (type === 'piano') {
+                    attack = 0.01;
+                    decay = 0.3;
+                    sustain = 0.15;
+                    release = 0.2;
+                } else if (type === 'flute') {
+                    attack = 0.05;
+                    decay = 0.2;
+                    sustain = 0.3;
+                    release = 0.05;
+                } else if (type === 'trumpet') {
+                    attack = 0.02;
+                    decay = 0.1;
+                    sustain = 0.35;
+                    release = 0.05;
+                }
+                
+                gain.gain.linearRampToValueAtTime(0.4, now + attack);
+                gain.gain.exponentialRampToValueAtTime(sustain, now + attack + decay);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + duration - release);
 
                 mainOsc.connect(gain);
                 gain.connect(dryGain);
@@ -720,20 +816,39 @@
                 delayInput.connect(delayNode);
                 delayInput.connect(delayDryGain);
 
+                // Handle extra oscillator
                 if (oscData.extraOsc) {
                     const eg = ctx.createGain();
-                    eg.gain.setValueAtTime(0.3, ctx.currentTime);
+                    let extraVol = 0.3;
+                    if (type === 'piano') extraVol = 0.08;
+                    else if (type === 'flute') extraVol = 0.15;
+                    else if (type === 'trumpet') extraVol = 0.4;
+                    eg.gain.setValueAtTime(extraVol, now);
                     oscData.extraOsc.connect(eg);
                     eg.connect(gain);
-                    oscData.extraOsc.start(ctx.currentTime);
-                    oscData.extraOsc.stop(ctx.currentTime + duration);
+                    oscData.extraOsc.start(now);
+                    oscData.extraOsc.stop(now + duration);
                     activeOscillators.push(oscData.extraOsc);
                 }
+                
+                if (oscData.extraOsc2) {
+                    const eg2 = ctx.createGain();
+                    let extraVol2 = 0.04;
+                    if (type === 'piano') extraVol2 = 0.04;
+                    else if (type === 'trumpet') extraVol2 = 0.1;
+                    eg2.gain.setValueAtTime(extraVol2, now);
+                    oscData.extraOsc2.connect(eg2);
+                    eg2.connect(gain);
+                    oscData.extraOsc2.start(now);
+                    oscData.extraOsc2.stop(now + duration);
+                    activeOscillators.push(oscData.extraOsc2);
+                }
 
-                mainOsc.start(ctx.currentTime);
-                mainOsc.stop(ctx.currentTime + duration);
+                mainOsc.start(now);
+                mainOsc.stop(now + duration);
                 activeOscillators.push(mainOsc);
                 if (oscData.extraOsc) activeOscillators.push(oscData.extraOsc);
+                if (oscData.extraOsc2) activeOscillators.push(oscData.extraOsc2);
 
                 mainOsc.onended = () => {
                     const idx = activeOscillators.indexOf(mainOsc);
@@ -743,6 +858,9 @@
             } catch (e) { console.warn(e); return null; }
         }
 
+        // ================================================================
+        // PLAY CHORD
+        // ================================================================
         function playChord(freqs, duration = 0.8) {
             try {
                 const ctx = initAudio();
@@ -753,10 +871,17 @@
                     const mainOsc = oscData.mainOsc;
                     const gain = ctx.createGain();
 
-                    gain.gain.setValueAtTime(0.001, ctx.currentTime);
-                    gain.gain.linearRampToValueAtTime(0.25, ctx.currentTime + 0.03);
-                    gain.gain.exponentialRampToValueAtTime(0.1, ctx.currentTime + 0.2);
-                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+                    const now = ctx.currentTime;
+                    gain.gain.setValueAtTime(0.001, now);
+                    
+                    let attack = 0.03, decay = 0.15, sustain = 0.2, release = 0.01;
+                    if (type === 'piano') { attack = 0.01; decay = 0.3; sustain = 0.15; release = 0.2; }
+                    else if (type === 'flute') { attack = 0.05; decay = 0.2; sustain = 0.3; release = 0.05; }
+                    else if (type === 'trumpet') { attack = 0.02; decay = 0.1; sustain = 0.35; release = 0.05; }
+                    
+                    gain.gain.linearRampToValueAtTime(0.25, now + attack);
+                    gain.gain.exponentialRampToValueAtTime(sustain, now + attack + decay);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + duration - release);
 
                     mainOsc.connect(gain);
                     gain.connect(dryGain);
@@ -769,17 +894,36 @@
 
                     if (oscData.extraOsc) {
                         const eg = ctx.createGain();
-                        eg.gain.setValueAtTime(0.3, ctx.currentTime);
+                        let extraVol = 0.3;
+                        if (type === 'piano') extraVol = 0.08;
+                        else if (type === 'flute') extraVol = 0.15;
+                        else if (type === 'trumpet') extraVol = 0.4;
+                        eg.gain.setValueAtTime(extraVol, now);
                         oscData.extraOsc.connect(eg);
                         eg.connect(gain);
-                        oscData.extraOsc.start(ctx.currentTime);
-                        oscData.extraOsc.stop(ctx.currentTime + duration);
+                        oscData.extraOsc.start(now);
+                        oscData.extraOsc.stop(now + duration);
                         activeOscillators.push(oscData.extraOsc);
                     }
+                    
+                    if (oscData.extraOsc2) {
+                        const eg2 = ctx.createGain();
+                        let extraVol2 = 0.04;
+                        if (type === 'piano') extraVol2 = 0.04;
+                        else if (type === 'trumpet') extraVol2 = 0.1;
+                        eg2.gain.setValueAtTime(extraVol2, now);
+                        oscData.extraOsc2.connect(eg2);
+                        eg2.connect(gain);
+                        oscData.extraOsc2.start(now);
+                        oscData.extraOsc2.stop(now + duration);
+                        activeOscillators.push(oscData.extraOsc2);
+                    }
 
-                    mainOsc.start(ctx.currentTime);
-                    mainOsc.stop(ctx.currentTime + duration);
+                    mainOsc.start(now);
+                    mainOsc.stop(now + duration);
                     activeOscillators.push(mainOsc);
+                    if (oscData.extraOsc) activeOscillators.push(oscData.extraOsc);
+                    if (oscData.extraOsc2) activeOscillators.push(oscData.extraOsc2);
                 });
                 return true;
             } catch (e) { console.warn(e); return false; }
@@ -982,7 +1126,11 @@
 
         instrumentSelector.addEventListener('change', function() {
             currentInstrument = this.value;
-            statusDisplay.innerHTML = `🎹 Instrumen berubah ke: ${this.options[this.selectedIndex].text}`;
+            const names = {
+                sine: 'Sine', square: 'Square', sawtooth: 'Sawtooth', triangle: 'Triangle',
+                organ: 'Organ', piano: '🎹 Piano', flute: '🎵 Flute', trumpet: '🎺 Trumpet'
+            };
+            statusDisplay.innerHTML = `🎹 Instrumen berubah ke: ${names[this.value] || this.value}`;
         });
 
         reverbSlider.addEventListener('input', function() {
@@ -1057,7 +1205,7 @@
             </tbody></table><p style="font-size:0.8rem;color:#888;font-weight:bold;">A4 = 440 Hz (acuan) | Oktaf berikutnya × 3</p>`,
             skala: `<h3>🎹 Skala Mayor (E=1)</h3><p>E - F - G - H - I - J - K - A - B - C - D - E</p><p>Interval: 1 1 1 1 ½ 1 1 1 1 1 ½</p><h3>🎹 Skala Minor (A=1)</h3><p>A - B - C - D - E - F - G - H - I - J - K - A</p><p>Interval: 1 1 1 ½ 1 1 1 1 ½ 1 1</p>`,
             chord: `<h3>🎵 Akord</h3><table class="freq-table"><thead><tr><th>Root</th><th>Akord</th></tr></thead><tbody>${Object.entries(CHORD_DICT).map(([root,notes]) => `<tr><td style="color:#ffd700;">${root}</td><td>${notes.join(' + ')}</td></tr>`).join('')}</tbody></table>`,
-            tentang: `<h3>📖 Tentang Aplikasi</h3><p>Berdasarkan karya tulis Sukma Riadi Pakpahan, SST.</p><p><b>Fitur:</b> 5 instrumen, Reverb, Delay, Amplifier, 3/4/5 oktaf, Akord.</p><p><b>Instrumen:</b> Sine, Square, Sawtooth, Triangle, Organ.</p><p><b>Amplifier:</b> Mengatur volume keseluruhan (0.5x hingga 3.0x).</p><p><b>Sistem:</b> 12-TET 20 Nada per Oktaf | A4 = 440 Hz</p>`
+            tentang: `<h3>📖 Tentang Aplikasi</h3><p>Berdasarkan karya tulis Sukma Riadi Pakpahan, SST.</p><p><b>Fitur:</b> 8 instrumen (Sine, Square, Sawtooth, Triangle, Organ, Piano, Flute, Trumpet), Reverb, Delay, Amplifier, 3/4/5 oktaf, Akord.</p><p><b>Amplifier:</b> Mengatur volume keseluruhan (0.5x hingga 3.0x).</p><p><b>Sistem:</b> 12-TET 20 Nada per Oktaf | A4 = 440 Hz</p>`
         };
 
         function renderTab(tabId) {
@@ -1089,6 +1237,7 @@
             ampVal.textContent = '1.0x';
             console.log('🎵 Aplikasi 12-TET siap!');
             console.log('📊 A4 = 440 Hz (acuan)');
+            console.log('🎹 Instrumen: Sine, Square, Sawtooth, Triangle, Organ, Piano, Flute, Trumpet');
         });
     </script>
 </body>
