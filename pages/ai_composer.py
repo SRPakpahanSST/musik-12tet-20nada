@@ -1,15 +1,10 @@
 import streamlit as st
 
-st.set_page_config(
-    page_title="AI Composer - Musik 12-TET",
-    page_icon="🎵",
-    layout="wide"
-)
+st.set_page_config(page_title="AI Composer", page_icon="🎵", layout="wide")
 
 st.title("🎵 AI Music Composer")
 st.markdown("*Ciptakan melodi otomatis dengan kecerdasan buatan*")
 
-# Baca file HTML
 try:
     with open("ai_composer.html", "r", encoding="utf-8") as f:
         html = f.read()
