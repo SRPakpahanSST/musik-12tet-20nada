@@ -17,7 +17,7 @@
             padding: 20px;
         }
         .container {
-            max-width: 800px;
+            max-width: 900px;
             width: 100%;
             background: #16213e;
             border-radius: 20px;
@@ -121,13 +121,17 @@
         }
         .transcribed-notes {
             font-family: monospace;
-            font-size: 1.2rem;
+            font-size: 1rem;
             color: #ffd700;
             background: #111;
             padding: 15px;
             border-radius: 8px;
             margin-bottom: 15px;
             min-height: 40px;
+            max-height: 300px;
+            overflow-y: auto;
+            word-wrap: break-word;
+            line-height: 1.8;
         }
         .btn {
             padding: 10px 25px;
@@ -147,7 +151,13 @@
         .btn-danger { background: #a04040; color: #fff; }
         .btn-danger:hover { background: #c05050; }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .btn-group { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px; justify-content: center; }
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+            justify-content: center;
+        }
         .error-message {
             background: #2a0d0d;
             border: 1px solid #e94560;
@@ -174,9 +184,32 @@
             width: 0%;
             transition: width 0.3s;
         }
-        .warning {
-            color: #f5a623;
+        .control-row {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .control-row label {
+            color: #aaa;
+            font-size: 0.85rem;
+        }
+        .control-row select {
+            background: #0f3460;
+            color: #fff;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            outline: none;
+        }
+        .info-text {
+            color: #888;
             font-size: 0.8rem;
+            text-align: center;
             margin-top: 5px;
         }
         @media (max-width:600px) { .container { padding: 15px; } }
@@ -185,7 +218,7 @@
 <body>
     <div class="container">
         <h1>🎤 AI Audio Transcriber</h1>
-        <p class="subtitle">Bersenandung atau mainkan melodi (maks. 5 menit)</p>
+        <p class="subtitle">Rekam lagu atau suara, AI akan menuliskannya</p>
 
         <div class="error-message" id="errorMessage">
             ⚠️ <span id="errorText">Terjadi kesalahan. Pastikan browser mengizinkan akses mikrofon.</span>
@@ -202,6 +235,22 @@
             </div>
         </div>
 
+        <!-- Kontrol -->
+        <div class="control-row">
+            <label>🎯 Mode:</label>
+            <select id="modeSelect">
+                <option value="vocal">Vokal (200-800 Hz)</option>
+                <option value="instrument">Instrumental (80-1200 Hz)</option>
+                <option value="full">Full Range (60-1800 Hz)</option>
+            </select>
+            <label>🎚️ Sensitivitas:</label>
+            <select id="sensitivitySelect">
+                <option value="0.015">Tinggi (lebih sensitif)</option>
+                <option value="0.02" selected>Sedang</option>
+                <option value="0.03">Rendah (kurang noise)</option>
+            </select>
+        </div>
+
         <div class="status" id="status">🔴 Klik tombol mikrofon untuk mulai merekam (maks. 5 menit)</div>
 
         <div class="btn-group">
@@ -213,15 +262,17 @@
         <div class="result-area" id="resultArea">
             <h3>📝 Hasil Transkripsi</h3>
             <div class="transcribed-notes" id="transcribedDisplay">-</div>
-            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <div style="display:flex; gap:20px; flex-wrap:wrap; justify-content:center;">
                 <span style="color:#888;font-size:0.85rem;" id="transcribeInfo">Jumlah nada: 0</span>
+                <span style="color:#888;font-size:0.85rem;" id="durationInfo">Durasi rekaman: 0 detik</span>
             </div>
+            <div class="info-text">💡 Jika hasil sedikit, coba mode "Vokal" dan rekam hanya melodi utama.</div>
         </div>
     </div>
 
     <script>
         // ================================================================
-        // DATA FREKUENSI (sama seperti sebelumnya)
+        // DATA FREKUENSI 12-TET
         // ================================================================
         const FREQ_MAP = {
             'E3':203.924,'F3':227.604,'G3':254.034,'H3':283.533,
@@ -248,8 +299,9 @@
         let recordedAudioBuffer = null;
         let transcribedNotes = [];
         let isPlaying = false;
-        const maxRecordSeconds = 300; // 5 MENIT
+        const maxRecordSeconds = 300;
 
+        // DOM refs
         const recordBtn = document.getElementById('recordBtn');
         const timerDisplay = document.getElementById('timerDisplay');
         const statusEl = document.getElementById('status');
@@ -259,6 +311,7 @@
         const resultArea = document.getElementById('resultArea');
         const transcribedDisplay = document.getElementById('transcribedDisplay');
         const transcribeInfo = document.getElementById('transcribeInfo');
+        const durationInfo = document.getElementById('durationInfo');
         const recordArea = document.getElementById('recordArea');
         const canvas = document.getElementById('waveformCanvas');
         const ctx = canvas.getContext('2d');
@@ -266,7 +319,12 @@
         const errorText = document.getElementById('errorText');
         const progressBar = document.getElementById('progressBar');
         const progressFill = document.getElementById('progressFill');
+        const modeSelect = document.getElementById('modeSelect');
+        const sensitivitySelect = document.getElementById('sensitivitySelect');
 
+        // ================================================================
+        // UTILITY
+        // ================================================================
         function resizeCanvas() {
             const rect = canvas.parentElement.getBoundingClientRect();
             canvas.width = rect.width || 600;
@@ -275,9 +333,6 @@
         resizeCanvas();
         window.addEventListener('resize', resizeCanvas);
 
-        // ================================================================
-        // AUDIO ENGINE
-        // ================================================================
         function initAudio() {
             if (!audioCtx) {
                 audioCtx = new(window.AudioContext || window.webkitAudioContext)();
@@ -286,7 +341,7 @@
             return audioCtx;
         }
 
-        function playNote(freq, duration = 0.4) {
+        function playNote(freq, duration = 0.3) {
             try {
                 const ctx = initAudio();
                 const osc = ctx.createOscillator();
@@ -344,20 +399,17 @@
                 isRecording = true;
                 recordArea.classList.add('recording');
                 recordBtn.textContent = '⏹';
-                statusEl.textContent = `🔴 Merekam... (maks. 5 menit)`;
+                statusEl.textContent = '🔴 Merekam... (maks. 5 menit)';
                 transcribeBtn.disabled = true;
                 seconds = 0;
-                timerDisplay.textContent = `00:00 / 05:00`;
+                timerDisplay.textContent = '00:00 / 05:00';
                 if (recordTimer) clearInterval(recordTimer);
                 recordTimer = setInterval(() => {
                     seconds++;
                     const m = String(Math.floor(seconds/60)).padStart(2,'0');
                     const s = String(seconds%60).padStart(2,'0');
-                    const maxM = String(Math.floor(maxRecordSeconds/60)).padStart(2,'0');
-                    const maxS = String(maxRecordSeconds%60).padStart(2,'0');
-                    timerDisplay.textContent = `${m}:${s} / ${maxM}:${maxS}`;
+                    timerDisplay.textContent = `${m}:${s} / 05:00`;
                     
-                    // Update waveform
                     if (analyser) {
                         analyser.getByteTimeDomainData(dataArray);
                         ctx.fillStyle = '#0d0d1a';
@@ -377,7 +429,6 @@
                         ctx.stroke();
                     }
 
-                    // Auto-stop jika mencapai batas
                     if (seconds >= maxRecordSeconds) {
                         stopRecording();
                         statusEl.textContent = '⏹ Rekaman otomatis berhenti (maks. 5 menit)';
@@ -387,9 +438,9 @@
             } catch (e) {
                 console.error('Mikrofon error:', e);
                 let msg = 'Gagal akses mikrofon. ';
-                if (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError') {
-                    msg += 'Izin mikrofon ditolak. Berikan izin mikrofon di pengaturan browser.';
-                } else if (e.name === 'NotFoundError' || e.name === 'DevicesNotFoundError') {
+                if (e.name === 'NotAllowedError') {
+                    msg += 'Izin mikrofon ditolak. Berikan izin di pengaturan browser.';
+                } else if (e.name === 'NotFoundError') {
                     msg += 'Tidak ada mikrofon terdeteksi.';
                 } else {
                     msg += 'Error: ' + e.message;
@@ -433,7 +484,7 @@
         }
 
         // ================================================================
-        // AI TRANSCRIBE (dengan progress bar)
+        // AI TRANSCRIBE (dengan output semua nada)
         // ================================================================
         function findClosestNote(freq) {
             let closest = NOTE_FREQS[0];
@@ -461,12 +512,22 @@
             transcribeBtn.disabled = true;
             progressBar.classList.add('show');
 
-            // Gunakan setTimeout agar UI update terlihat
             setTimeout(() => {
                 const data = recordedAudioBuffer.getChannelData(0);
                 const sampleRate = recordedAudioBuffer.sampleRate;
-                // Optimasi untuk rekaman panjang: window size 40ms
-                const windowSize = Math.floor(sampleRate * 0.04);
+                const duration = data.length / sampleRate;
+                durationInfo.textContent = `Durasi rekaman: ${duration.toFixed(1)} detik`;
+
+                // Ambil mode dan sensitivitas
+                const mode = modeSelect.value;
+                const sensitivity = parseFloat(sensitivitySelect.value);
+                
+                // Rentang frekuensi berdasarkan mode
+                let minFreq = 60, maxFreq = 1800;
+                if (mode === 'vocal') { minFreq = 200; maxFreq = 800; }
+                else if (mode === 'instrument') { minFreq = 80; maxFreq = 1200; }
+
+                const windowSize = Math.floor(sampleRate * 0.05);
                 const hopSize = Math.floor(windowSize * 0.5);
                 const detected = [];
                 const totalSteps = Math.floor((data.length - windowSize) / hopSize);
@@ -474,25 +535,22 @@
 
                 for (let start=0; start < data.length - windowSize; start += hopSize) {
                     stepCount++;
-                    // Update progress tiap 5% step
                     if (stepCount % Math.floor(totalSteps/20) === 0) {
                         const pct = Math.min(100, Math.round((stepCount / totalSteps) * 100));
                         progressFill.style.width = pct + '%';
                     }
 
-                    // RMS
                     let sum = 0;
                     for (let i=0; i<windowSize; i++) {
                         sum += Math.abs(data[start + i]);
                     }
                     const rms = Math.sqrt(sum / windowSize);
-                    if (rms < 0.01) continue; // threshold lebih tinggi
+                    if (rms < sensitivity) continue;
 
-                    // Autocorrelation
                     let maxCorr = 0;
                     let pitch = 0;
-                    const minLag = Math.floor(sampleRate / 1500);
-                    const maxLag = Math.floor(sampleRate / 60);
+                    const minLag = Math.floor(sampleRate / maxFreq);
+                    const maxLag = Math.floor(sampleRate / minFreq);
                     for (let lag = minLag; lag < maxLag; lag++) {
                         let corr = 0;
                         for (let i=0; i<windowSize-lag; i++) {
@@ -503,13 +561,14 @@
                             pitch = sampleRate / lag;
                         }
                     }
-                    if (pitch > 60 && pitch < 1800) {
+                    if (pitch > minFreq && pitch < maxFreq) {
                         const note = findClosestNote(pitch);
                         if (note) detected.push(note);
                     }
                 }
 
-                // Simplify
+                // Tampilkan SEMUA nada yang terdeteksi (tanpa batas 20)
+                // Tapi simplifikasi: ambil unique notes berurutan
                 const uniqueNotes = [];
                 let lastNote = null;
                 for (let n of detected) {
@@ -520,25 +579,22 @@
                 }
                 if (lastNote) uniqueNotes.push(lastNote);
 
-                let result = uniqueNotes;
-                if (result.length > 20) {
-                    const step = Math.floor(result.length / 20);
-                    result = result.filter((_, i) => i % step === 0).slice(0, 20);
-                }
-
-                transcribedNotes = result;
-                if (result.length === 0) {
-                    transcribedDisplay.textContent = '(Tidak ada nada terdeteksi. Coba rekam dengan suara lebih jelas)';
+                transcribedNotes = uniqueNotes;
+                if (uniqueNotes.length === 0) {
+                    transcribedDisplay.textContent = '(Tidak ada nada terdeteksi. Coba mode yang berbeda atau periksa rekaman)';
                     transcribeInfo.textContent = 'Jumlah nada: 0';
                 } else {
-                    const names = result.map(n => n.name).join(' → ');
+                    const names = uniqueNotes.map(n => n.name).join(' → ');
+                    // Tampilkan semua nada (bisa panjang)
                     transcribedDisplay.textContent = names;
-                    transcribeInfo.textContent = `Jumlah nada: ${result.length}`;
+                    transcribeInfo.textContent = `Jumlah nada: ${uniqueNotes.length}`;
                     resultArea.classList.add('show');
                     playResultBtn.disabled = false;
+                    // Scroll ke atas hasil
+                    transcribedDisplay.scrollTop = 0;
                 }
 
-                statusEl.textContent = `✅ Transkripsi selesai! ${result.length} nada ditemukan.`;
+                statusEl.textContent = `✅ Transkripsi selesai! ${uniqueNotes.length} nada ditemukan.`;
                 statusEl.className = 'status';
                 transcribeBtn.disabled = false;
                 progressBar.classList.remove('show');
@@ -558,7 +614,7 @@
             statusEl.textContent = '🎵 Memutar hasil transkripsi...';
 
             let delay = 0;
-            const duration = 0.3;
+            const duration = 0.25;
             transcribedNotes.forEach((note, i) => {
                 setTimeout(() => {
                     if (!isPlaying) return;
@@ -592,6 +648,7 @@
             transcribedNotes = [];
             transcribedDisplay.textContent = '-';
             transcribeInfo.textContent = 'Jumlah nada: 0';
+            durationInfo.textContent = 'Durasi rekaman: 0 detik';
             resultArea.classList.remove('show');
             playResultBtn.disabled = true;
             transcribeBtn.disabled = true;
@@ -619,7 +676,6 @@
         ctx.textAlign = 'center';
         ctx.fillText('Tunggu rekaman...', canvas.width/2, canvas.height/2 + 5);
 
-        // Cek izin awal
         if (navigator.permissions && navigator.permissions.query) {
             navigator.permissions.query({ name: 'microphone' }).then(result => {
                 if (result.state === 'denied') {
