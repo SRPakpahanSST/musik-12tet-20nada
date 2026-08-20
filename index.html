@@ -473,21 +473,21 @@
 <body>
 
     <!-- ============================================================
-    SPLASH SCREEN
+    SPLASH SCREEN (dengan fallback path ganda)
     ============================================================ -->
     <div id="splash">
-        <!-- Gambar splash dengan ekstensi .png -->
-        <img 
-            class="splash-image" 
+        <!-- Coba di assets/images/ dulu, jika gagal akan di-retry dengan root -->
+        <img
+            class="splash-image"
             id="splashImg"
-            src="assets/images/img1.png" 
-            alt="Splash" 
-            onerror="handleImageError()"
+            src="assets/images/img1.png"
+            alt="Splash"
+            onerror="tryRootPath()"
         />
         <!-- Fallback teks jika gambar gagal dimuat -->
         <div class="splash-fallback" id="splashFallback">
             🖼️ Gambar tidak ditemukan<br />
-            <span style="font-size:0.8rem;color:#666;">Pastikan file <strong>assets/images/img1.png</strong> ada</span>
+            <span style="font-size:0.8rem;color:#666;">Pastikan file <strong>assets/images/img1.png</strong> atau <strong>img1.png</strong> di root ada</span>
         </div>
 
         <div class="splash-title">🎵 PMD Musik 12 TET</div>
@@ -590,24 +590,42 @@
 
     <script>
         // ================================================================
-        // SPLASH SCREEN LOGIC + FALLBACK GAMBAR (dengan .png)
+        // FALLBACK PATH GANDA UNTUK GAMBAR SPLASH
+        // ================================================================
+
+        const splashImg = document.getElementById('splashImg');
+        const splashFallback = document.getElementById('splashFallback');
+        let retried = false;
+
+        function tryRootPath() {
+            if (retried) {
+                // Jika sudah dicoba dan tetap gagal, tampilkan fallback
+                splashImg.classList.add('error');
+                splashFallback.classList.add('show');
+                console.error('❌ Gambar tidak ditemukan di assets/images/ maupun root.');
+                return;
+            }
+            retried = true;
+            console.warn('⚠️ Gambar gagal di assets/images/, mencoba root...');
+            splashImg.src = 'img1.png'; // coba di root
+            // Jika masih gagal, fungsi ini akan dipanggil lagi dengan retried=true
+        }
+
+        // Event jika gambar berhasil dimuat (baik dari path pertama atau kedua)
+        splashImg.addEventListener('load', () => {
+            console.log('✅ Gambar splash berhasil dimuat dari:', splashImg.src);
+            // Hapus fallback jika sebelumnya muncul
+            splashFallback.classList.remove('show');
+            splashImg.classList.remove('error');
+        });
+
+        // ================================================================
+        // SPLASH LOGIC
         // ================================================================
 
         const splash = document.getElementById('splash');
         const app = document.getElementById('app');
         const startBtn = document.getElementById('startBtn');
-        const splashImg = document.getElementById('splashImg');
-        const splashFallback = document.getElementById('splashFallback');
-
-        function handleImageError() {
-            console.warn('⚠️ Gambar splash gagal dimuat: assets/images/img1.png');
-            splashImg.classList.add('error');
-            splashFallback.classList.add('show');
-        }
-
-        splashImg.addEventListener('load', () => {
-            console.log('✅ Gambar splash berhasil dimuat!');
-        });
 
         startBtn.addEventListener('click', () => {
             splash.classList.add('hidden');
@@ -616,7 +634,7 @@
         });
 
         // ================================================================
-        // DATA FREKUENSI (sama seperti sebelumnya)
+        // DATA FREKUENSI 12-TET (20 NADA PER OKTAF)
         // ================================================================
 
         const FREQ_MAP = {
@@ -643,6 +661,10 @@
             'B#6': 13259.544, 'C6': 14008.275, 'C#6': 14799.285, 'D6': 15634.959
         };
 
+        // ================================================================
+        // CHORD DICTIONARY
+        // ================================================================
+
         const CHORD_DICT = {
             "A2": ["A2", "C#3", "E3"],
             "B2": ["B2", "D#3", "F#3"],
@@ -658,59 +680,80 @@
             "G#3": ["G#3", "A#3", "D4"]
         };
 
+        // ================================================================
+        // SKALA
+        // ================================================================
+
         const SCALE_MAYOR = ['E', 'F', 'G', 'H', 'I', 'J', 'K', 'A', 'B', 'C', 'D', 'E'];
         const SCALE_MINOR = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'A'];
 
         // ================================================================
-        // AUDIO ENGINE (sama seperti sebelumnya, disingkat)
+        // AUDIO ENGINE DENGAN MASTER GAIN (AMPLIFIER)
         // ================================================================
 
         let audioCtx = null;
         let activeOscillators = [];
         let isPlaying = false;
         let playMode = 'single';
+
         let masterGain = null;
-        let reverbNode = null, delayNode = null, delayFeedback = null;
-        let dryGain = null, wetGain = null, delayDryGain = null, delayWetGain = null;
+        let reverbNode = null;
+        let delayNode = null;
+        let delayFeedback = null;
+        let dryGain = null;
+        let wetGain = null;
+        let delayDryGain = null;
+        let delayWetGain = null;
+
         let currentInstrument = 'organ';
-        let reverbMix = 0.2, delayMix = 0.0;
+        let reverbMix = 0.2;
+        let delayMix = 0.0;
+        let delayFeedbackValue = 0.3;
 
         function initAudio() {
             if (!audioCtx) {
                 audioCtx = new(window.AudioContext || window.webkitAudioContext)();
                 setupEffects();
             }
-            if (audioCtx.state === 'suspended') audioCtx.resume();
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
             return audioCtx;
         }
 
         function setupEffects() {
             if (!audioCtx) return;
+
             masterGain = audioCtx.createGain();
             masterGain.gain.setValueAtTime(1.0, audioCtx.currentTime);
 
+            // Reverb
             reverbNode = audioCtx.createConvolver();
-            const impulseLength = 2.0, sampleRate = audioCtx.sampleRate;
+            const impulseLength = 2.0;
+            const sampleRate = audioCtx.sampleRate;
             const numSamples = Math.floor(impulseLength * sampleRate);
             const impulse = audioCtx.createBuffer(2, numSamples, sampleRate);
-            for (let ch = 0; ch < 2; ch++) {
-                const data = impulse.getChannelData(ch);
+            for (let channel = 0; channel < 2; channel++) {
+                const channelData = impulse.getChannelData(channel);
                 for (let i = 0; i < numSamples; i++) {
-                    data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (sampleRate * 0.3));
+                    const decay = Math.exp(-i / (sampleRate * 0.3));
+                    channelData[i] = (Math.random() * 2 - 1) * decay;
                 }
             }
             reverbNode.buffer = impulse;
 
+            // Delay
             delayNode = audioCtx.createDelay(2.0);
             delayNode.delayTime.setValueAtTime(0.3, audioCtx.currentTime);
             delayFeedback = audioCtx.createGain();
-            delayFeedback.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            delayFeedback.gain.setValueAtTime(delayFeedbackValue, audioCtx.currentTime);
 
             dryGain = audioCtx.createGain();
             wetGain = audioCtx.createGain();
             delayDryGain = audioCtx.createGain();
             delayWetGain = audioCtx.createGain();
 
+            // Routing ke masterGain
             dryGain.connect(masterGain);
             wetGain.connect(reverbNode);
             reverbNode.connect(masterGain);
@@ -723,21 +766,24 @@
 
             updateReverbMix(reverbMix);
             updateDelayMix(delayMix);
+
             const ampSlider = document.getElementById('ampSlider');
             if (ampSlider) {
-                masterGain.gain.setValueAtTime(parseInt(ampSlider.value)/100, audioCtx.currentTime);
+                const val = parseInt(ampSlider.value) / 100;
+                masterGain.gain.setValueAtTime(val, audioCtx.currentTime);
             }
         }
 
-        function updateReverbMix(v) {
-            reverbMix = Math.max(0, Math.min(1, v));
+        function updateReverbMix(value) {
+            reverbMix = Math.max(0, Math.min(1, value));
             if (dryGain && wetGain) {
                 dryGain.gain.setValueAtTime(1 - reverbMix, audioCtx.currentTime);
                 wetGain.gain.setValueAtTime(reverbMix, audioCtx.currentTime);
             }
         }
-        function updateDelayMix(v) {
-            delayMix = Math.max(0, Math.min(1, v));
+
+        function updateDelayMix(value) {
+            delayMix = Math.max(0, Math.min(1, value));
             if (delayDryGain && delayWetGain) {
                 delayDryGain.gain.setValueAtTime(1 - delayMix, audioCtx.currentTime);
                 delayWetGain.gain.setValueAtTime(delayMix, audioCtx.currentTime);
@@ -746,8 +792,9 @@
 
         function createInstrumentOscillator(freq, type) {
             const ctx = audioCtx;
+            let osc;
             if (type === 'organ') {
-                const osc = ctx.createOscillator();
+                osc = ctx.createOscillator();
                 osc.type = 'sawtooth';
                 const osc2 = ctx.createOscillator();
                 osc2.type = 'square';
@@ -757,7 +804,7 @@
                 osc2.connect(gain2);
                 return { mainOsc: osc, extraOsc: osc2, extraGain: gain2 };
             } else {
-                const osc = ctx.createOscillator();
+                osc = ctx.createOscillator();
                 osc.type = type;
                 return { mainOsc: osc };
             }
@@ -770,6 +817,7 @@
                 const oscData = createInstrumentOscillator(freq, type);
                 const mainOsc = oscData.mainOsc;
                 const gain = ctx.createGain();
+
                 gain.gain.setValueAtTime(0.001, ctx.currentTime);
                 gain.gain.linearRampToValueAtTime(0.4, ctx.currentTime + 0.03);
                 gain.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime + 0.15);
@@ -778,39 +826,45 @@
                 mainOsc.connect(gain);
                 gain.connect(dryGain);
                 gain.connect(wetGain);
-                const delayInput = ctx.createGain();
-                gain.connect(delayInput);
-                delayInput.connect(delayNode);
-                delayInput.connect(delayDryGain);
+
+                const delayInputGain = ctx.createGain();
+                gain.connect(delayInputGain);
+                delayInputGain.connect(delayNode);
+                delayInputGain.connect(delayDryGain);
 
                 if (oscData.extraOsc) {
-                    const eg = ctx.createGain();
-                    eg.gain.setValueAtTime(0.3, ctx.currentTime);
-                    oscData.extraOsc.connect(eg);
-                    eg.connect(gain);
+                    const extraGain = ctx.createGain();
+                    extraGain.gain.setValueAtTime(0.3, ctx.currentTime);
+                    oscData.extraOsc.connect(extraGain);
+                    extraGain.connect(gain);
                     oscData.extraOsc.start(ctx.currentTime);
                     oscData.extraOsc.stop(ctx.currentTime + duration);
                     activeOscillators.push(oscData.extraOsc);
                 }
+
                 mainOsc.start(ctx.currentTime);
                 mainOsc.stop(ctx.currentTime + duration);
                 activeOscillators.push(mainOsc);
                 if (oscData.extraOsc) activeOscillators.push(oscData.extraOsc);
+
                 mainOsc.onended = () => {
                     const idx = activeOscillators.indexOf(mainOsc);
                     if (idx > -1) activeOscillators.splice(idx, 1);
                 };
                 return mainOsc;
-            } catch (e) { console.warn(e); return null; }
+            } catch (e) {
+                console.warn('Audio error:', e);
+                return null;
+            }
         }
 
-        function playChord(freqs, duration = 0.8) {
+        function playChord(frequencies, duration = 0.8) {
             try {
                 const ctx = initAudio();
                 const type = currentInstrument;
-                freqs.forEach(f => {
-                    if (f <= 0) return;
-                    const oscData = createInstrumentOscillator(f, type);
+                frequencies.forEach((freq) => {
+                    if (freq <= 0) return;
+                    const oscData = createInstrumentOscillator(freq, type);
                     const mainOsc = oscData.mainOsc;
                     const gain = ctx.createGain();
                     gain.gain.setValueAtTime(0.001, ctx.currentTime);
@@ -820,15 +874,15 @@
                     mainOsc.connect(gain);
                     gain.connect(dryGain);
                     gain.connect(wetGain);
-                    const delayInput = ctx.createGain();
-                    gain.connect(delayInput);
-                    delayInput.connect(delayNode);
-                    delayInput.connect(delayDryGain);
+                    const delayInputGain = ctx.createGain();
+                    gain.connect(delayInputGain);
+                    delayInputGain.connect(delayNode);
+                    delayInputGain.connect(delayDryGain);
                     if (oscData.extraOsc) {
-                        const eg = ctx.createGain();
-                        eg.gain.setValueAtTime(0.3, ctx.currentTime);
-                        oscData.extraOsc.connect(eg);
-                        eg.connect(gain);
+                        const extraGain = ctx.createGain();
+                        extraGain.gain.setValueAtTime(0.3, ctx.currentTime);
+                        oscData.extraOsc.connect(extraGain);
+                        extraGain.connect(gain);
                         oscData.extraOsc.start(ctx.currentTime);
                         oscData.extraOsc.stop(ctx.currentTime + duration);
                         activeOscillators.push(oscData.extraOsc);
@@ -838,34 +892,41 @@
                     activeOscillators.push(mainOsc);
                 });
                 return true;
-            } catch (e) { console.warn(e); return false; }
+            } catch (e) {
+                console.warn('Chord error:', e);
+                return false;
+            }
         }
 
         function stopAllSounds() {
-            activeOscillators.forEach(osc => { try { osc.stop(); } catch(e) {} });
+            activeOscillators.forEach(osc => { try { osc.stop(); } catch (e) {} });
             activeOscillators = [];
             isPlaying = false;
         }
 
         // ================================================================
-        // KEYBOARD GENERATION
+        // GENERATE NOTE SEQUENCE
         // ================================================================
 
         function generateNoteSequence(octaveCount) {
             const seq = [];
-            const octave2 = ['C2','C#2','D2'];
+            const octave2 = ['C2', 'C#2', 'D2'];
             octave2.forEach(n => seq.push({ note: n, isBlack: n.includes('#') }));
             for (let o = 3; o <= 2 + octaveCount - 1; o++) {
                 const notes = [
-                    'E'+o, 'E#'+o, 'F'+o, 'F#'+o, 'G'+o, 'G#'+o,
-                    'H'+o, 'H#'+o, 'I'+o, 'J'+o, 'J#'+o,
-                    'K'+o, 'K#'+o, 'A'+o, 'A#'+o,
-                    'B'+o, 'B#'+o, 'C'+o, 'C#'+o, 'D'+o
+                    'E' + o, 'E#' + o, 'F' + o, 'F#' + o, 'G' + o, 'G#' + o,
+                    'H' + o, 'H#' + o, 'I' + o, 'J' + o, 'J#' + o,
+                    'K' + o, 'K#' + o, 'A' + o, 'A#' + o,
+                    'B' + o, 'B#' + o, 'C' + o, 'C#' + o, 'D' + o
                 ];
                 notes.forEach(n => seq.push({ note: n, isBlack: n.includes('#') }));
             }
             return seq;
         }
+
+        // ================================================================
+        // MEMBANGUN KEYBOARD
+        // ================================================================
 
         const container = document.getElementById('keyboardContainer');
         const statusDisplay = document.getElementById('statusDisplay');
@@ -880,17 +941,27 @@
         const delayVal = document.getElementById('delayVal');
         const ampSlider = document.getElementById('ampSlider');
         const ampVal = document.getElementById('ampVal');
+
         let keyElements = {};
 
         function buildKeyboard(octaveCount) {
             container.innerHTML = '';
             keyElements = {};
+
             const noteSeq = generateNoteSequence(octaveCount);
-            const whiteWidth = 32, whiteHeight = 170, blackWidth = 20, blackHeight = 105, startX = 10, yWhite = 10;
+            const whiteWidth = 32;
+            const whiteHeight = 170;
+            const blackWidth = 20;
+            const blackHeight = 105;
+            const startX = 10;
+            const yWhite = 10;
+
             let whiteIndex = 0;
 
+            // Putih
             for (let i = 0; i < noteSeq.length; i++) {
                 const { note, isBlack } = noteSeq[i];
+                const freq = FREQ_MAP[note] || 0;
                 if (!isBlack) {
                     const x = startX + whiteIndex * whiteWidth;
                     const key = document.createElement('div');
@@ -904,18 +975,25 @@
                     label.textContent = note;
                     key.appendChild(label);
                     key.dataset.note = note;
-                    key.dataset.freq = FREQ_MAP[note] || 0;
-                    key.addEventListener('mousedown', (e) => { e.preventDefault(); handleKeyPress(note); });
+                    key.dataset.freq = freq;
+                    key.addEventListener('mousedown', (e) => {
+                        e.preventDefault();
+                        handleKeyPress(note);
+                    });
                     container.appendChild(key);
                     keyElements[note] = key;
                     whiteIndex++;
                 }
             }
+
+            // Hitam
             whiteIndex = 0;
             for (let i = 0; i < noteSeq.length; i++) {
                 const { note, isBlack } = noteSeq[i];
-                if (!isBlack) whiteIndex++;
-                else {
+                const freq = FREQ_MAP[note] || 0;
+                if (!isBlack) {
+                    whiteIndex++;
+                } else {
                     const x = startX + (whiteIndex - 1) * whiteWidth + whiteWidth - 10;
                     const key = document.createElement('div');
                     key.className = 'key key-black';
@@ -928,40 +1006,55 @@
                     label.textContent = note;
                     key.appendChild(label);
                     key.dataset.note = note;
-                    key.dataset.freq = FREQ_MAP[note] || 0;
-                    key.addEventListener('mousedown', (e) => { e.preventDefault(); handleKeyPress(note); });
+                    key.dataset.freq = freq;
+                    key.addEventListener('mousedown', (e) => {
+                        e.preventDefault();
+                        handleKeyPress(note);
+                    });
                     container.appendChild(key);
                     keyElements[note] = key;
                 }
             }
+
+            // Label Oktaf
             let posX = startX;
             let octaveGroups = [{ octave: 2, count: 3 }];
-            for (let o = 3; o <= 2 + octaveCount - 1; o++) octaveGroups.push({ octave: o, count: 20 });
-            for (let g of octaveGroups) {
-                const width = g.count * whiteWidth;
+            for (let o = 3; o <= 2 + octaveCount - 1; o++) {
+                octaveGroups.push({ octave: o, count: 20 });
+            }
+            for (let group of octaveGroups) {
+                const width = group.count * whiteWidth;
                 const label = document.createElement('div');
                 label.className = 'octave-label';
                 label.style.left = posX + 'px';
                 label.style.top = (yWhite + whiteHeight + 5) + 'px';
                 label.style.width = width + 'px';
-                label.textContent = `Oktaf ${g.octave}`;
+                label.textContent = `Oktaf ${group.octave}`;
                 container.appendChild(label);
                 posX += width;
             }
+
             const lastOctave = 1 + octaveCount;
-            statusDisplay.innerHTML = `🎹 ${octaveCount} oktaf (C2 sampai D${lastOctave}) — Klik tuts untuk bermain`;
+            statusDisplay.innerHTML =
+                `🎹 ${octaveCount} oktaf (C2 sampai D${lastOctave}) — Klik tuts untuk bermain`;
         }
+
+        // ================================================================
+        // HANDLE KEY PRESS
+        // ================================================================
 
         function handleKeyPress(note) {
             const key = keyElements[note];
             if (!key) return;
             key.classList.add('active');
             setTimeout(() => key.classList.remove('active'), 400);
+
             if (playMode === 'single') {
                 const freq = FREQ_MAP[note];
                 if (freq) {
                     playSingleNote(freq);
-                    statusDisplay.innerHTML = `🎵 Memainkan <span>${note}</span> (${freq.toFixed(2)} Hz) [${currentInstrument}]`;
+                    statusDisplay.innerHTML =
+                        `🎵 Memainkan <span>${note}</span> (${freq.toFixed(2)} Hz) [${currentInstrument}]`;
                 }
             } else {
                 const chordNotes = CHORD_DICT[note];
@@ -969,7 +1062,9 @@
                     const freqs = chordNotes.map(n => FREQ_MAP[n]).filter(f => f > 0);
                     if (freqs.length > 0) {
                         playChord(freqs);
-                        statusDisplay.innerHTML = `🎵 Akord <span>${note}</span>: ${chordNotes.join(' + ')} [${currentInstrument}]`;
+                        const chordStr = chordNotes.join(' + ');
+                        statusDisplay.innerHTML =
+                            `🎵 Akord <span>${note}</span>: ${chordStr} [${currentInstrument}]`;
                     } else {
                         statusDisplay.innerHTML = `⚠️ Akord untuk ${note} tidak valid`;
                     }
@@ -983,37 +1078,51 @@
             }
         }
 
+        // ================================================================
+        // SKALA
+        // ================================================================
+
         function playScale(scaleNotes, octave = 4) {
             stopAllSounds();
             isPlaying = true;
             const notes = [];
             for (let name of scaleNotes) {
-                const full = name + octave;
-                const f = FREQ_MAP[full];
-                if (f) notes.push({ name: full, freq: f });
+                const fullName = name + octave;
+                const freq = FREQ_MAP[fullName];
+                if (freq) notes.push({ name: fullName, freq });
             }
             if (notes.length === 0) return;
+
             let delay = 0;
-            const dur = 0.4, gap = 0.1;
+            const duration = 0.4;
+            const gap = 0.1;
+
             notes.forEach((note, i) => {
                 setTimeout(() => {
                     if (!isPlaying) return;
-                    playSingleNote(note.freq, dur);
+                    playSingleNote(note.freq, duration);
                     const key = keyElements[note.name];
-                    if (key) { key.classList.add('active'); setTimeout(() => key.classList.remove('active'), dur*1000); }
+                    if (key) {
+                        key.classList.add('active');
+                        setTimeout(() => key.classList.remove('active'), duration * 1000);
+                    }
                     statusDisplay.innerHTML = `🎵 ${note.name} (${note.freq.toFixed(2)} Hz)`;
                 }, delay * 1000);
-                delay += dur + gap;
+                delay += duration + gap;
             });
-            setTimeout(() => { isPlaying = false; statusDisplay.innerHTML = '✅ Skala selesai dimainkan'; }, delay*1000 + 300);
+
+            setTimeout(() => {
+                isPlaying = false;
+                statusDisplay.innerHTML = '✅ Skala selesai dimainkan';
+            }, delay * 1000 + 300);
         }
 
         // ================================================================
         // EVENT LISTENERS
         // ================================================================
 
-        document.querySelectorAll('input[name="playMode"]').forEach(r => {
-            r.addEventListener('change', function() {
+        document.querySelectorAll('input[name="playMode"]').forEach((radio) => {
+            radio.addEventListener('change', function() {
                 if (this.checked) {
                     playMode = this.value;
                     document.querySelectorAll('.controls label').forEach(l => l.classList.remove('active-mode'));
@@ -1056,7 +1165,9 @@
         ampSlider.addEventListener('input', function() {
             const val = parseInt(this.value) / 100;
             ampVal.textContent = val.toFixed(1) + 'x';
-            if (masterGain && audioCtx) masterGain.gain.setValueAtTime(val, audioCtx.currentTime);
+            if (masterGain && audioCtx) {
+                masterGain.gain.setValueAtTime(val, audioCtx.currentTime);
+            }
         });
 
         document.getElementById('playMayorBtn').addEventListener('click', () => playScale(SCALE_MAYOR, 4));
@@ -1087,18 +1198,65 @@
         // ================================================================
 
         const tabContent = document.getElementById('tabContent');
+
         const tabData = {
-            teori: `<h3>🎼 Dasar Teoritis</h3><p><b>Rumus:</b> f_n = f_0 × 3^(n/20), f_0 = A#4 = 440 Hz</p><p><b>Oktaf:</b> f_oktaf berikutnya = f_oktaf sebelumnya × 3</p><h3>🎵 Skala Mayor (E=1)</h3><p>E - F - G - H - I - J - K - A - B - C - D - E</p><h3>🎵 Skala Minor (A=1)</h3><p>A - B - C - D - E - F - G - H - I - J - K - A</p>`,
-            freq: `<h3>📊 Frekuensi</h3><table class="freq-table"><thead><tr><th>Nada</th><th>Hz</th><th>Tuts</th></tr></thead><tbody>${Object.entries(FREQ_MAP).slice(0,30).map(([name,freq]) => `<tr><td class="note-name ${name.includes('#')?'black-note':''}">${name}</td><td>${freq.toFixed(2)}</td><td>${name.includes('#')?'⬛':'⬜'}</td></tr>`).join('')}</tbody></table><p style="font-size:0.8rem;color:#888;">... dan seterusnya hingga D6</p>`,
-            skala: `<h3>🎹 Skala Mayor (E=1)</h3><p>E - F - G - H - I - J - K - A - B - C - D - E</p><p>Interval: 1 1 1 1 ½ 1 1 1 1 1 ½</p><h3>🎹 Skala Minor (A=1)</h3><p>A - B - C - D - E - F - G - H - I - J - K - A</p><p>Interval: 1 1 1 ½ 1 1 1 1 ½ 1 1</p>`,
-            chord: `<h3>🎵 Akord</h3><table class="freq-table"><thead><tr><th>Root</th><th>Akord</th></tr></thead><tbody>${Object.entries(CHORD_DICT).map(([root,notes]) => `<tr><td style="color:#ffd700;">${root}</td><td>${notes.join(' + ')}</td></tr>`).join('')}</tbody></table>`,
-            tentang: `<h3>📖 Tentang Aplikasi</h3><p>Berdasarkan karya tulis Sukma Riadi Pakpahan, SST.</p><p><b>Fitur:</b> 5 instrumen, Reverb, Delay, Amplifier, 3/4/5 oktaf, Akord.</p><p><b>Instrumen:</b> Sine, Square, Sawtooth, Triangle, Organ.</p><p><b>Amplifier:</b> Mengatur volume keseluruhan (0.5x hingga 3.0x).</p>`
+            teori: `
+                <h3>🎼 Dasar Teoritis</h3>
+                <p><b>Rumus:</b> f_n = f_0 × 3^(n/20), f_0 = A#4 = 440 Hz</p>
+                <p><b>Oktaf:</b> f_oktaf berikutnya = f_oktaf sebelumnya × 3</p>
+                <h3>🎵 Skala Mayor (E=1)</h3>
+                <p>E - F - G - H - I - J - K - A - B - C - D - E</p>
+                <h3>🎵 Skala Minor (A=1)</h3>
+                <p>A - B - C - D - E - F - G - H - I - J - K - A</p>
+            `,
+            freq: `
+                <h3>📊 Frekuensi</h3>
+                <table class="freq-table">
+                    <thead><tr><th>Nada</th><th>Hz</th><th>Tuts</th></tr></thead>
+                    <tbody>
+                        ${Object.entries(FREQ_MAP).slice(0, 30).map(([name, freq]) => {
+                            const isBlack = name.includes('#');
+                            return `<tr><td class="note-name ${isBlack ? 'black-note' : ''}">${name}</td><td>${freq.toFixed(2)}</td><td>${isBlack ? '⬛' : '⬜'}</td></tr>`;
+                        }).join('')}
+                    </tbody>
+                </table>
+                <p style="font-size:0.8rem;color:#888;">... dan seterusnya hingga D6</p>
+            `,
+            skala: `
+                <h3>🎹 Skala Mayor (E=1)</h3>
+                <p>E - F - G - H - I - J - K - A - B - C - D - E</p>
+                <p>Interval: 1 1 1 1 ½ 1 1 1 1 1 ½</p>
+                <h3>🎹 Skala Minor (A=1)</h3>
+                <p>A - B - C - D - E - F - G - H - I - J - K - A</p>
+                <p>Interval: 1 1 1 ½ 1 1 1 1 ½ 1 1</p>
+            `,
+            chord: `
+                <h3>🎵 Akord</h3>
+                <table class="freq-table">
+                    <thead><tr><th>Root</th><th>Akord</th></tr></thead>
+                    <tbody>
+                        ${Object.entries(CHORD_DICT).map(([root, notes]) => {
+                            return `<tr><td style="color:#ffd700;">${root}</td><td>${notes.join(' + ')}</td></tr>`;
+                        }).join('')}
+                    </tbody>
+                </table>
+            `,
+            tentang: `
+                <h3>📖 Tentang Aplikasi</h3>
+                <p>Berdasarkan karya tulis Sukma Riadi Pakpahan, SST.</p>
+                <p><b>Fitur:</b> 5 instrumen, Reverb, Delay, Amplifier, 3/4/5 oktaf, Akord.</p>
+                <p><b>Instrumen:</b> Sine, Square, Sawtooth, Triangle, Organ.</p>
+                <p><b>Amplifier:</b> Mengatur volume keseluruhan (0.5x hingga 3.0x).</p>
+            `
         };
 
         function renderTab(tabId) {
             tabContent.innerHTML = tabData[tabId] || '<p>Kosong</p>';
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tabId));
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tab === tabId);
+            });
         }
+
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', () => renderTab(btn.dataset.tab));
         });
@@ -1111,17 +1269,21 @@
             octaveSelector.value = '4';
             buildKeyboard(4);
             renderTab('teori');
+
             playMode = 'single';
             singleModeLabel.classList.add('active-mode');
             modeIndicator.textContent = '🎵 Mode: Tunggal';
+
             instrumentSelector.value = 'organ';
             currentInstrument = 'organ';
+
             reverbSlider.value = 20;
             reverbVal.textContent = '20%';
             delaySlider.value = 0;
             delayVal.textContent = '0%';
             ampSlider.value = 100;
             ampVal.textContent = '1.0x';
+
             console.log('🎵 Aplikasi 12-TET siap!');
         });
     </script>
