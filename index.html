@@ -57,10 +57,9 @@
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
             margin-bottom: 30px;
             object-fit: contain;
-            background: #1a1a2e; /* fallback jika gambar transparan */
+            background: #1a1a2e;
         }
 
-        /* fallback jika gambar gagal dimuat */
         .splash-image.error {
             display: none;
         }
@@ -166,7 +165,7 @@
         }
 
         /* ================================================================
-           KONTROL (sama seperti sebelumnya)
+           KONTROL
            ================================================================ */
         .controls {
             display: flex;
@@ -477,18 +476,18 @@
     SPLASH SCREEN
     ============================================================ -->
     <div id="splash">
-        <!-- Gambar splash dengan fallback -->
+        <!-- Gambar splash dengan ekstensi .png -->
         <img 
             class="splash-image" 
             id="splashImg"
-            src="assets/images/img1.jpg" 
+            src="assets/images/img1.png" 
             alt="Splash" 
             onerror="handleImageError()"
         />
         <!-- Fallback teks jika gambar gagal dimuat -->
         <div class="splash-fallback" id="splashFallback">
             🖼️ Gambar tidak ditemukan<br />
-            <span style="font-size:0.8rem;color:#666;">Pastikan file <strong>assets/images/img1.jpg</strong> ada</span>
+            <span style="font-size:0.8rem;color:#666;">Pastikan file <strong>assets/images/img1.png</strong> ada</span>
         </div>
 
         <div class="splash-title">🎵 PMD Musik 12 TET</div>
@@ -511,7 +510,7 @@
                 <p>Eksplorasi Mikrotonal — Inovasi Sistem 20 Nada per Oktaf</p>
             </header>
 
-            <!-- CONTROLS (sama seperti sebelumnya, singkat) -->
+            <!-- CONTROLS -->
             <div class="controls" id="controlsContainer">
                 <label class="active-mode" id="singleModeLabel">
                     <input type="radio" name="playMode" value="single" checked /> Nada Tunggal
@@ -591,7 +590,7 @@
 
     <script>
         // ================================================================
-        // SPLASH SCREEN LOGIC + FALLBACK GAMBAR
+        // SPLASH SCREEN LOGIC + FALLBACK GAMBAR (dengan .png)
         // ================================================================
 
         const splash = document.getElementById('splash');
@@ -600,19 +599,16 @@
         const splashImg = document.getElementById('splashImg');
         const splashFallback = document.getElementById('splashFallback');
 
-        // Fungsi jika gambar gagal dimuat
         function handleImageError() {
-            console.warn('⚠️ Gambar splash gagal dimuat: assets/images/img1.jpg');
-            splashImg.classList.add('error');    // sembunyikan img
-            splashFallback.classList.add('show'); // tampilkan fallback teks
+            console.warn('⚠️ Gambar splash gagal dimuat: assets/images/img1.png');
+            splashImg.classList.add('error');
+            splashFallback.classList.add('show');
         }
 
-        // Cek juga apakah gambar benar-benar load (untuk debugging)
         splashImg.addEventListener('load', () => {
             console.log('✅ Gambar splash berhasil dimuat!');
         });
 
-        // Tombol Mulai
         startBtn.addEventListener('click', () => {
             splash.classList.add('hidden');
             app.classList.add('show');
@@ -620,7 +616,7 @@
         });
 
         // ================================================================
-        // DATA FREKUENSI (sama seperti sebelumnya, disingkat)
+        // DATA FREKUENSI (sama seperti sebelumnya)
         // ================================================================
 
         const FREQ_MAP = {
@@ -666,7 +662,7 @@
         const SCALE_MINOR = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'A'];
 
         // ================================================================
-        // AUDIO ENGINE (disingkat, sama seperti sebelumnya)
+        // AUDIO ENGINE (sama seperti sebelumnya, disingkat)
         // ================================================================
 
         let audioCtx = null;
@@ -693,7 +689,6 @@
             masterGain = audioCtx.createGain();
             masterGain.gain.setValueAtTime(1.0, audioCtx.currentTime);
 
-            // Reverb
             reverbNode = audioCtx.createConvolver();
             const impulseLength = 2.0, sampleRate = audioCtx.sampleRate;
             const numSamples = Math.floor(impulseLength * sampleRate);
@@ -853,7 +848,7 @@
         }
 
         // ================================================================
-        // KEYBOARD GENERATION (sama seperti sebelumnya)
+        // KEYBOARD GENERATION
         // ================================================================
 
         function generateNoteSequence(octaveCount) {
@@ -894,7 +889,6 @@
             const whiteWidth = 32, whiteHeight = 170, blackWidth = 20, blackHeight = 105, startX = 10, yWhite = 10;
             let whiteIndex = 0;
 
-            // Putih
             for (let i = 0; i < noteSeq.length; i++) {
                 const { note, isBlack } = noteSeq[i];
                 if (!isBlack) {
@@ -917,7 +911,6 @@
                     whiteIndex++;
                 }
             }
-            // Hitam
             whiteIndex = 0;
             for (let i = 0; i < noteSeq.length; i++) {
                 const { note, isBlack } = noteSeq[i];
@@ -941,7 +934,6 @@
                     keyElements[note] = key;
                 }
             }
-            // Label oktaf
             let posX = startX;
             let octaveGroups = [{ octave: 2, count: 3 }];
             for (let o = 3; o <= 2 + octaveCount - 1; o++) octaveGroups.push({ octave: o, count: 20 });
