@@ -195,6 +195,11 @@
         .control-row label {
             color: #aaa;
             font-size: 0.85rem;
+            cursor: pointer;
+        }
+        .control-row input[type="radio"] {
+            accent-color: #e94560;
+            margin-right: 5px;
         }
         .control-row select {
             background: #0f3460;
@@ -205,6 +210,17 @@
             font-size: 0.85rem;
             cursor: pointer;
             outline: none;
+        }
+        .control-row .radio-group {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            background: #0d0d1a;
+            padding: 5px 15px;
+            border-radius: 20px;
+        }
+        .radio-group label.active-radio {
+            color: #f5a623;
         }
         .info-text {
             color: #888;
@@ -236,6 +252,21 @@
             text-align: center;
             margin-top: 8px;
         }
+        .mode-indicator {
+            display: inline-block;
+            padding: 2px 12px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            margin-left: 8px;
+        }
+        .mode-indicator.standard {
+            background: #0f3460;
+            color: #aaa;
+        }
+        .mode-indicator.improved {
+            background: #2d7d46;
+            color: #fff;
+        }
         @media (max-width:600px) { .container { padding: 15px; } }
     </style>
 </head>
@@ -244,9 +275,9 @@
         <h1>
             🎤 AI Audio Transcriber
             <span class="badge">20 Nada/Oktaf</span>
-            <span class="quality-badge">✨ YIN Algoritma</span>
+            <span id="modeBadge" class="mode-indicator standard">⚡ Standar</span>
         </h1>
-        <p class="subtitle">Rekam lagu atau suara (maks. 22 menit) dengan akurasi tinggi</p>
+        <p class="subtitle">Rekam lagu atau suara (maks. 22 menit), AI akan menuliskannya</p>
 
         <div class="error-message" id="errorMessage">
             ⚠️ <span id="errorText">Terjadi kesalahan. Pastikan browser mengizinkan akses mikrofon.</span>
@@ -264,12 +295,23 @@
         </div>
 
         <div class="control-row">
+            <!-- Radio Button untuk memilih versi -->
+            <div class="radio-group">
+                <label id="standardLabel" class="active-radio">
+                    <input type="radio" name="algorithm" value="standard" checked /> Standar
+                </label>
+                <label id="improvedLabel">
+                    <input type="radio" name="algorithm" value="improved" /> Improved (YIN)
+                </label>
+            </div>
+
             <label>🎯 Mode:</label>
             <select id="modeSelect">
                 <option value="vocal">Vokal (200-800 Hz)</option>
                 <option value="instrument">Instrumental (80-1200 Hz)</option>
                 <option value="full" selected>Full Range (60-1800 Hz)</option>
             </select>
+
             <label>🎚️ Sensitivitas:</label>
             <select id="sensitivitySelect">
                 <option value="0.008">Sangat Tinggi</option>
@@ -277,17 +319,21 @@
                 <option value="0.018">Sedang</option>
                 <option value="0.03">Rendah (kurang noise)</option>
             </select>
-            <label>🧹 Filter:</label>
-            <select id="filterSelect">
-                <option value="highpass" selected>High-pass (kurangi noise)</option>
-                <option value="none">Tanpa filter</option>
-            </select>
+
+            <!-- Filter hanya untuk versi Improved -->
+            <span id="filterContainer">
+                <label>🧹 Filter:</label>
+                <select id="filterSelect">
+                    <option value="highpass" selected>High-pass (kurangi noise)</option>
+                    <option value="none">Tanpa filter</option>
+                </select>
+            </span>
         </div>
 
         <div class="status" id="status">🔴 Klik tombol mikrofon untuk mulai merekam (maks. 22 menit)</div>
 
         <div class="btn-group">
-            <button class="btn btn-success" id="transcribeBtn" disabled>🧠 AI Transcribe (YIN)</button>
+            <button class="btn btn-success" id="transcribeBtn" disabled>🧠 AI Transcribe</button>
             <button class="btn btn-secondary" id="playResultBtn" disabled>▶ Play Hasil</button>
             <button class="btn btn-danger" id="clearBtn">🗑️ Clear</button>
         </div>
@@ -298,7 +344,7 @@
             <div style="display:flex; gap:20px; flex-wrap:wrap; justify-content:center;">
                 <span style="color:#888;font-size:0.85rem;" id="transcribeInfo">Jumlah nada: 0</span>
                 <span style="color:#888;font-size:0.85rem;" id="durationInfo">Durasi rekaman: 0 detik</span>
-                <span style="color:#2d7d46;font-size:0.85rem;" id="qualityInfo">Algoritma: YIN</span>
+                <span style="color:#888;font-size:0.85rem;" id="algoInfo">Algoritma: Standar</span>
             </div>
             <div class="info-text">💡 Nada dengan tanda <b>#</b> adalah nada kromatik (tuts hitam).</div>
             <div class="warning-text">⚠️ Rekaman panjang membutuhkan waktu analisis lebih lama.</div>
@@ -332,7 +378,7 @@
         const NOTE_NAMES_REV = Object.keys(FREQ_MAP);
 
         // ================================================================
-        // YIN PITCH DETECTION ALGORITHM
+        // YIN PITCH DETECTION ALGORITHM (Improved)
         // ================================================================
         function yinPitchDetection(signal, sampleRate, minFreq, maxFreq) {
             const bufferSize = signal.length;
@@ -396,7 +442,7 @@
         }
 
         // ================================================================
-        // HIGH-PASS FILTER
+        // HIGH-PASS FILTER (Improved)
         // ================================================================
         function highPassFilter(signal, sampleRate, cutoff = 80) {
             const alpha = 0.95;
@@ -410,7 +456,7 @@
         }
 
         // ================================================================
-        // NORMALISASI GAIN
+        // NORMALISASI GAIN (Improved)
         // ================================================================
         function normalizeAudio(data) {
             let max = 0.001;
@@ -426,7 +472,7 @@
         }
 
         // ================================================================
-        // MEDIAN FILTER
+        // MEDIAN FILTER (Improved)
         // ================================================================
         function medianFilter(notes, windowSize = 5) {
             if (notes.length < windowSize) return notes;
@@ -443,6 +489,28 @@
         }
 
         // ================================================================
+        // STANDARD AUTOCORRELATION (Versi Biasa)
+        // ================================================================
+        function standardPitchDetection(windowData, sampleRate, minFreq, maxFreq) {
+            const windowSize = windowData.length;
+            let maxCorr = 0;
+            let pitch = 0;
+            const minLag = Math.floor(sampleRate / maxFreq);
+            const maxLag = Math.floor(sampleRate / minFreq);
+            for (let lag = minLag; lag < maxLag && lag < windowSize; lag++) {
+                let corr = 0;
+                for (let i = 0; i < windowSize - lag; i++) {
+                    corr += windowData[i] * windowData[i + lag];
+                }
+                if (corr > maxCorr) {
+                    maxCorr = corr;
+                    pitch = sampleRate / lag;
+                }
+            }
+            return pitch;
+        }
+
+        // ================================================================
         // VARIABEL GLOBAL
         // ================================================================
         let audioCtx = null;
@@ -456,7 +524,8 @@
         let recordedAudioBuffer = null;
         let transcribedNotes = [];
         let isPlaying = false;
-        const MAX_RECORD_SECONDS = 1320; // 22 MENIT
+        let currentAlgorithm = 'standard'; // 'standard' atau 'improved'
+        const MAX_RECORD_SECONDS = 1320;
 
         // DOM refs
         const recordBtn = document.getElementById('recordBtn');
@@ -469,7 +538,8 @@
         const transcribedDisplay = document.getElementById('transcribedDisplay');
         const transcribeInfo = document.getElementById('transcribeInfo');
         const durationInfo = document.getElementById('durationInfo');
-        const qualityInfo = document.getElementById('qualityInfo');
+        const algoInfo = document.getElementById('algoInfo');
+        const modeBadge = document.getElementById('modeBadge');
         const recordArea = document.getElementById('recordArea');
         const canvas = document.getElementById('waveformCanvas');
         const ctx = canvas.getContext('2d');
@@ -480,6 +550,9 @@
         const modeSelect = document.getElementById('modeSelect');
         const sensitivitySelect = document.getElementById('sensitivitySelect');
         const filterSelect = document.getElementById('filterSelect');
+        const filterContainer = document.getElementById('filterContainer');
+        const standardLabel = document.getElementById('standardLabel');
+        const improvedLabel = document.getElementById('improvedLabel');
 
         // ================================================================
         // UTILITY
@@ -519,6 +592,35 @@
         }
 
         // ================================================================
+        // RADIO BUTTON LOGIC
+        // ================================================================
+        document.querySelectorAll('input[name="algorithm"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                if (this.checked) {
+                    currentAlgorithm = this.value;
+                    // Update UI
+                    if (currentAlgorithm === 'improved') {
+                        modeBadge.textContent = '✨ YIN';
+                        modeBadge.className = 'mode-indicator improved';
+                        filterContainer.style.display = 'inline';
+                        algoInfo.textContent = 'Algoritma: YIN + Median Filter';
+                    } else {
+                        modeBadge.textContent = '⚡ Standar';
+                        modeBadge.className = 'mode-indicator standard';
+                        filterContainer.style.display = 'none';
+                        algoInfo.textContent = 'Algoritma: Standar (Autocorrelation)';
+                    }
+                    // Update label aktif
+                    standardLabel.classList.toggle('active-radio', currentAlgorithm === 'standard');
+                    improvedLabel.classList.toggle('active-radio', currentAlgorithm === 'improved');
+                }
+            });
+        });
+
+        // Set default
+        filterContainer.style.display = 'none';
+
+        // ================================================================
         // RECORDING
         // ================================================================
         async function startRecording() {
@@ -548,7 +650,7 @@
                     const arrayBuffer = await blob.arrayBuffer();
                     const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
                     recordedAudioBuffer = audioBuffer;
-                    statusEl.textContent = '✅ Rekaman selesai! Klik "AI Transcribe (YIN)" untuk analisis.';
+                    statusEl.textContent = '✅ Rekaman selesai! Klik "AI Transcribe" untuk analisis.';
                     transcribeBtn.disabled = false;
                     recordArea.classList.remove('recording');
                     progressBar.classList.remove('show');
@@ -657,13 +759,14 @@
                     closest = f;
                 }
             }
-            if (minDiff / closest > 0.04) return null;
+            const tolerance = currentAlgorithm === 'improved' ? 0.04 : 0.05;
+            if (minDiff / closest > tolerance) return null;
             const idx = NOTE_FREQS.indexOf(closest);
             return { name: NOTE_NAMES_REV[idx], freq: closest };
         }
 
         // ================================================================
-        // AI TRANSCRIBE
+        // AI TRANSCRIBE (pilih algoritma berdasarkan radio button)
         // ================================================================
         function transcribeAudio() {
             if (!recordedAudioBuffer) {
@@ -671,11 +774,11 @@
                 return;
             }
 
-            statusEl.textContent = '🧠 AI menganalisis dengan YIN algorithm... (20 nada per oktaf)';
+            const algoLabel = currentAlgorithm === 'improved' ? 'YIN' : 'Standar';
+            statusEl.textContent = `🧠 AI menganalisis dengan algoritma ${algoLabel}... (20 nada per oktaf)`;
             statusEl.className = 'status loading';
             transcribeBtn.disabled = true;
             progressBar.classList.add('show');
-            qualityInfo.textContent = 'Algoritma: YIN + Median Filter';
 
             setTimeout(() => {
                 let data = recordedAudioBuffer.getChannelData(0);
@@ -683,9 +786,12 @@
                 const duration = data.length / sampleRate;
                 durationInfo.textContent = `Durasi rekaman: ${duration.toFixed(1)} detik`;
 
-                data = normalizeAudio(data);
-                if (filterSelect.value === 'highpass') {
-                    data = highPassFilter(data, sampleRate, 80);
+                // Improved: normalisasi + filter
+                if (currentAlgorithm === 'improved') {
+                    data = normalizeAudio(data);
+                    if (filterSelect.value === 'highpass') {
+                        data = highPassFilter(data, sampleRate, 80);
+                    }
                 }
 
                 const mode = modeSelect.value;
@@ -695,8 +801,8 @@
                 if (mode === 'vocal') { minFreq = 200; maxFreq = 800; }
                 else if (mode === 'instrument') { minFreq = 80; maxFreq = 1200; }
 
-                const windowSize = Math.floor(sampleRate * 0.06);
-                const hopSize = Math.floor(windowSize * 0.3);
+                const windowSize = currentAlgorithm === 'improved' ? Math.floor(sampleRate * 0.06) : Math.floor(sampleRate * 0.05);
+                const hopSize = currentAlgorithm === 'improved' ? Math.floor(windowSize * 0.3) : Math.floor(windowSize * 0.5);
                 const detected = [];
                 const totalSteps = Math.floor((data.length - windowSize) / hopSize);
                 let stepCount = 0;
@@ -716,33 +822,52 @@
                     const rms = Math.sqrt(sum / windowSize);
                     if (rms < sensitivity) continue;
 
-                    const pitch = yinPitchDetection(windowData, sampleRate, minFreq, maxFreq);
+                    let pitch = 0;
+                    if (currentAlgorithm === 'improved') {
+                        pitch = yinPitchDetection(windowData, sampleRate, minFreq, maxFreq);
+                    } else {
+                        pitch = standardPitchDetection(windowData, sampleRate, minFreq, maxFreq);
+                    }
+
                     if (pitch > minFreq && pitch < maxFreq) {
                         const note = findClosestNote(pitch);
                         if (note) detected.push(note);
                     }
                 }
 
-                const noteNames = detected.map(n => n.name);
-                const smoothed = medianFilter(noteNames, 5);
-                const uniqueNotes = [];
-                let lastNote = null;
-                for (let n of smoothed) {
-                    if (n !== lastNote) {
-                        if (lastNote) {
-                            const freqKey = Object.keys(FREQ_MAP).find(k => k === lastNote);
-                            if (freqKey) {
-                                uniqueNotes.push({ name: lastNote, freq: FREQ_MAP[freqKey] });
+                let uniqueNotes = [];
+                if (currentAlgorithm === 'improved') {
+                    // Improved: median filter
+                    const noteNames = detected.map(n => n.name);
+                    const smoothed = medianFilter(noteNames, 5);
+                    let lastNote = null;
+                    for (let n of smoothed) {
+                        if (n !== lastNote) {
+                            if (lastNote) {
+                                const freqKey = Object.keys(FREQ_MAP).find(k => k === lastNote);
+                                if (freqKey) {
+                                    uniqueNotes.push({ name: lastNote, freq: FREQ_MAP[freqKey] });
+                                }
                             }
+                            lastNote = n;
                         }
-                        lastNote = n;
                     }
-                }
-                if (lastNote) {
-                    const freqKey = Object.keys(FREQ_MAP).find(k => k === lastNote);
-                    if (freqKey) {
-                        uniqueNotes.push({ name: lastNote, freq: FREQ_MAP[freqKey] });
+                    if (lastNote) {
+                        const freqKey = Object.keys(FREQ_MAP).find(k => k === lastNote);
+                        if (freqKey) {
+                            uniqueNotes.push({ name: lastNote, freq: FREQ_MAP[freqKey] });
+                        }
                     }
+                } else {
+                    // Standard: simple unique notes
+                    let lastNote = null;
+                    for (let n of detected) {
+                        if (!lastNote || n.name !== lastNote.name) {
+                            if (lastNote) uniqueNotes.push(lastNote);
+                            lastNote = n;
+                        }
+                    }
+                    if (lastNote) uniqueNotes.push(lastNote);
                 }
 
                 transcribedNotes = uniqueNotes;
@@ -758,7 +883,7 @@
                     transcribedDisplay.scrollTop = 0;
                 }
 
-                statusEl.textContent = `✅ Transkripsi selesai! ${uniqueNotes.length} nada ditemukan (YIN algorithm).`;
+                statusEl.textContent = `✅ Transkripsi selesai! ${uniqueNotes.length} nada ditemukan (${algoLabel} algorithm).`;
                 statusEl.className = 'status';
                 transcribeBtn.disabled = false;
                 progressBar.classList.remove('show');
@@ -813,7 +938,6 @@
             transcribedDisplay.textContent = '-';
             transcribeInfo.textContent = 'Jumlah nada: 0';
             durationInfo.textContent = 'Durasi rekaman: 0 detik';
-            qualityInfo.textContent = 'Algoritma: YIN';
             resultArea.classList.remove('show');
             playResultBtn.disabled = true;
             transcribeBtn.disabled = true;
