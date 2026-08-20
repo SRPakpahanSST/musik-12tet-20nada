@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Composer - PMD Musik 12 TET</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a2e;
+            color: #eee;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: #16213e;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+        }
+        h1 {
+            text-align: center;
+            font-size: 2rem;
+            background: linear-gradient(135deg, #e94560, #f5a623);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #aaa;
+            margin-bottom: 30px;
+        }
+        .back-btn {
+            display: inline-block;
+            padding: 8px 20px;
+            background: #0f3460;
+            color: #fff;
+            border-radius: 20px;
+            text-decoration: none;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+        .back-btn:hover { background: #1a4a7a; }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            color: #aaa;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 10px;
+            background: #0d0d1a;
+            color: #fff;
+            font-size: 1rem;
+            outline: none;
+        }
+        .form-group textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            border: 1px solid #e94560;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 30px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 1rem;
+        }
+        .btn-primary { background: #e94560; color: #fff; }
+        .btn-primary:hover { background: #c73652; transform: scale(1.02); }
+        .btn-secondary { background: #0f3460; color: #fff; }
+        .btn-secondary:hover { background: #1a4a7a; }
+        .btn-success { background: #2d7d46; color: #fff; }
+        .btn-success:hover { background: #3a9a5a; }
+        .btn-danger { background: #a04040; color: #fff; }
+        .btn-danger:hover { background: #c05050; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        #resultArea {
+            margin-top: 25px;
+            padding: 20px;
+            background: #0d0d1a;
+            border-radius: 12px;
+            min-height: 100px;
+            display: none;
+        }
+        #resultArea.show { display: block; }
+        #resultArea h3 {
+            color: #f5a623;
+            margin-bottom: 10px;
+        }
+        .melody-display {
+            font-family: monospace;
+            font-size: 1.2rem;
+            color: #ffd700;
+            word-wrap: break-word;
+            background: #111;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        .status {
+            color: #aaa;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            min-height: 24px;
+        }
+        .status .loading {
+            color: #f5a623;
+            animation: blink 1s infinite;
+        }
+        @keyframes blink { 50% { opacity: 0.3; } }
+        .mood-tags {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .mood-tag {
+            padding: 5px 15px;
+            border-radius: 20px;
+            background: #0f3460;
+            color: #aaa;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 0.85rem;
+            border: 1px solid transparent;
+        }
+        .mood-tag:hover { background: #1a4a7a; }
+        .mood-tag.active {
+            border-color: #e94560;
+            color: #fff;
+            background: #e94560;
+        }
+        @media (max-width:600px) {
+            .form-row { grid-template-columns: 1fr; }
+            .container { padding: 15px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-btn">← Kembali ke Aplikasi Utama</a>
+        <h1>🎵 AI Music Composer</h1>
+        <p class="subtitle">Ciptakan melodi otomatis dengan kecerdasan buatan</p>
+
+        <div class="form-group">
+            <label>🎭 Mood / Suasana</label>
+            <div class="mood-tags" id="moodTags">
+                <span class="mood-tag active" data-mood="happy">😊 Happy</span>
+                <span class="mood-tag" data-mood="sad">😢 Sad</span>
+                <span class="mood-tag" data-mood="romantic">🥰 Romantic</span>
+                <span class="mood-tag" data-mood="mysterious">🔮 Mysterious</span>
+                <span class="mood-tag" data-mood="energetic">⚡ Energetic</span>
+                <span class="mood-tag" data-mood="calm">🌊 Calm</span>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>🎼 Skala</label>
+                <select id="scaleSelect">
+                    <option value="mayor">Mayor (E)</option>
+                    <option value="minor">Minor (A)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>⏱️ Tempo (BPM)</label>
+                <select id="tempoSelect">
+                    <option value="60">Lambat (60)</option>
+                    <option value="90">Sedang (90)</option>
+                    <option value="120" selected>Cepat (120)</option>
+                    <option value="160">Sangat Cepat (160)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>📝 Deskripsi (opsional)</label>
+            <textarea id="promptInput" placeholder="Contoh: melodi yang perlahan meningkat, dengan nada-nada tinggi..."></textarea>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn btn-primary" id="generateBtn">🚀 Generate Melodi</button>
+            <button class="btn btn-success" id="playBtn" disabled>▶ Play</button>
+            <button class="btn btn-danger" id="stopBtn" disabled>⏹ Stop</button>
+        </div>
+
+        <div class="status" id="status">💡 Pilih mood dan klik Generate</div>
+
+        <div id="resultArea">
+            <h3>🎶 Melodi Hasil AI</h3>
+            <div class="melody-display" id="melodyDisplay">-</div>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <span style="color:#888;font-size:0.85rem;" id="noteCountInfo">Jumlah nada: 0</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ================================================================
+        // DATA 12-TET (sama seperti aplikasi utama)
+        // ================================================================
+        const FREQ_MAP = {
+            'E3': 203.924, 'F3': 227.604, 'G3': 254.034, 'H3': 283.533,
+            'I3': 316.458, 'J3': 334.328, 'K3': 373.151, 'A3': 416.482,
+            'B3': 464.846, 'C3': 518.825, 'D3': 579.073,
+            'E4': 611.771, 'F4': 682.812, 'G4': 762.102, 'H4': 850.6,
+            'I4': 949.374, 'J4': 1002.983, 'K4': 1119.453, 'A4': 1249.447,
+            'B4': 1394.537, 'C4': 1556.475, 'D4': 1737.218,
+            'E5': 1835.314, 'F5': 2048.436, 'G5': 2286.307, 'H5': 2551.8,
+            'I5': 2848.123, 'J5': 3008.949, 'K5': 3358.358, 'A5': 3748.341,
+            'B5': 4183.611, 'C5': 4669.425, 'D5': 5211.653
+        };
+        const NOTE_NAMES = ['E','F','G','H','I','J','K','A','B','C','D'];
+
+        // ================================================================
+        // AUDIO ENGINE
+        // ================================================================
+        let audioCtx = null;
+        let activeOscillators = [];
+        let isPlaying = false;
+        let currentMelody = [];
+        let playTimeout = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new(window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            return audioCtx;
+        }
+
+        function playNote(freq, duration = 0.4) {
+            try {
+                const ctx = initAudio();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, ctx.currentTime);
+                gain.gain.setValueAtTime(0.001, ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.02);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(ctx.currentTime);
+                osc.stop(ctx.currentTime + duration);
+                activeOscillators.push(osc);
+                osc.onended = () => {
+                    const idx = activeOscillators.indexOf(osc);
+                    if (idx > -1) activeOscillators.splice(idx, 1);
+                };
+                return osc;
+            } catch(e) { console.warn(e); return null; }
+        }
+
+        function stopAllSounds() {
+            activeOscillators.forEach(osc => { try { osc.stop(); } catch(e) {} });
+            activeOscillators = [];
+            if (playTimeout) { clearTimeout(playTimeout); playTimeout = null; }
+            isPlaying = false;
+            document.getElementById('playBtn').textContent = '▶ Play';
+        }
+
+        // ================================================================
+        // AI COMPOSER (simulasi generative)
+        // ================================================================
+        function getScaleNotes(type) {
+            if (type === 'mayor') return ['E','F','G','H','I','J','K','A','B','C','D','E'];
+            else return ['A','B','C','D','E','F','G','H','I','J','K','A'];
+        }
+
+        function generateMelody(mood, scaleType, tempo, prompt) {
+            const scale = getScaleNotes(scaleType);
+            // Ambil 7 nada dari skala (nada dasar)
+            const baseNotes = scale.slice(0, 7);
+            const octaves = [3, 4, 5];
+            
+            // Parameter berdasarkan mood
+            const moodParams = {
+                'happy': { stepRange: 4, repeatChance: 0.3, noteLength: 0.3, range: 3, direction: 1 },
+                'sad': { stepRange: 3, repeatChance: 0.5, noteLength: 0.6, range: 2, direction: -1 },
+                'romantic': { stepRange: 3, repeatChance: 0.4, noteLength: 0.5, range: 2, direction: 0 },
+                'mysterious': { stepRange: 5, repeatChance: 0.2, noteLength: 0.4, range: 4, direction: 0 },
+                'energetic': { stepRange: 6, repeatChance: 0.1, noteLength: 0.2, range: 5, direction: 1 },
+                'calm': { stepRange: 2, repeatChance: 0.6, noteLength: 0.7, range: 1, direction: -1 }
+            };
+            const params = moodParams[mood] || moodParams['happy'];
+            
+            const numNotes = Math.floor(Math.random() * 16) + 12; // 12-28 nada
+            const melody = [];
+            let currentIndex = Math.floor(Math.random() * 7);
+            let currentOctave = 4;
+            
+            for (let i = 0; i < numNotes; i++) {
+                // Pilih langkah
+                let step = 0;
+                if (Math.random() < params.repeatChance) {
+                    step = 0;
+                } else {
+                    step = Math.floor(Math.random() * params.stepRange) + 1;
+                    if (Math.random() < 0.5) step = -step;
+                }
+                
+                // Arah bias
+                if (params.direction > 0 && Math.random() < 0.3) step = Math.abs(step);
+                if (params.direction < 0 && Math.random() < 0.3) step = -Math.abs(step);
+                
+                let newIndex = currentIndex + step;
+                // Batasi dalam range
+                if (newIndex < 0) newIndex = 0;
+                if (newIndex >= baseNotes.length) newIndex = baseNotes.length - 1;
+                
+                // Cek range oktaf
+                let octave = currentOctave;
+                if (newIndex - currentIndex > 3 && octave < 5) octave++;
+                if (newIndex - currentIndex < -3 && octave > 3) octave--;
+                
+                const noteName = baseNotes[newIndex] + octave;
+                const freq = FREQ_MAP[noteName];
+                if (freq) {
+                    const duration = params.noteLength * (0.8 + Math.random() * 0.4);
+                    melody.push({ note: noteName, freq: freq, duration: duration });
+                }
+                
+                currentIndex = newIndex;
+                currentOctave = octave;
+            }
+            return melody;
+        }
+
+        // ================================================================
+        // UI LOGIC
+        // ================================================================
+        const moodTags = document.querySelectorAll('.mood-tag');
+        const scaleSelect = document.getElementById('scaleSelect');
+        const tempoSelect = document.getElementById('tempoSelect');
+        const promptInput = document.getElementById('promptInput');
+        const generateBtn = document.getElementById('generateBtn');
+        const playBtn = document.getElementById('playBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const statusEl = document.getElementById('status');
+        const resultArea = document.getElementById('resultArea');
+        const melodyDisplay = document.getElementById('melodyDisplay');
+        const noteCountInfo = document.getElementById('noteCountInfo');
+
+        let selectedMood = 'happy';
+        let generatedMelody = [];
+
+        // Mood tags
+        moodTags.forEach(tag => {
+            tag.addEventListener('click', function() {
+                moodTags.forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                selectedMood = this.dataset.mood;
+            });
+        });
+
+        // Generate
+        generateBtn.addEventListener('click', function() {
+            this.disabled = true;
+            this.textContent = '⏳ Generating...';
+            statusEl.innerHTML = '<span class="loading">⏳ AI sedang menciptakan melodi...</span>';
+            resultArea.classList.remove('show');
+            stopAllSounds();
+
+            // Simulasi proses AI (delay untuk efek)
+            setTimeout(() => {
+                const scale = scaleSelect.value;
+                const tempo = parseInt(tempoSelect.value);
+                const prompt = promptInput.value.trim() || 'tanpa deskripsi';
+                
+                generatedMelody = generateMelody(selectedMood, scale, tempo, prompt);
+                
+                // Tampilkan hasil
+                const noteNames = generatedMelody.map(n => n.note).join(' → ');
+                melodyDisplay.textContent = noteNames || '(tidak ada nada)';
+                noteCountInfo.textContent = `Jumlah nada: ${generatedMelody.length}`;
+                resultArea.classList.add('show');
+                
+                playBtn.disabled = false;
+                stopBtn.disabled = false;
+                
+                statusEl.innerHTML = `✅ Melodi selesai! ${generatedMelody.length} nada tercipta. (Mood: ${selectedMood}, Skala: ${scale})`;
+                this.disabled = false;
+                this.textContent = '🚀 Generate Melodi';
+            }, 800 + Math.random() * 600);
+        });
+
+        // Play
+        playBtn.addEventListener('click', function() {
+            if (generatedMelody.length === 0) return;
+            if (isPlaying) {
+                stopAllSounds();
+                this.textContent = '▶ Play';
+                statusEl.textContent = '⏹ Dihentikan';
+                return;
+            }
+            
+            initAudio();
+            isPlaying = true;
+            this.textContent = '⏹ Stop';
+            statusEl.textContent = '🎵 Memutar melodi...';
+            
+            const tempo = parseInt(tempoSelect.value);
+            const baseDuration = 60000 / tempo / 2; // 1/8 note
+            
+            let delay = 0;
+            generatedMelody.forEach((note, i) => {
+                const dur = note.duration * baseDuration / 1000;
+                setTimeout(() => {
+                    if (!isPlaying) return;
+                    playNote(note.freq, dur);
+                    // Highlight di display
+                    const parts = melodyDisplay.textContent.split(' → ');
+                    if (i < parts.length) {
+                        // update visual sederhana
+                    }
+                }, delay * 1000);
+                delay += note.duration * baseDuration / 1000 + 0.05;
+            });
+            
+            playTimeout = setTimeout(() => {
+                isPlaying = false;
+                playBtn.textContent = '▶ Play';
+                statusEl.textContent = '✅ Melodi selesai diputar';
+            }, delay * 1000 + 200);
+        });
+
+        stopBtn.addEventListener('click', function() {
+            stopAllSounds();
+            playBtn.textContent = '▶ Play';
+            statusEl.textContent = '⏹ Dihentikan';
+        });
+
+        // Initial status
+        statusEl.textContent = '💡 Pilih mood dan klik Generate';
+    </script>
+</body>
+</html>
