@@ -85,6 +85,11 @@
         .status.error {
             color: #e94560;
         }
+        .status.loading {
+            color: #f5a623;
+            animation: blink 1s infinite;
+        }
+        @keyframes blink { 50% { opacity: 0.3; } }
         .waveform {
             width: 100%;
             height: 80px;
@@ -153,13 +158,29 @@
             display: none;
         }
         .error-message.show { display: block; }
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #0d0d1a;
+            border-radius: 2px;
+            margin-top: 10px;
+            overflow: hidden;
+            display: none;
+        }
+        .progress-bar.show { display: block; }
+        .progress-bar .fill {
+            height: 100%;
+            background: linear-gradient(90deg, #e94560, #f5a623);
+            width: 0%;
+            transition: width 0.3s;
+        }
         @media (max-width:600px) { .container { padding: 15px; } }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>🎤 AI Audio Transcriber</h1>
-        <p class="subtitle">Bersenandung atau mainkan melodi, AI akan menuliskannya</p>
+        <p class="subtitle">Bersenandung atau mainkan melodi (maks. 10 detik)</p>
 
         <div class="error-message" id="errorMessage">
             ⚠️ <span id="errorText">Terjadi kesalahan. Pastikan browser mengizinkan akses mikrofon.</span>
@@ -167,13 +188,16 @@
 
         <div class="record-area" id="recordArea">
             <button class="record-btn" id="recordBtn">🎤</button>
-            <div class="timer" id="timerDisplay">00:00</div>
+            <div class="timer" id="timerDisplay">00:00 / 00:10</div>
             <div class="waveform" id="waveformContainer">
                 <canvas id="waveformCanvas"></canvas>
             </div>
+            <div class="progress-bar" id="progressBar">
+                <div class="fill" id="progressFill"></div>
+            </div>
         </div>
 
-        <div class="status" id="status">🔴 Klik tombol mikrofon untuk mulai merekam</div>
+        <div class="status" id="status">🔴 Klik tombol mikrofon untuk mulai merekam (maks. 10 detik)</div>
 
         <div class="btn-group">
             <button class="btn btn-success" id="transcribeBtn" disabled>🧠 AI Transcribe</button>
@@ -205,7 +229,6 @@
             'I5':2848.123,'J5':3008.949,'K5':3358.358,'A5':3748.341,
             'B5':4183.611,'C5':4669.425,'D5':5211.653
         };
-        const NOTE_NAMES = ['E','F','G','H','I','J','K','A','B','C','D'];
         const NOTE_FREQS = Object.values(FREQ_MAP);
         const NOTE_NAMES_REV = Object.keys(FREQ_MAP);
 
@@ -220,6 +243,7 @@
         let recordedAudioBuffer = null;
         let transcribedNotes = [];
         let isPlaying = false;
+        let maxRecordSeconds = 10; // batas rekaman
 
         const recordBtn = document.getElementById('recordBtn');
         const timerDisplay = document.getElementById('timerDisplay');
@@ -235,6 +259,8 @@
         const ctx = canvas.getContext('2d');
         const errorMessage = document.getElementById('errorMessage');
         const errorText = document.getElementById('errorText');
+        const progressBar = document.getElementById('progressBar');
+        const progressFill = document.getElementById('progressFill');
 
         function resizeCanvas() {
             const rect = canvas.parentElement.getBoundingClientRect();
@@ -278,16 +304,12 @@
         // ================================================================
         async function startRecording() {
             try {
-                // Periksa apakah browser mendukung getUserMedia
                 if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                     showError('Browser tidak mendukung akses mikrofon.');
                     return;
                 }
 
-                // Minta izin mikrofon
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                
-                // Jika berhasil, sembunyikan error
                 hideError();
 
                 const ctx = initAudio();
@@ -310,22 +332,27 @@
                     statusEl.textContent = '✅ Rekaman selesai! Klik "AI Transcribe" untuk analisis.';
                     transcribeBtn.disabled = false;
                     recordArea.classList.remove('recording');
+                    progressBar.classList.remove('show');
                 };
 
                 mediaRecorder.start();
                 isRecording = true;
                 recordArea.classList.add('recording');
                 recordBtn.textContent = '⏹';
-                statusEl.textContent = '🔴 Merekam... bicara atau bersenandung';
+                statusEl.textContent = `🔴 Merekam... (maks. ${maxRecordSeconds} detik)`;
                 transcribeBtn.disabled = true;
                 seconds = 0;
-                timerDisplay.textContent = '00:00';
+                timerDisplay.textContent = `00:00 / 00:${String(maxRecordSeconds).padStart(2,'0')}`;
                 if (recordTimer) clearInterval(recordTimer);
                 recordTimer = setInterval(() => {
                     seconds++;
                     const m = String(Math.floor(seconds/60)).padStart(2,'0');
                     const s = String(seconds%60).padStart(2,'0');
-                    timerDisplay.textContent = `${m}:${s}`;
+                    const maxM = String(Math.floor(maxRecordSeconds/60)).padStart(2,'0');
+                    const maxS = String(maxRecordSeconds%60).padStart(2,'0');
+                    timerDisplay.textContent = `${m}:${s} / ${maxM}:${maxS}`;
+                    
+                    // Update waveform
                     if (analyser) {
                         analyser.getByteTimeDomainData(dataArray);
                         ctx.fillStyle = '#0d0d1a';
@@ -343,6 +370,12 @@
                             x += sliceWidth;
                         }
                         ctx.stroke();
+                    }
+
+                    // Auto-stop jika mencapai batas
+                    if (seconds >= maxRecordSeconds) {
+                        stopRecording();
+                        statusEl.textContent = '⏹ Rekaman otomatis berhenti (maks. 10 detik)';
                     }
                 }, 200);
 
@@ -370,6 +403,7 @@
                 recordTimer = null;
                 recordBtn.textContent = '🎤';
                 mediaRecorder.stream.getTracks().forEach(t => t.stop());
+                recordArea.classList.remove('recording');
             }
         }
 
@@ -394,7 +428,7 @@
         }
 
         // ================================================================
-        // AI TRANSCRIBE (sama seperti sebelumnya)
+        // AI TRANSCRIBE (dengan progress bar)
         // ================================================================
         function findClosestNote(freq) {
             let closest = NOTE_FREQS[0];
@@ -418,26 +452,43 @@
             }
 
             statusEl.textContent = '🧠 AI sedang menganalisis audio...';
+            statusEl.className = 'status loading';
             transcribeBtn.disabled = true;
+            progressBar.classList.add('show');
 
+            // Gunakan setTimeout agar UI update terlihat
             setTimeout(() => {
                 const data = recordedAudioBuffer.getChannelData(0);
                 const sampleRate = recordedAudioBuffer.sampleRate;
-                const windowSize = Math.floor(sampleRate * 0.05);
-                const hopSize = Math.floor(windowSize * 0.5);
+                // Optimasi: gunakan window size 30ms (lebih kecil)
+                const windowSize = Math.floor(sampleRate * 0.03);
+                const hopSize = Math.floor(windowSize * 0.4);
                 const detected = [];
+                const totalSteps = Math.floor((data.length - windowSize) / hopSize);
+                let stepCount = 0;
 
                 for (let start=0; start < data.length - windowSize; start += hopSize) {
+                    stepCount++;
+                    // Update progress tiap 5% step
+                    if (stepCount % Math.floor(totalSteps/20) === 0) {
+                        const pct = Math.min(100, Math.round((stepCount / totalSteps) * 100));
+                        progressFill.style.width = pct + '%';
+                    }
+
+                    // RMS
                     let sum = 0;
                     for (let i=0; i<windowSize; i++) {
                         sum += Math.abs(data[start + i]);
                     }
                     const rms = Math.sqrt(sum / windowSize);
-                    if (rms < 0.005) continue;
+                    if (rms < 0.008) continue; // threshold lebih tinggi
 
+                    // Autocorrelation
                     let maxCorr = 0;
                     let pitch = 0;
-                    for (let lag = Math.floor(sampleRate/5000); lag < Math.floor(sampleRate/50); lag++) {
+                    const minLag = Math.floor(sampleRate / 1500);
+                    const maxLag = Math.floor(sampleRate / 60);
+                    for (let lag = minLag; lag < maxLag; lag++) {
                         let corr = 0;
                         for (let i=0; i<windowSize-lag; i++) {
                             corr += data[start+i] * data[start+i+lag];
@@ -447,12 +498,13 @@
                             pitch = sampleRate / lag;
                         }
                     }
-                    if (pitch > 50 && pitch < 2000) {
+                    if (pitch > 60 && pitch < 1800) {
                         const note = findClosestNote(pitch);
                         if (note) detected.push(note);
                     }
                 }
 
+                // Simplify
                 const uniqueNotes = [];
                 let lastNote = null;
                 for (let n of detected) {
@@ -480,9 +532,13 @@
                     resultArea.classList.add('show');
                     playResultBtn.disabled = false;
                 }
+
                 statusEl.textContent = `✅ Transkripsi selesai! ${result.length} nada ditemukan.`;
+                statusEl.className = 'status';
                 transcribeBtn.disabled = false;
-            }, 1000);
+                progressBar.classList.remove('show');
+                progressFill.style.width = '0%';
+            }, 300); // delay untuk UI
         }
 
         transcribeBtn.addEventListener('click', transcribeAudio);
@@ -535,6 +591,7 @@
             playResultBtn.disabled = true;
             transcribeBtn.disabled = true;
             statusEl.textContent = '🗑️ Dihapus. Rekam ulang untuk transkripsi.';
+            statusEl.className = 'status';
             ctx.fillStyle = '#0d0d1a';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = '#555';
@@ -542,12 +599,14 @@
             ctx.textAlign = 'center';
             ctx.fillText('Tunggu rekaman...', canvas.width/2, canvas.height/2 + 5);
             hideError();
+            progressBar.classList.remove('show');
+            progressFill.style.width = '0%';
         });
 
         // ================================================================
         // INIT
         // ================================================================
-        statusEl.textContent = '🔴 Klik tombol mikrofon untuk mulai merekam';
+        statusEl.textContent = '🔴 Klik tombol mikrofon untuk mulai merekam (maks. 10 detik)';
         ctx.fillStyle = '#0d0d1a';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = '#555';
@@ -555,10 +614,7 @@
         ctx.textAlign = 'center';
         ctx.fillText('Tunggu rekaman...', canvas.width/2, canvas.height/2 + 5);
 
-        // ================================================================
-        // MENANGANI ERROR MIKROFON DI AWAL (jika sudah ditolak)
-        // ================================================================
-        // Coba deteksi apakah mikrofon diizinkan dengan memeriksa status izin
+        // Cek izin awal
         if (navigator.permissions && navigator.permissions.query) {
             navigator.permissions.query({ name: 'microphone' }).then(result => {
                 if (result.state === 'denied') {
