@@ -116,6 +116,15 @@ with st.sidebar:
     
     st.markdown("---")
     
+    # ===== TAMBAHAN: LINK KE HALAMAN AI =====
+    st.markdown("### 🤖 Fitur AI")
+    st.markdown("""
+    - [🎵 AI Composer](/ai_composer)
+    - [🎤 AI Transcriber](/ai_transcriber)
+    """)
+    
+    st.markdown("---")
+    
     st.markdown("""
     ### 📚 Referensi
     1. Helmholtz, H. (1954). *On the Sensations of Tone*
