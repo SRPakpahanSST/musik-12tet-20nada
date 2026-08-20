@@ -436,17 +436,36 @@
 
         </div> <!-- penutup container -->
 
-        <!-- ===== MENU AI (di luar container, tapi di dalam #app) ===== -->
+ <!-- ===== MENU AI (di luar container, tapi di dalam #app) ===== -->
 <div style="margin-top:25px; display:flex; gap:15px; flex-wrap:wrap; justify-content:center; padding:10px;">
-    <button onclick="window.top.location.href='/ai_composer'" 
-            style="padding:14px 35px; background:linear-gradient(135deg,#e94560,#f5a623); color:#fff; border-radius:30px; border:none; font-weight:700; font-size:1rem; cursor:pointer; transition:0.2s; box-shadow:0 4px 20px rgba(233,69,96,0.3);">
+    <a href="/ai_composer" target="_top" rel="noopener" 
+       style="padding:14px 35px; background:linear-gradient(135deg,#e94560,#f5a623); color:#fff; border-radius:30px; text-decoration:none; font-weight:700; transition:0.2s; box-shadow:0 4px 20px rgba(233,69,96,0.3); display:inline-block;"
+       onclick="return navigateTo('/ai_composer');">
         🎵 AI Composer
-    </button>
-    <button onclick="window.top.location.href='/ai_transcriber'" 
-            style="padding:14px 35px; background:linear-gradient(135deg,#6c2bd9,#a855f7); color:#fff; border-radius:30px; border:none; font-weight:700; font-size:1rem; cursor:pointer; transition:0.2s; box-shadow:0 4px 20px rgba(108,43,217,0.3);">
+    </a>
+    <a href="/ai_transcriber" target="_top" rel="noopener" 
+       style="padding:14px 35px; background:linear-gradient(135deg,#6c2bd9,#a855f7); color:#fff; border-radius:30px; text-decoration:none; font-weight:700; transition:0.2s; box-shadow:0 4px 20px rgba(108,43,217,0.3); display:inline-block;"
+       onclick="return navigateTo('/ai_transcriber');">
         🎤 AI Transcriber
-    </button>
+    </a>
 </div>
+
+<script>
+function navigateTo(path) {
+    // Coba berbagai metode untuk navigasi keluar dari iframe
+    if (window.top && window.top !== window) {
+        try {
+            window.top.location.href = path;
+            return false; // prevent default a tag
+        } catch(e) {
+            // jika gagal, coba method lain
+        }
+    }
+    // fallback: buka di tab baru
+    window.open(path, '_top');
+    return false;
+}
+</script>
 
     </div> <!-- penutup #app -->
 
