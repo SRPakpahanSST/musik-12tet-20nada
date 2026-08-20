@@ -1,10 +1,6 @@
 import streamlit as st
 
-st.set_page_config(
-    page_title="AI Transcriber - Musik 12-TET",
-    page_icon="🎤",
-    layout="wide"
-)
+st.set_page_config(page_title="AI Transcriber", page_icon="🎤", layout="wide")
 
 st.title("🎤 AI Audio Transcriber")
 st.markdown("*Bersenandung atau mainkan melodi, AI akan menuliskannya*")
