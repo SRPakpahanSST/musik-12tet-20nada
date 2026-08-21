@@ -147,7 +147,7 @@
             display: block;
         }
 
-        /* ===== CONTROLS ===== */
+        /* ===== CONTROLS (Keyboard) ===== */
         .controls {
             display: flex;
             gap: 10px;
@@ -217,7 +217,7 @@
             display: inline-block;
         }
 
-        /* Mode Radio Group */
+        /* Mode Radio Group (Keyboard) */
         .mode-radio-group {
             display: flex;
             gap: 6px;
@@ -253,27 +253,14 @@
         .mode-badge.desc { background: #0f3460; color: #aaa; }
         .mode-badge.prompt { background: #2d7d46; color: #fff; }
 
-        /* ===== DESKRIPSI / PROMPT AREA ===== */
-        .input-area {
+        /* Prompt Area (Keyboard) */
+        .prompt-area {
             display: none;
             width: 100%;
-            padding: 10px 0;
+            padding: 8px 0;
         }
-        .input-area.show {
-            display: block;
-        }
-
-        .input-area .input-group {
-            margin-bottom: 10px;
-        }
-        .input-area .input-group label {
-            display: block;
-            color: #aaa;
-            font-size: 0.8rem;
-            margin-bottom: 3px;
-        }
-        .input-area .input-group textarea,
-        .input-area .input-group input[type="password"] {
+        .prompt-area.show { display: block; }
+        .prompt-area textarea {
             width: 100%;
             padding: 8px 12px;
             border: none;
@@ -281,35 +268,14 @@
             background: #0d0d1a;
             color: #fff;
             font-size: 0.85rem;
+            resize: vertical;
+            min-height: 40px;
             outline: none;
             border: 1px solid #2a3a5e;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        .input-area .input-group textarea {
-            resize: vertical;
-            min-height: 50px;
-        }
-        .input-area .input-group textarea:focus,
-        .input-area .input-group input[type="password"]:focus {
-            border-color: #e94560;
-        }
-        .input-area .input-group .hint {
-            color: #666;
-            font-size: 0.7rem;
-            margin-top: 3px;
-        }
-        .input-area .input-group .api-hint {
-            color: #888;
-            font-size: 0.7rem;
-            margin-top: 3px;
-            background: #1a0d0d;
-            padding: 5px 10px;
-            border-radius: 8px;
-            border-left: 3px solid #a04040;
-        }
-        .input-area .input-group .api-hint a {
-            color: #f5a623;
-        }
+        .prompt-area textarea:focus { border-color: #e94560; }
+        .prompt-area .hint { color: #666; font-size: 0.7rem; margin-top: 3px; }
 
         /* ===== KEYBOARD ===== */
         .keyboard-wrapper {
@@ -409,14 +375,8 @@
             border: 1px solid #2a3a5e;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        .ai-container textarea:focus {
-            border-color: #e94560;
-        }
-        .ai-container .hint {
-            color: #666;
-            font-size: 0.75rem;
-            margin-top: 3px;
-        }
+        .ai-container textarea:focus { border-color: #e94560; }
+        .ai-container .hint { color: #666; font-size: 0.75rem; margin-top: 3px; }
         .ai-result {
             margin-top: 12px;
             padding: 12px;
@@ -469,6 +429,89 @@
             background: #e94560;
         }
         .mood-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+
+        /* ===== AI COMPOSER MODE RADIO ===== */
+        .ai-mode-radio {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            background: #111;
+            padding: 6px 14px;
+            border-radius: 20px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        .ai-mode-radio label {
+            color: #aaa;
+            font-size: 0.75rem;
+            cursor: pointer;
+            padding: 3px 10px;
+            border-radius: 12px;
+            transition: 0.2s;
+        }
+        .ai-mode-radio label:hover { background: #1a1a3e; }
+        .ai-mode-radio label.active-ai-mode {
+            background: #e94560;
+            color: #fff;
+        }
+        .ai-mode-radio input[type="radio"] {
+            accent-color: #e94560;
+            margin-right: 3px;
+        }
+        .ai-mode-badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.6rem;
+            margin-left: 5px;
+        }
+        .ai-mode-badge.desc { background: #0f3460; color: #aaa; }
+        .ai-mode-badge.prompt { background: #2d7d46; color: #fff; }
+
+        /* ===== AI COMPOSER INPUT AREAS ===== */
+        .ai-input-area {
+            display: none;
+            width: 100%;
+        }
+        .ai-input-area.show { display: block; }
+        .ai-input-area .input-group { margin-bottom: 8px; }
+        .ai-input-area .input-group label {
+            color: #aaa;
+            display: block;
+            margin-bottom: 3px;
+            font-size: 0.8rem;
+        }
+        .ai-input-area .input-group textarea,
+        .ai-input-area .input-group input[type="password"] {
+            width: 100%;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 10px;
+            background: #0d0d1a;
+            color: #fff;
+            font-size: 0.85rem;
+            outline: none;
+            border: 1px solid #2a3a5e;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .ai-input-area .input-group textarea { resize: vertical; min-height: 50px; }
+        .ai-input-area .input-group textarea:focus,
+        .ai-input-area .input-group input[type="password"]:focus { border-color: #e94560; }
+        .ai-input-area .input-group .hint {
+            color: #666;
+            font-size: 0.7rem;
+            margin-top: 3px;
+        }
+        .ai-input-area .input-group .api-hint {
+            color: #888;
+            font-size: 0.7rem;
+            margin-top: 3px;
+            background: #1a0d0d;
+            padding: 4px 10px;
+            border-radius: 8px;
+            border-left: 3px solid #a04040;
+        }
+        .ai-input-area .input-group .api-hint a { color: #f5a623; }
 
         /* ===== INFO PANEL ===== */
         .info-section {
@@ -562,6 +605,8 @@
             .mode-radio-group { flex-wrap: wrap; gap: 3px; padding: 3px 8px; }
             .mode-radio-group label { font-size: 0.65rem; padding: 2px 6px; }
             .ai-row { grid-template-columns: 1fr; }
+            .ai-mode-radio { gap: 5px; padding: 4px 10px; }
+            .ai-mode-radio label { font-size: 0.65rem; padding: 2px 6px; }
         }
     </style>
 </head>
@@ -595,14 +640,11 @@
 
             <!-- ===== TAB 1: KEYBOARD ===== -->
             <div class="tab-content-main active" id="tab-keyboard">
-                <!-- Keyboard -->
                 <div class="keyboard-wrapper">
                     <div class="keyboard-container" id="keyboardContainer"></div>
                 </div>
-
                 <div class="status" id="statusDisplay">Klik tuts atau tekan tombol untuk mendengar nada</div>
 
-                <!-- Controls -->
                 <div class="controls">
                     <label class="active-mode" id="singleModeLabel">
                         <input type="radio" name="playMode" value="single" checked /> Nada Tunggal
@@ -611,7 +653,6 @@
                         <input type="radio" name="playMode" value="chord" /> Akord
                     </label>
 
-                    <!-- Mode Deskripsi / Prompt -->
                     <div class="mode-radio-group">
                         <span class="effect-label">🎯 Mode:</span>
                         <label id="descModeLabel" class="active-mode-label">
@@ -668,28 +709,9 @@
                     <span class="chord-info" id="modeIndicator">🎵 Mode: Tunggal</span>
                 </div>
 
-                <!-- ===== DESKRIPSI / PROMPT AREA ===== -->
-                <div class="input-area show" id="descArea">
-                    <div class="input-group">
-                        <label>📝 Deskripsi Melodi</label>
-                        <textarea id="descInput" placeholder="Contoh: melodi yang perlahan meningkat, dengan nada-nada tinggi dan suasana romantis..."></textarea>
-                        <div class="hint">💡 Tulis deskripsi melodi yang diinginkan. Sistem akan mensimulasikannya.</div>
-                    </div>
-                </div>
-
-                <div class="input-area" id="promptArea">
-                    <div class="input-group">
-                        <label>🔑 OpenAI API Key</label>
-                        <input type="password" id="apiKeyInput" placeholder="sk-... (masukkan API Key OpenAI Anda)" />
-                        <div class="api-hint">
-                            💡 Dapatkan API Key di <a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com</a>
-                        </div>
-                    </div>
-                    <div class="input-group">
-                        <label>🤖 Prompt untuk AI Chatbot</label>
-                        <textarea id="promptInput" placeholder="Contoh: Ciptakan melodi jazz yang romantis dengan tempo sedang, menggunakan skala minor..."></textarea>
-                        <div class="hint">💡 Tulis prompt spesifik untuk AI. AI akan menciptakan melodi berdasarkan prompt ini.</div>
-                    </div>
+                <div class="prompt-area" id="promptArea">
+                    <textarea id="promptInput" placeholder="Contoh: Ciptakan melodi yang perlahan meningkat, dengan nada-nada tinggi dan suasana romantis..."></textarea>
+                    <div class="hint" id="promptHint">💡 Tulis prompt untuk AI Chatbot (hanya jika mode Prompt AI aktif)</div>
                 </div>
             </div>
 
@@ -699,6 +721,44 @@
                     <h3>🎵 AI Music Composer</h3>
                     <p style="color:#aaa;margin-bottom:10px;font-size:0.85rem;">Ciptakan melodi otomatis dengan AI (A4 = 440 Hz)</p>
 
+                    <!-- ===== AI MODE RADIO ===== -->
+                    <div class="ai-mode-radio" id="aiModeRadio">
+                        <span style="color:#aaa;font-size:0.75rem;">🎯 Mode Input:</span>
+                        <label id="aiDescModeLabel" class="active-ai-mode">
+                            <input type="radio" name="aiInputMode" value="deskripsi" checked /> Deskripsi
+                        </label>
+                        <label id="aiPromptModeLabel">
+                            <input type="radio" name="aiInputMode" value="prompt" /> Prompt AI
+                        </label>
+                        <span id="aiModeBadge" class="ai-mode-badge desc">Mode: Deskripsi</span>
+                    </div>
+
+                    <!-- ===== AI DESKRIPSI AREA ===== -->
+                    <div class="ai-input-area show" id="aiDescArea">
+                        <div class="input-group">
+                            <label>📝 Deskripsi Melodi</label>
+                            <textarea id="aiDescInput" placeholder="Contoh: melodi yang perlahan meningkat, dengan nada-nada tinggi dan suasana romantis..."></textarea>
+                            <div class="hint">💡 Tulis deskripsi melodi yang diinginkan. Sistem akan mensimulasikannya.</div>
+                        </div>
+                    </div>
+
+                    <!-- ===== AI PROMPT AREA ===== -->
+                    <div class="ai-input-area" id="aiPromptArea">
+                        <div class="input-group">
+                            <label>🔑 OpenAI API Key</label>
+                            <input type="password" id="aiApiKeyInput" placeholder="sk-... (masukkan API Key OpenAI Anda)" />
+                            <div class="api-hint">
+                                💡 Dapatkan API Key di <a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com</a>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label>🤖 Prompt untuk AI Chatbot</label>
+                            <textarea id="aiPromptInput" placeholder="Contoh: Ciptakan melodi jazz yang romantis dengan tempo sedang, menggunakan skala minor..."></textarea>
+                            <div class="hint">💡 Tulis prompt spesifik untuk AI. AI akan menciptakan melodi berdasarkan prompt ini.</div>
+                        </div>
+                    </div>
+
+                    <!-- ===== MOOD, SKALA, TEMPO ===== -->
                     <div style="margin-bottom:10px;">
                         <label style="color:#aaa;display:block;margin-bottom:3px;font-size:0.8rem;">🎭 Mood / Suasana</label>
                         <div class="mood-tags" id="moodTags">
@@ -728,11 +788,6 @@
                                 <option value="160">Sangat Cepat (160)</option>
                             </select>
                         </div>
-                    </div>
-
-                    <div style="margin-bottom:10px;">
-                        <label style="color:#aaa;display:block;margin-bottom:3px;font-size:0.8rem;">📝 Deskripsi / Prompt</label>
-                        <textarea id="aiPromptInput" placeholder="Contoh: Ciptakan melodi yang sedih dengan tempo lambat..."></textarea>
                     </div>
 
                     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
@@ -1279,11 +1334,9 @@
         const delayVal = document.getElementById('delayVal');
         const ampSlider = document.getElementById('ampSlider');
         const ampVal = document.getElementById('ampVal');
-        const descArea = document.getElementById('descArea');
         const promptArea = document.getElementById('promptArea');
-        const descInput = document.getElementById('descInput');
-        const apiKeyInput = document.getElementById('apiKeyInput');
         const promptInput = document.getElementById('promptInput');
+        const promptHint = document.getElementById('promptHint');
         let keyElements = {};
 
         function buildKeyboard(octaveCount) {
@@ -1426,7 +1479,6 @@
         // EVENT LISTENERS - KEYBOARD
         // ================================================================
 
-        // Play Mode
         document.querySelectorAll('input[name="playMode"]').forEach(r => {
             r.addEventListener('change', function() {
                 if (this.checked) {
@@ -1444,7 +1496,6 @@
             });
         });
 
-        // Input Mode (Deskripsi / Prompt)
         document.querySelectorAll('input[name="inputMode"]').forEach(r => {
             r.addEventListener('change', function() {
                 if (this.checked) {
@@ -1455,13 +1506,13 @@
                     if (currentInputMode === 'deskripsi') {
                         modeBadge.textContent = 'Mode: Deskripsi';
                         modeBadge.className = 'mode-badge desc';
-                        descArea.classList.add('show');
                         promptArea.classList.remove('show');
+                        promptHint.textContent = '💡 Tulis deskripsi melodi (mode Deskripsi)';
                     } else {
                         modeBadge.textContent = 'Mode: Prompt AI';
                         modeBadge.className = 'mode-badge prompt';
-                        descArea.classList.remove('show');
                         promptArea.classList.add('show');
+                        promptHint.textContent = '💡 Tulis prompt untuk AI Chatbot (mode Prompt AI)';
                     }
                 }
             });
@@ -1531,13 +1582,48 @@
         });
 
         // ================================================================
-        // AI COMPOSER
+        // AI COMPOSER - MODE RADIO
+        // ================================================================
+        const aiDescArea = document.getElementById('aiDescArea');
+        const aiPromptArea = document.getElementById('aiPromptArea');
+        const aiDescModeLabel = document.getElementById('aiDescModeLabel');
+        const aiPromptModeLabel = document.getElementById('aiPromptModeLabel');
+        const aiModeBadge = document.getElementById('aiModeBadge');
+        const aiDescInput = document.getElementById('aiDescInput');
+        const aiApiKeyInput = document.getElementById('aiApiKeyInput');
+        const aiPromptInput = document.getElementById('aiPromptInput');
+
+        let aiInputMode = 'deskripsi';
+
+        document.querySelectorAll('input[name="aiInputMode"]').forEach(r => {
+            r.addEventListener('change', function() {
+                if (this.checked) {
+                    aiInputMode = this.value;
+
+                    if (aiInputMode === 'deskripsi') {
+                        aiDescArea.classList.add('show');
+                        aiPromptArea.classList.remove('show');
+                        aiDescModeLabel.classList.add('active-ai-mode');
+                        aiPromptModeLabel.classList.remove('active-ai-mode');
+                        aiModeBadge.textContent = 'Mode: Deskripsi';
+                        aiModeBadge.className = 'ai-mode-badge desc';
+                    } else {
+                        aiDescArea.classList.remove('show');
+                        aiPromptArea.classList.add('show');
+                        aiPromptModeLabel.classList.add('active-ai-mode');
+                        aiDescModeLabel.classList.remove('active-ai-mode');
+                        aiModeBadge.textContent = 'Mode: Prompt AI';
+                        aiModeBadge.className = 'ai-mode-badge prompt';
+                    }
+                }
+            });
+        });
+
+        // ================================================================
+        // AI COMPOSER - MOOD TAGS
         // ================================================================
         const moodTags = document.querySelectorAll('#moodTags .mood-tag');
         let selectedMood = 'sad';
-        let generatedMelody = [];
-        let aiPlaying = false;
-        let aiPlayTimeout = null;
 
         moodTags.forEach(tag => {
             tag.addEventListener('click', function() {
@@ -1547,6 +1633,9 @@
             });
         });
 
+        // ================================================================
+        // AI COMPOSER - GENERATE SIMULATION
+        // ================================================================
         function generateSimulation(mood, scaleType, tempo) {
             const scale = scaleType === 'mayor' ?
                 ['E', 'F', 'G', 'H', 'I', 'J', 'K', 'A', 'B', 'C', 'D', 'E'] :
@@ -1601,10 +1690,85 @@
             return melody;
         }
 
-        document.getElementById('aiGenerateBtn').addEventListener('click', function() {
+        // ================================================================
+        // AI COMPOSER - GENERATE WITH AI (OpenAI)
+        // ================================================================
+        async function generateWithAI(prompt, mood, scaleType, tempo, apiKey) {
+            try {
+                const systemPrompt = `Anda adalah komposer musik yang ahli dalam sistem 12-TET 20 nada per oktaf dengan A4=440 Hz.
+Skala Mayor: E - F - G - H - I - J - K - A - B - C - D - E
+Skala Minor: A - B - C - D - E - F - G - H - I - J - K - A
+
+Tugas: Buat melodi dalam format NOTASI NADA SAJA (contoh: E4 G4 H4 E5 G5 H5 E6).
+Hasilkan 8-20 nada. Hanya output notasi nada, tanpa penjelasan tambahan.
+Gunakan nada dari oktaf 3, 4, dan 5.`;
+
+                const userPrompt = `Mood: ${mood}
+Skala: ${scaleType}
+Tempo: ${tempo} BPM
+Deskripsi: ${prompt || 'Ciptakan melodi yang indah'}
+
+Hasilkan notasi nada:`;
+
+                const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`
+                    },
+                    body: JSON.stringify({
+                        model: 'gpt-3.5-turbo',
+                        messages: [
+                            { role: 'system', content: systemPrompt },
+                            { role: 'user', content: userPrompt }
+                        ],
+                        temperature: 0.8,
+                        max_tokens: 200
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error?.message || 'API Error');
+                }
+
+                const data = await response.json();
+                const result = data.choices[0].message.content.trim();
+
+                const notes = result.split(/\s+/).filter(n => n.length > 0);
+                const melody = [];
+                for (let n of notes) {
+                    n = n.replace(/[,;.]/g, '');
+                    if (FREQ_MAP[n]) {
+                        melody.push({ note: n, freq: FREQ_MAP[n], duration: 0.3 + Math.random() * 0.3 });
+                    }
+                }
+
+                return melody.length > 0 ? melody : generateSimulation(mood, scaleType, tempo);
+
+            } catch (error) {
+                console.warn('AI API Error:', error);
+                document.getElementById('aiResultArea').innerHTML = `<div style="color:#e94560;">⚠️ Error API: ${error.message}. Beralih ke simulasi.</div>`;
+                return generateSimulation(mood, scaleType, tempo);
+            }
+        }
+
+        // ================================================================
+        // AI COMPOSER - GENERATE BUTTON
+        // ================================================================
+        let generatedMelody = [];
+        let aiPlaying = false;
+        let aiPlayTimeout = null;
+
+        document.getElementById('aiGenerateBtn').addEventListener('click', async function() {
             const scale = document.getElementById('aiScaleSelect').value;
             const tempo = parseInt(document.getElementById('aiTempoSelect').value);
-            const prompt = document.getElementById('aiPromptInput').value.trim() || 'Melodi otomatis';
+            const inputText = aiInputMode === 'deskripsi' ? aiDescInput.value.trim() : aiPromptInput.value.trim();
+
+            if (!inputText) {
+                alert('Masukkan deskripsi atau prompt terlebih dahulu!');
+                return;
+            }
 
             const resultArea = document.getElementById('aiResultArea');
             const melodyDisplay = document.getElementById('aiMelodyDisplay');
@@ -1620,18 +1784,43 @@
             this.disabled = true;
             this.textContent = '⏳ Generating...';
 
-            setTimeout(() => {
-                generatedMelody = generateSimulation(selectedMood, scale, tempo);
+            setTimeout(async () => {
+                let melody;
+                if (aiInputMode === 'prompt') {
+                    const apiKey = aiApiKeyInput.value.trim();
+                    if (!apiKey) {
+                        alert('Masukkan API Key OpenAI terlebih dahulu!');
+                        this.disabled = false;
+                        this.textContent = '🚀 Generate';
+                        return;
+                    }
+                    melody = await generateWithAI(inputText, selectedMood, scale, tempo, apiKey);
+                } else {
+                    melody = generateSimulation(selectedMood, scale, tempo);
+                }
+
+                if (!melody || melody.length === 0) {
+                    melodyDisplay.textContent = '(Tidak ada nada yang dihasilkan)';
+                    noteCount.textContent = 'Jumlah nada: 0';
+                    this.disabled = false;
+                    this.textContent = '🚀 Generate';
+                    return;
+                }
+
+                generatedMelody = melody;
                 const noteNames = generatedMelody.map(n => n.note).join(' → ');
-                melodyDisplay.textContent = noteNames || '(tidak ada nada)';
+                melodyDisplay.textContent = noteNames;
                 noteCount.textContent = `Jumlah nada: ${generatedMelody.length}`;
                 playBtn.disabled = false;
                 stopBtn.disabled = false;
                 this.disabled = false;
                 this.textContent = '🚀 Generate';
-            }, 600);
+            }, 300);
         });
 
+        // ================================================================
+        // AI COMPOSER - PLAY / STOP / CLEAR
+        // ================================================================
         document.getElementById('aiPlayBtn').addEventListener('click', function() {
             if (generatedMelody.length === 0) return;
             if (aiPlaying) {
@@ -1923,9 +2112,13 @@
             delayVal.textContent = '0%';
             ampSlider.value = 100;
             ampVal.textContent = '1.0x';
-            // Default: Deskripsi mode aktif
-            descArea.classList.add('show');
-            promptArea.classList.remove('show');
+
+            // AI Composer default: Deskripsi mode aktif
+            aiDescArea.classList.add('show');
+            aiPromptArea.classList.remove('show');
+            aiDescModeLabel.classList.add('active-ai-mode');
+            aiPromptModeLabel.classList.remove('active-ai-mode');
+
             console.log('🎵 PMD Musik 12-TET siap!');
             console.log('📊 A4 = 440 Hz (acuan)');
             console.log('🎹 8 Instrumen: Sine, Square, Sawtooth, Triangle, Organ, Piano, Flute, Trumpet');
