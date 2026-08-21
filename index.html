@@ -991,7 +991,7 @@
                 </div>
             </div>
 
-            <!-- ===== TAB 3: AI TRANSCRIBER (OPTIMASI) ===== -->
+            <!-- ===== TAB 3: AI TRANSCRIBER ===== -->
             <div class="tab-content-main" id="tab-transcriber">
                 <div class="ai-container">
                     <h3>
@@ -1020,7 +1020,6 @@
 
                     <!-- Controls -->
                     <div class="transcriber-controls">
-                        <!-- Radio Button Algoritma -->
                         <div class="radio-group">
                             <label id="standardLabel" class="active-radio">
                                 <input type="radio" name="algorithm" value="standard" checked /> Standar
@@ -1045,7 +1044,6 @@
                             <option value="0.03">Rendah (kurang noise)</option>
                         </select>
 
-                        <!-- Filter hanya untuk Improved -->
                         <span id="filterContainer" style="display:none;">
                             <label>🧹 Filter:</label>
                             <select id="filterSelect">
@@ -1077,7 +1075,7 @@
                 </div>
             </div>
 
-            <!-- ===== TAB 4: CHORD PROGRESSION (sudah diperbaiki) ===== -->
+            <!-- ===== TAB 4: CHORD PROGRESSION ===== -->
             <div class="tab-content-main" id="tab-chord">
                 <div class="ai-container">
                     <h3>🎶 Chord Progression Generator</h3>
@@ -1210,27 +1208,8 @@
         const NOTE_FREQS = Object.values(FREQ_MAP);
         const NOTE_NAMES = Object.keys(FREQ_MAP);
 
-        // Chord dictionary untuk keyboard (akord sederhana)
-        const CHORD_DICT = {
-            "A2": ["A2", "C#3", "E3"],
-            "B2": ["B2", "D#3", "F#3"],
-            "C3": ["C3", "E3", "G3"],
-            "D3": ["D3", "F#3", "A3"],
-            "E3": ["E3", "G#3", "B3"],
-            "F3": ["F3", "A3", "C4"],
-            "G3": ["G3", "B3", "D4"],
-            "A#2": ["A#2", "C3", "E3"],
-            "C#3": ["C#3", "D#3", "G3"],
-            "D#3": ["D#3", "F3", "A3"],
-            "F#3": ["F#3", "G#3", "C4"],
-            "G#3": ["G#3", "A#3", "D4"]
-        };
-
-        const SCALE_MAYOR = ['E', 'F', 'G', 'H', 'I', 'J', 'K', 'A', 'B', 'C', 'D', 'E'];
-        const SCALE_MINOR = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'A'];
-
         // ================================================================
-        // SISTEM 20 NADA PER OKTAF – FUNGSI DASAR (digunakan di seluruh aplikasi)
+        // SISTEM 20 NADA PER OKTAF – FUNGSI DASAR
         // ================================================================
         const NOTES_20 = ['E','E#','F','F#','G','G#','H','H#','I','J','J#','K','K#','A','A#','B','B#','C','C#','D'];
         const MAYOR_INTERVALS = [2,2,1,2,2,2,1];
@@ -1488,82 +1467,11 @@
             } catch (e) { console.warn(e); return null; }
         }
 
-        function playChord(freqs, duration = 0.8) {
-            try {
-                const ctx = initAudio();
-                const type = currentInstrument;
-                freqs.forEach(f => {
-                    if (f <= 0) return;
-                    const oscData = createInstrumentOscillator(f, type);
-                    const mainOsc = oscData.mainOsc;
-                    const gain = ctx.createGain();
-
-                    const now = ctx.currentTime;
-                    gain.gain.setValueAtTime(0.001, now);
-
-                    let attack = 0.03,
-                        decay = 0.15,
-                        sustain = 0.2,
-                        release = 0.01;
-                    if (type === 'piano') { attack = 0.01;
-                        decay = 0.3;
-                        sustain = 0.15;
-                        release = 0.2; } else if (type === 'flute') { attack = 0.05;
-                        decay = 0.2;
-                        sustain = 0.3;
-                        release = 0.05; } else if (type === 'trumpet') { attack = 0.02;
-                        decay = 0.1;
-                        sustain = 0.35;
-                        release = 0.05; }
-
-                    gain.gain.linearRampToValueAtTime(0.25, now + attack);
-                    gain.gain.exponentialRampToValueAtTime(sustain, now + attack + decay);
-                    gain.gain.exponentialRampToValueAtTime(0.001, now + duration - release);
-
-                    mainOsc.connect(gain);
-                    gain.connect(dryGain);
-                    gain.connect(wetGain);
-
-                    const delayInput = ctx.createGain();
-                    gain.connect(delayInput);
-                    delayInput.connect(delayNode);
-                    delayInput.connect(delayDryGain);
-
-                    if (oscData.extraOsc) {
-                        const eg = ctx.createGain();
-                        let extraVol = 0.3;
-                        if (type === 'piano') extraVol = 0.08;
-                        else if (type === 'flute') extraVol = 0.15;
-                        else if (type === 'trumpet') extraVol = 0.4;
-                        eg.gain.setValueAtTime(extraVol, now);
-                        oscData.extraOsc.connect(eg);
-                        eg.connect(gain);
-                        oscData.extraOsc.start(now);
-                        oscData.extraOsc.stop(now + duration);
-                        activeOscillators.push(oscData.extraOsc);
-                    }
-
-                    if (oscData.extraOsc2) {
-                        const eg2 = ctx.createGain();
-                        let extraVol2 = 0.04;
-                        if (type === 'piano') extraVol2 = 0.04;
-                        else if (type === 'trumpet') extraVol2 = 0.1;
-                        eg2.gain.setValueAtTime(extraVol2, now);
-                        oscData.extraOsc2.connect(eg2);
-                        eg2.connect(gain);
-                        oscData.extraOsc2.start(now);
-                        oscData.extraOsc2.stop(now + duration);
-                        activeOscillators.push(oscData.extraOsc2);
-                    }
-
-                    mainOsc.start(now);
-                    mainOsc.stop(now + duration);
-                    activeOscillators.push(mainOsc);
-                    if (oscData.extraOsc) activeOscillators.push(oscData.extraOsc);
-                    if (oscData.extraOsc2) activeOscillators.push(oscData.extraOsc2);
-                });
-                return true;
-            } catch (e) { console.warn(e); return false; }
+        function playChordFreqs(freqs, duration = 0.8) {
+            if (!freqs || freqs.length === 0) return;
+            freqs.forEach(f => {
+                if (f > 0) playSingleNote(f, duration);
+            });
         }
 
         function stopAllSounds() {
@@ -1703,6 +1611,7 @@
             if (!key) return;
             key.classList.add('active');
             setTimeout(() => key.classList.remove('active'), 400);
+
             if (playMode === 'single') {
                 const freq = FREQ_MAP[note];
                 if (freq) {
@@ -1710,21 +1619,49 @@
                     statusDisplay.innerHTML = `🎵 Memainkan <span>${note}</span> (${freq.toFixed(2)} Hz) [${currentInstrument}]`;
                 }
             } else {
-                const chordNotes = CHORD_DICT[note];
-                if (chordNotes && chordNotes.length > 0) {
-                    const freqs = chordNotes.map(n => FREQ_MAP[n]).filter(f => f > 0);
-                    if (freqs.length > 0) {
-                        playChord(freqs);
-                        statusDisplay.innerHTML = `🎵 Akord <span>${note}</span>: ${chordNotes.join(' + ')} [${currentInstrument}]`;
-                    } else {
-                        statusDisplay.innerHTML = `⚠️ Akord untuk ${note} tidak valid`;
+                // ===== MODE AKORD dengan batasan C2-D3 =====
+                const match = note.match(/^([A-Z#]+)(\d+)$/);
+                if (!match) return;
+                const noteName = match[1];
+                const octave = parseInt(match[2]);
+
+                // Cek apakah nada berada dalam rentang C2-D3
+                const isValidChordRoot = (() => {
+                    if (octave === 2) {
+                        return ['C2', 'C#2', 'D2'].includes(note);
                     }
-                } else {
+                    if (octave === 3) {
+                        // semua 20 nada di oktaf 3 termasuk
+                        return NOTES_20.includes(noteName);
+                    }
+                    return false;
+                })();
+
+                if (!isValidChordRoot) {
+                    // Mainkan nada tunggal
                     const freq = FREQ_MAP[note];
                     if (freq) {
                         playSingleNote(freq);
-                        statusDisplay.innerHTML = `🎵 ${note} (Tidak ada akord, dimainkan tunggal)`;
+                        statusDisplay.innerHTML = `⚠️ Akord hanya untuk C2-D3. Memainkan tunggal <span>${note}</span>`;
                     }
+                    return;
+                }
+
+                const idx = NOTES_20.indexOf(noteName);
+                if (idx === -1) return;
+
+                // Build chord mayor
+                const chordNotes = buildChord20(idx, 'mayor');
+                const freqs = chordNotes.map(n => {
+                    const fullNote = n + octave;
+                    return FREQ_MAP[fullNote] || 0;
+                }).filter(f => f > 0);
+
+                if (freqs.length > 0) {
+                    playChordFreqs(freqs);
+                    statusDisplay.innerHTML = `🎵 Akord <span>${note}</span> mayor: ${chordNotes.join(' + ')} [${currentInstrument}]`;
+                } else {
+                    statusDisplay.innerHTML = `⚠️ Akord untuk ${note} tidak valid (tidak ada frekuensi).`;
                 }
             }
         }
@@ -1802,9 +1739,9 @@
                         modeIndicator.textContent = '🎵 Mode: Tunggal';
                     } else {
                         chordModeLabel.classList.add('active-mode');
-                        modeIndicator.textContent = '🎵 Mode: Akord';
+                        modeIndicator.textContent = '🎵 Mode: Akord (C2-D3)';
                     }
-                    statusDisplay.innerHTML = `🔄 Mode berubah ke: ${playMode === 'single' ? 'Tunggal' : 'Akord'}`;
+                    statusDisplay.innerHTML = `🔄 Mode berubah ke: ${playMode === 'single' ? 'Tunggal' : 'Akord (C2-D3)'}`;
                 }
             });
         });
@@ -2708,10 +2645,9 @@ Hasilkan notasi nada:`;
         });
 
         // ================================================================
-        // CHORD PROGRESSION (20 NADA PER OKTAF) — menggunakan fungsi dasar yang sudah didefinisikan
+        // CHORD PROGRESSION (20 NADA PER OKTAF)
         // ================================================================
 
-        // Event listener untuk Generate Progresi
         document.getElementById('chordGenerateBtn').addEventListener('click', function() {
             const input = document.getElementById('chordInput').value.trim();
             if (!input) {
@@ -2719,31 +2655,26 @@ Hasilkan notasi nada:`;
                 return;
             }
 
-            // Parsing input: ambil nama not (abaikan oktaf)
             const rawNotes = input.split(/[\s→,]+/).filter(n => n.length > 0);
-            const noteNames = rawNotes.map(n => n.replace(/[0-9]/g, '')); // hilangkan angka oktaf
+            const noteNames = rawNotes.map(n => n.replace(/[0-9]/g, ''));
 
             if (noteNames.length < 3) {
                 alert('Minimal 3 nada!');
                 return;
             }
 
-            // Hitung frekuensi kemunculan setiap not
             const freqCount = {};
             noteNames.forEach(n => {
-                // pastikan not ada di NOTES_20
                 if (NOTES_20.includes(n)) {
                     freqCount[n] = (freqCount[n] || 0) + 1;
                 }
             });
 
-            // Jika tidak ada not yang dikenali, gunakan E sebagai default
             if (Object.keys(freqCount).length === 0) {
                 alert('Tidak ada not yang dikenali dalam sistem 20 nada.');
                 return;
             }
 
-            // Tentukan root sebagai not dengan frekuensi tertinggi
             let maxCount = 0;
             let rootName = 'E';
             for (let [n, c] of Object.entries(freqCount)) {
@@ -2756,9 +2687,7 @@ Hasilkan notasi nada:`;
                 return;
             }
 
-            // Baca mode analisis dari select
             const modeAnalisis = document.getElementById('chordModeSelect').value;
-
             let scaleType = 'Mayor';
             let scaleNames = [];
 
@@ -2770,8 +2699,7 @@ Hasilkan notasi nada:`;
                 scaleType = 'Minor';
                 const scaleIdx = buildScale20(rootIdx, MINOR_INTERVALS);
                 scaleNames = scaleIdx.map(i => getNoteName20(i));
-            } else { // auto
-                // Coba kedua skala dan lihat mana yang lebih cocok dengan not-not yang muncul
+            } else {
                 const mayorScaleIdx = buildScale20(rootIdx, MAYOR_INTERVALS);
                 const minorScaleIdx = buildScale20(rootIdx, MINOR_INTERVALS);
                 const mayorScaleNames = mayorScaleIdx.map(i => getNoteName20(i));
@@ -2789,19 +2717,13 @@ Hasilkan notasi nada:`;
                 }
             }
 
-            // Ambil 7 akar dari skala (7 derajat)
-            const chordRoots = scaleNames.slice(0, 7); // 7 not pertama (I sampai VII)
-
-            // Tentukan jenis akord (mayor/minor/diminished) berdasarkan interval
+            const chordRoots = scaleNames.slice(0, 7);
             const chordTypes = [];
             for (let i = 0; i < chordRoots.length; i++) {
                 const rootIdx2 = NOTES_20.indexOf(chordRoots[i]);
-                // Ambil not ketiga (derajat ke-3 dalam skala) dengan interval 4 langkah dari root
                 const thirdIdx = (rootIdx2 + 4) % 20;
                 const thirdName = getNoteName20(thirdIdx);
-                // Cek apakah third ada dalam skala (untuk menentukan mayor/minor)
                 const isMajor = scaleNames.includes(thirdName);
-                // Cek apakah kwint (7 langkah) ada dalam skala? untuk diminished
                 const fifthIdx = (rootIdx2 + 7) % 20;
                 const fifthName = getNoteName20(fifthIdx);
                 const isDiminished = !scaleNames.includes(fifthName);
@@ -2812,18 +2734,15 @@ Hasilkan notasi nada:`;
                 }
             }
 
-            // Roman numeral sesuai jenis akord
             const romanMap = {
                 'mayor': ['I', 'ii', 'iii', 'IV', 'V', 'vi', 'vii°'],
                 'minor': ['i', 'ii°', 'III', 'iv', 'v', 'VI', 'VII']
             };
             const roman = scaleType === 'Mayor' ? romanMap['mayor'] : romanMap['minor'];
 
-            // Jumlah akord yang ditampilkan
             const countVal = parseInt(document.getElementById('chordCountSelect').value);
             const showCount = Math.min(countVal, chordRoots.length);
 
-            // Tampilkan hasil
             const grid = document.getElementById('chordGrid');
             grid.innerHTML = '';
             const resultDiv = document.getElementById('chordResult');
@@ -2885,8 +2804,8 @@ Hasilkan notasi nada:`;
                 <tr><td class="note-name">D4</td><td>611.77</td><td>⬜</td></tr>
             </tbody></table><p style="font-size:0.8rem;color:#888;font-weight:bold;">A4 = 440 Hz (acuan) | Oktaf berikutnya × 3</p>`,
             skala: `<h3>🎹 Skala Mayor (E=1)</h3><p>E - F - G - H - I - J - K - A - B - C - D - E</p><p>Interval: 1 1 1 1 ½ 1 1 1 1 1 ½</p><h3>🎹 Skala Minor (A=1)</h3><p>A - B - C - D - E - F - G - H - I - J - K - A</p><p>Interval: 1 1 1 ½ 1 1 1 1 ½ 1 1</p>`,
-            chord: `<h3>🎵 Akord</h3><table class="freq-table"><thead><tr><th>Root</th><th>Akord</th></tr></thead><tbody>${Object.entries(CHORD_DICT).map(([root,notes]) => `<tr><td style="color:#ffd700;">${root}</td><td>${notes.join(' + ')}</td></tr>`).join('')}</tbody></table>`,
-            tentang: `<h3>📖 Tentang Aplikasi</h3><p>Berdasarkan karya tulis Sukma Riadi Pakpahan, SST.</p><p><b>Fitur:</b> 8 instrumen (Sine, Square, Sawtooth, Triangle, Organ, Piano, Flute, Trumpet), Reverb, Delay, Amplifier, 3/4/5 oktaf, Akord, AI Composer, AI Transcriber, Chord Progression.</p><p><b>Sistem:</b> 12-TET 20 Nada per Oktaf | A4 = 440 Hz</p>`
+            chord: `<h3>🎵 Akord</h3><p>Akord dibangun dari 20 not dengan terts (mayor=4, minor=3) dan kwint (7).</p><p>Contoh: E mayor = E, G#, K#</p>`,
+            tentang: `<h3>📖 Tentang Aplikasi</h3><p>Berdasarkan karya tulis Sukma Riadi Pakpahan, SST.</p><p><b>Fitur:</b> 8 instrumen, Reverb, Delay, Amplifier, 3/4/5 oktaf, Akord (C2-D3), AI Composer, AI Transcriber, Chord Progression.</p><p><b>Sistem:</b> 12-TET 20 Nada per Oktaf | A4 = 440 Hz</p>`
         };
 
         function renderTab(tabId) {
@@ -2921,7 +2840,6 @@ Hasilkan notasi nada:`;
             aiDescModeLabel.classList.add('active-ai-mode');
             aiPromptModeLabel.classList.remove('active-ai-mode');
 
-            // Status awal transcriber
             statusEl.textContent = '🔴 Klik tombol mikrofon untuk mulai merekam (maks. 22 menit)';
             ctxCanvas.fillStyle = '#0d0d1a';
             ctxCanvas.fillRect(0, 0, canvas.width, canvas.height);
@@ -2940,9 +2858,7 @@ Hasilkan notasi nada:`;
 
             console.log('🎵 PMD Musik 12-TET siap!');
             console.log('📊 A4 = 440 Hz (acuan)');
-            console.log('🎹 8 Instrumen: Sine, Square, Sawtooth, Triangle, Organ, Piano, Flute, Trumpet');
-            console.log('🧠 AI Transcriber dengan YIN + Median Filter siap digunakan.');
-            console.log('🎶 Chord Progression menggunakan 20 nada per oktaf.');
+            console.log('🎹 Akord hanya tersedia untuk C2-D3 (23 nada).');
         });
     </script>
 </body>
