@@ -1,708 +1,139 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AI Composer - PMD Musik 12 TET</title>
-    <style>
-        * { margin:0; padding:0; box-sizing:border-box; }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #1a1a2e;
-            color: #eee;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-        .container {
-            max-width: 800px;
-            width: 100%;
-            background: #16213e;
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.8);
-        }
-        h1 {
-            text-align: center;
-            font-size: 2rem;
-            background: linear-gradient(135deg, #e94560, #f5a623);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 10px;
-        }
-        .subtitle {
-            text-align: center;
-            color: #aaa;
-            margin-bottom: 30px;
-        }
-        .back-btn {
-            display: inline-block;
-            padding: 8px 20px;
-            background: #0f3460;
-            color: #fff;
-            border-radius: 20px;
-            text-decoration: none;
-            margin-bottom: 20px;
-            font-size: 0.9rem;
-        }
-        .back-btn:hover { background: #1a4a7a; }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        .form-group label {
-            display: block;
-            color: #aaa;
-            margin-bottom: 5px;
-            font-size: 0.9rem;
-        }
-        .form-group input, .form-group select, .form-group textarea {
-            width: 100%;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 10px;
-            background: #0d0d1a;
-            color: #fff;
-            font-size: 1rem;
-            outline: none;
-        }
-        .form-group textarea {
-            resize: vertical;
-            min-height: 80px;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
-            border: 1px solid #e94560;
-        }
-        .form-group .hint {
-            color: #666;
-            font-size: 0.8rem;
-            margin-top: 5px;
-        }
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
-        .btn {
-            padding: 12px 30px;
-            border: none;
-            border-radius: 30px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: 0.2s;
-            font-size: 1rem;
-        }
-        .btn-primary { background: #e94560; color: #fff; }
-        .btn-primary:hover { background: #c73652; transform: scale(1.02); }
-        .btn-secondary { background: #0f3460; color: #fff; }
-        .btn-secondary:hover { background: #1a4a7a; }
-        .btn-success { background: #2d7d46; color: #fff; }
-        .btn-success:hover { background: #3a9a5a; }
-        .btn-danger { background: #a04040; color: #fff; }
-        .btn-danger:hover { background: #c05050; }
-        .btn-warning { background: #b8860b; color: #fff; }
-        .btn-warning:hover { background: #d4a017; }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .btn-group {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-top: 10px;
-        }
-        #resultArea {
-            margin-top: 25px;
-            padding: 20px;
-            background: #0d0d1a;
-            border-radius: 12px;
-            min-height: 100px;
-            display: none;
-        }
-        #resultArea.show { display: block; }
-        #resultArea h3 {
-            color: #f5a623;
-            margin-bottom: 10px;
-        }
-        .melody-display {
-            font-family: monospace;
-            font-size: 1.1rem;
-            color: #ffd700;
-            word-wrap: break-word;
-            background: #111;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            max-height: 200px;
-            overflow-y: auto;
-            line-height: 1.8;
-        }
-        .ai-response {
-            background: #0f1a2e;
-            border-left: 3px solid #f5a623;
-            padding: 12px 15px;
-            border-radius: 8px;
-            color: #ccc;
-            font-size: 0.9rem;
-            margin-bottom: 15px;
-            max-height: 150px;
-            overflow-y: auto;
-        }
-        .status {
-            color: #aaa;
-            font-size: 0.9rem;
-            margin-top: 10px;
-            min-height: 24px;
-        }
-        .status .loading {
-            color: #f5a623;
-            animation: blink 1s infinite;
-        }
-        @keyframes blink { 50% { opacity: 0.3; } }
-        .mood-tags {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-        .mood-tag {
-            padding: 5px 15px;
-            border-radius: 20px;
-            background: #0f3460;
-            color: #aaa;
-            cursor: pointer;
-            transition: 0.2s;
-            font-size: 0.85rem;
-            border: 1px solid transparent;
-        }
-        .mood-tag:hover { background: #1a4a7a; }
-        .mood-tag.active {
-            border-color: #e94560;
-            color: #fff;
-            background: #e94560;
-        }
-        .badge {
-            display: inline-block;
-            background: #2d7d46;
-            color: #fff;
-            padding: 2px 10px;
-            border-radius: 12px;
-            font-size: 0.7rem;
-            margin-left: 5px;
-        }
-        .api-info {
-            background: #1a0d0d;
-            border: 1px solid #a04040;
-            border-radius: 8px;
-            padding: 10px;
-            margin-bottom: 15px;
-            font-size: 0.85rem;
-            color: #888;
-        }
-        .api-info a {
-            color: #f5a623;
-        }
-        .radio-group {
-            display: flex;
-            gap: 20px;
-            align-items: center;
-            background: #0d0d1a;
-            padding: 10px 15px;
-            border-radius: 12px;
-            margin-bottom: 10px;
-        }
-        .radio-group label {
-            color: #aaa;
-            cursor: pointer;
-            font-size: 0.9rem;
-            padding: 4px 12px;
-            border-radius: 15px;
-            transition: 0.2s;
-        }
-        .radio-group label:hover { background: #1a1a3e; }
-        .radio-group input[type="radio"] {
-            accent-color: #e94560;
-            margin-right: 6px;
-        }
-        .radio-group label.active-radio {
-            background: #e94560;
-            color: #fff;
-        }
-        .mode-badge {
-            display: inline-block;
-            padding: 2px 12px;
-            border-radius: 12px;
-            font-size: 0.7rem;
-            margin-left: 8px;
-        }
-        .mode-badge.desc { background: #0f3460; color: #aaa; }
-        .mode-badge.prompt { background: #2d7d46; color: #fff; }
-        @media (max-width:600px) {
-            .form-row { grid-template-columns: 1fr; }
-            .container { padding: 15px; }
-            .radio-group { flex-wrap: wrap; gap: 10px; }
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <a href="index.html" class="back-btn">← Kembali ke Aplikasi Utama</a>
-        <h1>🎵 AI Music Composer <span class="badge">20 Nada/Oktaf</span></h1>
-        <p class="subtitle">Ciptakan melodi dengan AI — A4 = 440 Hz</p>
+# app.py
+import streamlit as st
+import base64
 
-        <!-- API Key Input -->
-        <div class="api-info">
-            🔑 <strong>Butuh API Key OpenAI</strong> untuk generate melodi dengan AI sesungguhnya.<br />
-            Masukkan API Key di bawah atau gunakan <strong>mode simulasi</strong> (tanpa API).
-            <br /><span style="font-size:0.75rem;">📌 Dapatkan API Key di <a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com</a></span>
-        </div>
+# ============================================================
+# KONFIGURASI HALAMAN
+# ============================================================
 
-        <div class="form-group">
-            <label>🔑 OpenAI API Key (opsional)</label>
-            <input type="password" id="apiKeyInput" placeholder="sk-... (kosongkan untuk mode simulasi)" />
-            <div class="hint">Kosongkan untuk menggunakan mode simulasi (tanpa API).</div>
-        </div>
+st.set_page_config(
+    page_title="Musik 12-TET (20 Nada per Oktaf)",
+    page_icon="🎵",
+    layout="wide"
+)
 
-        <!-- ===== RADIO BUTTON: DESKRIPSI vs PROMPT ===== -->
-        <div class="radio-group" id="modeRadioGroup">
-            <label id="descLabel" class="active-radio">
-                <input type="radio" name="inputMode" value="deskripsi" checked /> 📝 Deskripsi
-            </label>
-            <label id="promptLabel">
-                <input type="radio" name="inputMode" value="prompt" /> 🤖 Prompt AI
-            </label>
-            <span style="color:#666;font-size:0.8rem;margin-left:auto;" id="modeBadge" class="mode-badge desc">Mode: Deskripsi</span>
-        </div>
+# ============================================================
+# JUDUL
+# ============================================================
 
-        <div class="form-group">
-            <label id="inputLabel">📝 Deskripsi Melodi</label>
-            <textarea id="promptInput" placeholder="Contoh: melodi yang perlahan meningkat, dengan nada-nada tinggi dan suasana romantis..."></textarea>
-            <div class="hint" id="inputHint">💡 Tulis deskripsi melodi yang diinginkan. Sistem akan mensimulasikannya.</div>
-        </div>
+st.title("🎵 Musik 12-TET (20 Nada per Oktaf)")
+st.markdown("""
+*Eksplorasi Mikrotonal — Inovasi Sistem 20 Nada per Oktaf*
+""")
 
-        <div class="form-group">
-            <label>🎭 Mood / Suasana</label>
-            <div class="mood-tags" id="moodTags">
-                <span class="mood-tag active" data-mood="happy">😊 Happy</span>
-                <span class="mood-tag" data-mood="sad">😢 Sad</span>
-                <span class="mood-tag" data-mood="romantic">🥰 Romantic</span>
-                <span class="mood-tag" data-mood="mysterious">🔮 Mysterious</span>
-                <span class="mood-tag" data-mood="energetic">⚡ Energetic</span>
-                <span class="mood-tag" data-mood="calm">🌊 Calm</span>
-            </div>
-        </div>
+st.markdown("---")
 
-        <div class="form-row">
-            <div class="form-group">
-                <label>🎼 Skala</label>
-                <select id="scaleSelect">
-                    <option value="mayor">Mayor (E)</option>
-                    <option value="minor">Minor (A)</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>⏱️ Tempo (BPM)</label>
-                <select id="tempoSelect">
-                    <option value="60">Lambat (60)</option>
-                    <option value="90">Sedang (90)</option>
-                    <option value="120" selected>Cepat (120)</option>
-                    <option value="160">Sangat Cepat (160)</option>
-                </select>
-            </div>
-        </div>
+# ============================================================
+# BACA FILE HTML
+# ============================================================
 
-        <div class="btn-group">
-            <button class="btn btn-primary" id="generateBtn">🚀 Generate</button>
-            <button class="btn btn-success" id="playBtn" disabled>▶ Play</button>
-            <button class="btn btn-danger" id="stopBtn" disabled>⏹ Stop</button>
-            <button class="btn btn-secondary" id="clearBtn">🗑️ Clear</button>
-        </div>
+def load_html():
+    """Membaca file index.html"""
+    try:
+        with open("index.html", "r", encoding="utf-8") as f:
+            return f.read()
+    except FileNotFoundError:
+        return create_minimal_html()
 
-        <div class="status" id="status">💡 Pilih mode (Deskripsi/Prompt) dan klik Generate</div>
-
-        <div id="resultArea">
-            <h3>🎶 Melodi Hasil</h3>
-            <div class="ai-response" id="aiResponse">-</div>
-            <div class="melody-display" id="melodyDisplay">-</div>
-            <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                <span style="color:#888;font-size:0.85rem;" id="noteCountInfo">Jumlah nada: 0</span>
-                <span style="color:#888;font-size:0.85rem;" id="modeInfo">Mode: Deskripsi</span>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // ================================================================
-        // DATA FREKUENSI 12-TET (20 NADA PER OKTAF)
-        // A4 = 440 Hz (acuan)
-        // ================================================================
-        const FREQ_MAP = {
-            'E3': 71.813, 'F3': 80.152, 'G3': 89.46, 'H3': 99.848,
-            'I3': 111.443, 'J3': 124.384, 'K3': 138.827, 'A3': 154.949,
-            'B3': 172.942, 'C3': 193.024, 'D3': 215.439,
-            'E4': 227.604, 'F4': 254.034, 'G4': 283.533, 'H4': 316.458,
-            'I4': 353.206, 'J4': 394.222, 'K4': 440.0, 'A4': 491.094,
-            'B4': 548.122, 'C4': 611.771, 'D4': 682.812,
-            'E5': 762.102, 'F5': 850.6, 'G5': 949.374, 'H5': 1059.619,
-            'I5': 1182.665, 'J5': 1320.0, 'K5': 1473.283, 'A5': 1644.365,
-            'B5': 1835.314, 'C5': 2048.436, 'D5': 2286.307
-        };
-
-        const NOTE_NAMES = ['E','F','G','H','I','J','K','A','B','C','D'];
-
-        // ================================================================
-        // AUDIO ENGINE
-        // ================================================================
-        let audioCtx = null;
-        let activeOscillators = [];
-        let isPlaying = false;
-        let currentMelody = [];
-        let playTimeout = null;
-
-        function initAudio() {
-            if (!audioCtx) {
-                audioCtx = new(window.AudioContext || window.webkitAudioContext)();
+def create_minimal_html():
+    """Membuat HTML minimal jika index.html tidak ditemukan"""
+    return """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Musik 12-TET</title>
+        <style>
+            body { 
+                font-family: Arial; 
+                background: #1a1a2e; 
+                color: #eee; 
+                text-align: center;
+                padding: 50px;
             }
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            return audioCtx;
-        }
-
-        function playNote(freq, duration = 0.4) {
-            try {
-                const ctx = initAudio();
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(freq, ctx.currentTime);
-                gain.gain.setValueAtTime(0.001, ctx.currentTime);
-                gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.02);
-                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                osc.start(ctx.currentTime);
-                osc.stop(ctx.currentTime + duration);
-                activeOscillators.push(osc);
-                osc.onended = () => {
-                    const idx = activeOscillators.indexOf(osc);
-                    if (idx > -1) activeOscillators.splice(idx, 1);
-                };
-                return osc;
-            } catch(e) { console.warn(e); return null; }
-        }
-
-        function stopAllSounds() {
-            activeOscillators.forEach(osc => { try { osc.stop(); } catch(e) {} });
-            activeOscillators = [];
-            if (playTimeout) { clearTimeout(playTimeout); playTimeout = null; }
-            isPlaying = false;
-            document.getElementById('playBtn').textContent = '▶ Play';
-        }
-
-        // ================================================================
-        // GENERATE FUNCTIONS
-        // ================================================================
-        function generateSimulation(mood, scaleType, tempo, prompt) {
-            const scale = scaleType === 'mayor' 
-                ? ['E','F','G','H','I','J','K','A','B','C','D','E']
-                : ['A','B','C','D','E','F','G','H','I','J','K','A'];
-            
-            const baseNotes = scale.slice(0, 7);
-            
-            const moodParams = {
-                'happy': { stepRange: 4, repeatChance: 0.3, noteLength: 0.3, direction: 1 },
-                'sad': { stepRange: 3, repeatChance: 0.5, noteLength: 0.6, direction: -1 },
-                'romantic': { stepRange: 3, repeatChance: 0.4, noteLength: 0.5, direction: 0 },
-                'mysterious': { stepRange: 5, repeatChance: 0.2, noteLength: 0.4, direction: 0 },
-                'energetic': { stepRange: 6, repeatChance: 0.1, noteLength: 0.2, direction: 1 },
-                'calm': { stepRange: 2, repeatChance: 0.6, noteLength: 0.7, direction: -1 }
-            };
-            const params = moodParams[mood] || moodParams['happy'];
-            
-            const numNotes = Math.floor(Math.random() * 16) + 12;
-            const melody = [];
-            let currentIndex = Math.floor(Math.random() * 7);
-            let currentOctave = 4;
-            
-            for (let i = 0; i < numNotes; i++) {
-                let step = 0;
-                if (Math.random() < params.repeatChance) {
-                    step = 0;
-                } else {
-                    step = Math.floor(Math.random() * params.stepRange) + 1;
-                    if (Math.random() < 0.5) step = -step;
-                }
-                
-                if (params.direction > 0 && Math.random() < 0.3) step = Math.abs(step);
-                if (params.direction < 0 && Math.random() < 0.3) step = -Math.abs(step);
-                
-                let newIndex = currentIndex + step;
-                if (newIndex < 0) newIndex = 0;
-                if (newIndex >= baseNotes.length) newIndex = baseNotes.length - 1;
-                
-                let octave = currentOctave;
-                if (newIndex - currentIndex > 3 && octave < 5) octave++;
-                if (newIndex - currentIndex < -3 && octave > 3) octave--;
-                
-                const noteName = baseNotes[newIndex] + octave;
-                const freq = FREQ_MAP[noteName];
-                if (freq) {
-                    const duration = params.noteLength * (0.8 + Math.random() * 0.4);
-                    melody.push({ note: noteName, freq: freq, duration: duration });
-                }
-                
-                currentIndex = newIndex;
-                currentOctave = octave;
+            .error {
+                color: #e94560;
+                font-size: 24px;
             }
-            return melody;
-        }
+        </style>
+    </head>
+    <body>
+        <div class="error">⚠️ File index.html tidak ditemukan</div>
+        <p>Pastikan file index.html berada di folder yang sama dengan app.py</p>
+    </body>
+    </html>
+    """
 
-        async function generateWithAI(prompt, mood, scaleType, tempo) {
-            const apiKey = document.getElementById('apiKeyInput').value.trim();
-            
-            if (!apiKey) {
-                return generateSimulation(mood, scaleType, tempo, prompt);
-            }
+# ============================================================
+# TAMPILKAN APLIKASI
+# ============================================================
 
-            try {
-                const systemPrompt = `Anda adalah komposer musik yang ahli dalam sistem 12-TET 20 nada per oktaf dengan A4=440 Hz.
-Skala Mayor: E - F - G - H - I - J - K - A - B - C - D - E
-Skala Minor: A - B - C - D - E - F - G - H - I - J - K - A
+# TAMPILKAN APLIKASI
+html_content = load_html()
+st.components.v1.html(
+    html_content,
+    height=750,
+    scrolling=True
+)
 
-Tugas: Buat melodi dalam format NOTASI NADA SAJA (contoh: E4 G4 H4 E5 G5 H5 E6).
-Hasilkan 8-20 nada. Hanya output notasi nada, tanpa penjelasan tambahan.
-Gunakan nada dari oktaf 3, 4, dan 5.`;
+# ============================================================
+# SIDEBAR - INFORMASI
+# ============================================================
 
-                const userPrompt = `Mood: ${mood}
-Skala: ${scaleType}
-Tempo: ${tempo} BPM
-Deskripsi: ${prompt || 'Ciptakan melodi yang indah'}
+with st.sidebar:
+    st.header("📖 Informasi")
+    
+    st.markdown("""
+    ### Sistem 12-TET (20 Nada per Oktaf)
+    
+    **Rumus Frekuensi:**
+    ```
+    f_n = f_0 × 3^(n/20)
+    ```
+    
+    **Skala Mayor (E=1):**
+    ```
+    E - F - G - H - I - J - K - A - B - C - D - E
+    ```
+    
+    **Skala Minor (A=1):**
+    ```
+    A - B - C - D - E - F - G - H - I - J - K - A
+    ```
+    """)
+    
+    st.markdown("---")
+    
+    st.markdown("""
+    ### 🎹 Keyboard
+    - **Tuts Putih**: Nada Natural
+    - **Tuts Hitam**: Nada Kromatik (#)
+    - Klik tuts untuk mendengar nada
+    """)
+    
+    st.markdown("---")
+    
+    # ===== FITUR AI (gunakan st.page_link untuk navigasi handal) =====
+    st.markdown("### 🤖 Fitur AI")
+    st.page_link("pages/ai_composer.py", label="🎵 AI Composer")
+    st.page_link("pages/ai_transcriber.py", label="🎤 AI Transcriber")
+    
+    st.markdown("---")
+    
+    st.markdown("""
+    ### 📚 Referensi
+    1. Helmholtz, H. (1954). *On the Sensations of Tone*
+    2. Sethares, W. A. (2005). *Tuning, Timbre, Spectrum, Scale*
+    3. Tenney, J. (1988). *Meta-Hodos*
+    """)
+    
+    st.markdown("---")
+    
+    st.caption("© 2026 Sukma Riadi Pakpahan, SST")
 
-Hasilkan notasi nada:`;
+# ============================================================
+# FOOTER
+# ============================================================
 
-                const response = await fetch('https://api.openai.com/v1/chat/completions', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${apiKey}`
-                    },
-                    body: JSON.stringify({
-                        model: 'gpt-3.5-turbo',
-                        messages: [
-                            { role: 'system', content: systemPrompt },
-                            { role: 'user', content: userPrompt }
-                        ],
-                        temperature: 0.8,
-                        max_tokens: 200
-                    })
-                });
-
-                if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.error?.message || 'API Error');
-                }
-
-                const data = await response.json();
-                const result = data.choices[0].message.content.trim();
-                
-                const notes = result.split(/\s+/).filter(n => n.length > 0);
-                const melody = [];
-                for (let n of notes) {
-                    n = n.replace(/[,;.]/g, '');
-                    if (FREQ_MAP[n]) {
-                        melody.push({ note: n, freq: FREQ_MAP[n], duration: 0.3 + Math.random() * 0.3 });
-                    }
-                }
-                
-                return melody.length > 0 ? melody : generateSimulation(mood, scaleType, tempo, prompt);
-                
-            } catch (error) {
-                console.warn('AI API Error:', error);
-                document.getElementById('status').innerHTML = `⚠️ Error API: ${error.message}. Beralih ke simulasi.`;
-                return generateSimulation(mood, scaleType, tempo, prompt);
-            }
-        }
-
-        // ================================================================
-        // UI LOGIC
-        // ================================================================
-        const moodTags = document.querySelectorAll('.mood-tag');
-        const scaleSelect = document.getElementById('scaleSelect');
-        const tempoSelect = document.getElementById('tempoSelect');
-        const promptInput = document.getElementById('promptInput');
-        const generateBtn = document.getElementById('generateBtn');
-        const playBtn = document.getElementById('playBtn');
-        const stopBtn = document.getElementById('stopBtn');
-        const clearBtn = document.getElementById('clearBtn');
-        const statusEl = document.getElementById('status');
-        const resultArea = document.getElementById('resultArea');
-        const melodyDisplay = document.getElementById('melodyDisplay');
-        const aiResponse = document.getElementById('aiResponse');
-        const noteCountInfo = document.getElementById('noteCountInfo');
-        const modeInfo = document.getElementById('modeInfo');
-        const apiKeyInput = document.getElementById('apiKeyInput');
-        const inputLabel = document.getElementById('inputLabel');
-        const inputHint = document.getElementById('inputHint');
-        const modeBadge = document.getElementById('modeBadge');
-        const descLabel = document.getElementById('descLabel');
-        const promptLabel = document.getElementById('promptLabel');
-
-        let selectedMood = 'happy';
-        let generatedMelody = [];
-        let currentMode = 'deskripsi'; // 'deskripsi' atau 'prompt'
-
-        // ===== RADIO BUTTON LOGIC =====
-        document.querySelectorAll('input[name="inputMode"]').forEach(radio => {
-            radio.addEventListener('change', function() {
-                if (this.checked) {
-                    currentMode = this.value;
-                    
-                    // Update label aktif
-                    descLabel.classList.toggle('active-radio', currentMode === 'deskripsi');
-                    promptLabel.classList.toggle('active-radio', currentMode === 'prompt');
-                    
-                    // Update UI
-                    if (currentMode === 'deskripsi') {
-                        inputLabel.textContent = '📝 Deskripsi Melodi';
-                        inputHint.textContent = '💡 Tulis deskripsi melodi yang diinginkan. Sistem akan mensimulasikannya.';
-                        modeBadge.textContent = 'Mode: Deskripsi';
-                        modeBadge.className = 'mode-badge desc';
-                        promptInput.placeholder = 'Contoh: melodi yang perlahan meningkat, dengan nada-nada tinggi dan suasana romantis...';
-                    } else {
-                        inputLabel.textContent = '🤖 Prompt untuk AI Chatbot';
-                        inputHint.textContent = '💡 Tulis prompt spesifik untuk AI. AI akan menciptakan melodi berdasarkan prompt ini.';
-                        modeBadge.textContent = 'Mode: Prompt AI';
-                        modeBadge.className = 'mode-badge prompt';
-                        promptInput.placeholder = 'Contoh: Ciptakan melodi jazz dengan nuansa malam yang romantis...';
-                    }
-                    
-                    statusEl.innerHTML = `🔄 Mode berubah ke: ${currentMode === 'deskripsi' ? 'Deskripsi' : 'Prompt AI'}`;
-                }
-            });
-        });
-
-        // Mood tags
-        moodTags.forEach(tag => {
-            tag.addEventListener('click', function() {
-                moodTags.forEach(t => t.classList.remove('active'));
-                this.classList.add('active');
-                selectedMood = this.dataset.mood;
-            });
-        });
-
-        // ===== GENERATE =====
-        generateBtn.addEventListener('click', async function() {
-            this.disabled = true;
-            this.textContent = '⏳ Generating...';
-            statusEl.innerHTML = '<span class="loading">⏳ AI sedang menciptakan melodi...</span>';
-            resultArea.classList.remove('show');
-            stopAllSounds();
-
-            const scale = scaleSelect.value;
-            const tempo = parseInt(tempoSelect.value);
-            const inputText = promptInput.value.trim() || (currentMode === 'deskripsi' ? 'Melodi yang indah' : 'Ciptakan melodi yang indah');
-            const apiKey = apiKeyInput.value.trim();
-
-            const isAI = (currentMode === 'prompt' && apiKey);
-            modeInfo.textContent = `Mode: ${isAI ? '🤖 AI (OpenAI)' : '📝 Deskripsi'}`;
-            aiResponse.textContent = isAI ? `🤖 Mode Prompt AI: "${inputText}"` : `📝 Mode Deskripsi: "${inputText}"`;
-
-            try {
-                if (isAI) {
-                    generatedMelody = await generateWithAI(inputText, selectedMood, scale, tempo);
-                    if (generatedMelody.length > 0) {
-                        aiResponse.textContent = `🤖 AI Response: "${inputText}" → ${generatedMelody.length} nada tercipta.`;
-                    }
-                } else {
-                    generatedMelody = generateSimulation(selectedMood, scale, tempo, inputText);
-                    aiResponse.textContent = `📝 Simulasi: "${inputText}" → ${generatedMelody.length} nada tercipta.`;
-                }
-                
-                if (generatedMelody.length === 0) {
-                    generatedMelody = generateSimulation(selectedMood, scale, tempo, inputText);
-                    aiResponse.textContent = `🔄 Fallback: "${inputText}" → ${generatedMelody.length} nada.`;
-                }
-                
-                const noteNames = generatedMelody.map(n => n.note).join(' → ');
-                melodyDisplay.textContent = noteNames || '(tidak ada nada)';
-                noteCountInfo.textContent = `Jumlah nada: ${generatedMelody.length}`;
-                resultArea.classList.add('show');
-                
-                playBtn.disabled = false;
-                stopBtn.disabled = false;
-                
-                statusEl.innerHTML = `✅ Selesai! ${generatedMelody.length} nada tercipta. (${isAI ? 'AI' : 'Simulasi'})`;
-                
-            } catch (error) {
-                statusEl.innerHTML = `❌ Error: ${error.message}`;
-                generatedMelody = generateSimulation(selectedMood, scale, tempo, inputText);
-                const noteNames = generatedMelody.map(n => n.note).join(' → ');
-                melodyDisplay.textContent = noteNames;
-                noteCountInfo.textContent = `Jumlah nada: ${generatedMelody.length}`;
-                resultArea.classList.add('show');
-                playBtn.disabled = false;
-                stopBtn.disabled = false;
-                statusEl.innerHTML = `🔄 Fallback ke simulasi. ${generatedMelody.length} nada tercipta.`;
-            }
-
-            this.disabled = false;
-            this.textContent = '🚀 Generate';
-        });
-
-        // ===== PLAY =====
-        playBtn.addEventListener('click', function() {
-            if (generatedMelody.length === 0) return;
-            if (isPlaying) {
-                stopAllSounds();
-                this.textContent = '▶ Play';
-                statusEl.textContent = '⏹ Dihentikan';
-                return;
-            }
-            
-            initAudio();
-            isPlaying = true;
-            this.textContent = '⏹ Stop';
-            statusEl.textContent = '🎵 Memutar melodi...';
-            
-            const tempo = parseInt(tempoSelect.value);
-            const baseDuration = 60000 / tempo / 2;
-            
-            let delay = 0;
-            generatedMelody.forEach((note, i) => {
-                const dur = note.duration * baseDuration / 1000;
-                setTimeout(() => {
-                    if (!isPlaying) return;
-                    playNote(note.freq, dur);
-                }, delay * 1000);
-                delay += note.duration * baseDuration / 1000 + 0.05;
-            });
-            
-            playTimeout = setTimeout(() => {
-                isPlaying = false;
-                playBtn.textContent = '▶ Play';
-                statusEl.textContent = '✅ Melodi selesai diputar';
-            }, delay * 1000 + 200);
-        });
-
-        // ===== STOP =====
-        stopBtn.addEventListener('click', function() {
-            stopAllSounds();
-            playBtn.textContent = '▶ Play';
-            statusEl.textContent = '⏹ Dihentikan';
-        });
-
-        // ===== CLEAR =====
-        clearBtn.addEventListener('click', function() {
-            stopAllSounds();
-            generatedMelody = [];
-            resultArea.classList.remove('show');
-            melodyDisplay.textContent = '-';
-            noteCountInfo.textContent = 'Jumlah nada: 0';
-            aiResponse.textContent = '-';
-            playBtn.disabled = true;
-            stopBtn.disabled = true;
-            statusEl.textContent = '🗑️ Dihapus. Siap untuk generate ulang.';
-        });
-
-        statusEl.textContent = '💡 Pilih mode (Deskripsi/Prompt) dan klik Generate';
-    </script>
-</body>
-</html>
+st.markdown("---")
+st.caption("Berdasarkan Karya Tulis Ilmiah: Eksplorasi Musik Sistem 12-TET (20 Nada per Oktaf)")
