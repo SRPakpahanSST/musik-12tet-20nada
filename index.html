@@ -217,50 +217,34 @@
             display: inline-block;
         }
 
-        /* Mode Radio Group (Keyboard) */
-        .mode-radio-group {
+        /* Mode Radio Group (Keyboard) — hanya Deskripsi */
+        .mode-desc-group {
             display: flex;
-            gap: 6px;
             align-items: center;
+            gap: 6px;
             background: #111;
-            padding: 3px 10px;
+            padding: 3px 14px 3px 10px;
             border-radius: 20px;
         }
-        .mode-radio-group label {
+        .mode-desc-group .mode-label {
             color: #aaa;
             font-size: 0.75rem;
-            cursor: pointer;
-            padding: 2px 8px;
-            border-radius: 12px;
-            transition: 0.2s;
         }
-        .mode-radio-group label:hover { background: #1a1a3e; }
-        .mode-radio-group label.active-mode-label {
-            background: #e94560;
-            color: #fff;
-        }
-        .mode-radio-group input[type="radio"] {
-            accent-color: #e94560;
-            margin-right: 3px;
-        }
-        .mode-badge {
+        .mode-desc-group .mode-badge-desc {
             display: inline-block;
             padding: 2px 10px;
             border-radius: 12px;
             font-size: 0.6rem;
-            margin-left: 4px;
+            background: #0f3460;
+            color: #aaa;
         }
-        .mode-badge.desc { background: #0f3460; color: #aaa; }
-        .mode-badge.prompt { background: #2d7d46; color: #fff; }
 
-        /* Prompt Area (Keyboard) */
-        .prompt-area {
-            display: none;
+        /* Deskripsi Area (Keyboard) */
+        .desc-area {
             width: 100%;
             padding: 8px 0;
         }
-        .prompt-area.show { display: block; }
-        .prompt-area textarea {
+        .desc-area textarea {
             width: 100%;
             padding: 8px 12px;
             border: none;
@@ -274,8 +258,8 @@
             border: 1px solid #2a3a5e;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        .prompt-area textarea:focus { border-color: #e94560; }
-        .prompt-area .hint { color: #666; font-size: 0.7rem; margin-top: 3px; }
+        .desc-area textarea:focus { border-color: #e94560; }
+        .desc-area .hint { color: #666; font-size: 0.7rem; margin-top: 3px; }
 
         /* ===== KEYBOARD ===== */
         .keyboard-wrapper {
@@ -614,7 +598,7 @@
 
     <!-- ===== SPLASH SCREEN ===== -->
     <div id="welcome">
-        <img id="splashImg" src="splash.png" alt="Gambar splash PMD Musik" 
+        <img id="splashImg" src="splash.png" alt="Gambar splash PMD Musik"
              onerror="this.alt='Yuk, mulai saja'; this.style.border='1px dashed #444';" />
         <h1>🎵 PMD Musik 12 TET</h1>
         <p>Pedang Mata Dua Musik Digital<br />Mikrotonal 20 Nada per Oktaf</p>
@@ -653,15 +637,10 @@
                         <input type="radio" name="playMode" value="chord" /> Akord
                     </label>
 
-                    <div class="mode-radio-group">
-                        <span class="effect-label">🎯 Mode:</span>
-                        <label id="descModeLabel" class="active-mode-label">
-                            <input type="radio" name="inputMode" value="deskripsi" checked /> Deskripsi
-                        </label>
-                        <label id="promptModeLabel">
-                            <input type="radio" name="inputMode" value="prompt" /> Prompt AI
-                        </label>
-                        <span id="modeBadge" class="mode-badge desc">Mode: Deskripsi</span>
+                    <!-- Mode Deskripsi saja — tanpa Prompt AI -->
+                    <div class="mode-desc-group">
+                        <span class="mode-label">🎯 Mode:</span>
+                        <span class="mode-badge-desc">Deskripsi</span>
                     </div>
 
                     <span class="effect-label">Oktaf:</span>
@@ -709,9 +688,10 @@
                     <span class="chord-info" id="modeIndicator">🎵 Mode: Tunggal</span>
                 </div>
 
-                <div class="prompt-area" id="promptArea">
-                    <textarea id="promptInput" placeholder="Contoh: Ciptakan melodi yang perlahan meningkat, dengan nada-nada tinggi dan suasana romantis..."></textarea>
-                    <div class="hint" id="promptHint">💡 Tulis prompt untuk AI Chatbot (hanya jika mode Prompt AI aktif)</div>
+                <!-- Kotak Deskripsi — selalu tampil (tanpa Prompt AI) -->
+                <div class="desc-area" id="descArea">
+                    <textarea id="descInput" placeholder="Contoh: Ciptakan melodi yang perlahan meningkat, dengan nada-nada tinggi dan suasana romantis..."></textarea>
+                    <div class="hint">💡 Tulis deskripsi melodi yang diinginkan (mode Deskripsi)</div>
                 </div>
             </div>
 
@@ -995,7 +975,6 @@
         let dryGain = null, wetGain = null, delayDryGain = null, delayWetGain = null;
         let currentInstrument = 'organ';
         let reverbMix = 0.2, delayMix = 0.0;
-        let currentInputMode = 'deskripsi';
 
         function initAudio() {
             if (!audioCtx) {
@@ -1323,9 +1302,6 @@
         const modeIndicator = document.getElementById('modeIndicator');
         const singleModeLabel = document.getElementById('singleModeLabel');
         const chordModeLabel = document.getElementById('chordModeLabel');
-        const descModeLabel = document.getElementById('descModeLabel');
-        const promptModeLabel = document.getElementById('promptModeLabel');
-        const modeBadge = document.getElementById('modeBadge');
         const octaveSelector = document.getElementById('octaveSelector');
         const instrumentSelector = document.getElementById('instrumentSelector');
         const reverbSlider = document.getElementById('reverbMix');
@@ -1334,9 +1310,7 @@
         const delayVal = document.getElementById('delayVal');
         const ampSlider = document.getElementById('ampSlider');
         const ampVal = document.getElementById('ampVal');
-        const promptArea = document.getElementById('promptArea');
-        const promptInput = document.getElementById('promptInput');
-        const promptHint = document.getElementById('promptHint');
+        const descInput = document.getElementById('descInput');
         let keyElements = {};
 
         function buildKeyboard(octaveCount) {
@@ -1492,28 +1466,6 @@
                         modeIndicator.textContent = '🎵 Mode: Akord';
                     }
                     statusDisplay.innerHTML = `🔄 Mode berubah ke: ${playMode === 'single' ? 'Tunggal' : 'Akord'}`;
-                }
-            });
-        });
-
-        document.querySelectorAll('input[name="inputMode"]').forEach(r => {
-            r.addEventListener('change', function() {
-                if (this.checked) {
-                    currentInputMode = this.value;
-                    descModeLabel.classList.toggle('active-mode-label', currentInputMode === 'deskripsi');
-                    promptModeLabel.classList.toggle('active-mode-label', currentInputMode === 'prompt');
-
-                    if (currentInputMode === 'deskripsi') {
-                        modeBadge.textContent = 'Mode: Deskripsi';
-                        modeBadge.className = 'mode-badge desc';
-                        promptArea.classList.remove('show');
-                        promptHint.textContent = '💡 Tulis deskripsi melodi (mode Deskripsi)';
-                    } else {
-                        modeBadge.textContent = 'Mode: Prompt AI';
-                        modeBadge.className = 'mode-badge prompt';
-                        promptArea.classList.add('show');
-                        promptHint.textContent = '💡 Tulis prompt untuk AI Chatbot (mode Prompt AI)';
-                    }
                 }
             });
         });
