@@ -1612,57 +1612,56 @@
             key.classList.add('active');
             setTimeout(() => key.classList.remove('active'), 400);
 
-            // Hentikan semua suara sebelum memainkan yang baru
-            stopAllSounds();
+            const match = note.match(/^([A-Z#]+)(\d+)$/);
+            if (!match) return;
+            const noteName = match[1];
+            const octave = parseInt(match[2]);
 
             if (playMode === 'single') {
+                // Mode tunggal: hentikan semua suara, mainkan nada tunggal
+                stopAllSounds();
                 const freq = FREQ_MAP[note];
                 if (freq) {
                     playSingleNote(freq, 0.6);
                     statusDisplay.innerHTML = `🎵 Memainkan <span>${note}</span> (${freq.toFixed(2)} Hz) [${currentInstrument}]`;
                 }
-            } else {
-                // Mode akord
-                const match = note.match(/^([A-Z#]+)(\d+)$/);
-                if (!match) return;
-                const noteName = match[1];
-                const octave = parseInt(match[2]);
+                return;
+            }
 
-                const isValidChordRoot = (() => {
-                    if (octave === 2) {
-                        return ['C2', 'C#2', 'D2'].includes(note);
-                    }
-                    if (octave === 3) {
-                        return NOTES_20.includes(noteName);
-                    }
-                    return false;
-                })();
-
-                if (!isValidChordRoot) {
-                    // Mainkan nada tunggal
-                    const freq = FREQ_MAP[note];
-                    if (freq) {
-                        playSingleNote(freq, 0.6);
-                        statusDisplay.innerHTML = `⚠️ Akord hanya untuk C2-D3. Memainkan tunggal <span>${note}</span>`;
-                    }
-                    return;
+            // Mode Akord
+            const isValidChordRoot = (() => {
+                if (octave === 2) {
+                    return ['C2', 'C#2', 'D2'].includes(note);
                 }
+                if (octave === 3) {
+                    return NOTES_20.includes(noteName);
+                }
+                return false;
+            })();
 
+            if (isValidChordRoot) {
+                // Akord baru: hentikan semua suara dan mainkan akord sustain
+                stopAllSounds();
                 const idx = NOTES_20.indexOf(noteName);
                 if (idx === -1) return;
-
                 const chordNotes = buildChord20(idx, 'mayor');
                 const freqs = chordNotes.map(n => {
                     const fullNote = n + octave;
                     return FREQ_MAP[fullNote] || 0;
                 }).filter(f => f > 0);
-
                 if (freqs.length > 0) {
-                    const LONG_DURATION = 999; // durasi sangat panjang untuk sustain
+                    const LONG_DURATION = 999; // sustain sangat panjang
                     freqs.forEach(f => playSingleNote(f, LONG_DURATION));
                     statusDisplay.innerHTML = `🎵 Akord <span>${note}</span> mayor: ${chordNotes.join(' + ')} [${currentInstrument}] (sustain)`;
                 } else {
                     statusDisplay.innerHTML = `⚠️ Akord untuk ${note} tidak valid (tidak ada frekuensi).`;
+                }
+            } else {
+                // Nada tunggal di luar rentang: mainkan tanpa menghentikan akord
+                const freq = FREQ_MAP[note];
+                if (freq) {
+                    playSingleNote(freq, 0.6);
+                    statusDisplay.innerHTML = `🎵 Nada <span>${note}</span> (${freq.toFixed(2)} Hz) [${currentInstrument}] (melodi)`;
                 }
             }
         }
@@ -2808,7 +2807,7 @@ Hasilkan notasi nada:`;
             </tbody></table><p style="font-size:0.8rem;color:#888;font-weight:bold;">A4 = 440 Hz (acuan) | Oktaf berikutnya × 3</p>`,
             skala: `<h3>🎹 Skala Mayor (E=1)</h3><p>E - F - G - H - I - J - K - A - B - C - D - E</p><p>Interval: 1 1 1 1 ½ 1 1 1 1 1 ½</p><h3>🎹 Skala Minor (A=1)</h3><p>A - B - C - D - E - F - G - H - I - J - K - A</p><p>Interval: 1 1 1 ½ 1 1 1 1 ½ 1 1</p>`,
             chord: `<h3>🎵 Akord</h3><p>Akord dibangun dari 20 not dengan terts (mayor=4, minor=3) dan kwint (7).</p><p>Contoh: E mayor = E, G#, K#</p>`,
-            tentang: `<h3>📖 Tentang Aplikasi</h3><p>Berdasarkan karya tulis Sukma Riadi Pakpahan, SST.</p><p><b>Fitur:</b> 8 instrumen, Reverb, Delay, Amplifier, 3/4/5 oktaf, Akord (C2-D3), AI Composer, AI Transcriber, Chord Progression.</p><p><b>Sistem:</b> 12-TET 20 Nada per Oktaf | A4 = 440 Hz</p>`
+            tentang: `<h3>📖 Tentang Aplikasi</h3><p>Berdasarkan karya tulis Sukma Riadi Pakpahan, SST.</p><p><b>Fitur:</b> 8 instrumen, Reverb, Delay, Amplifier, 3/4/5 oktaf, Akord (C2-D3) dengan sustain, AI Composer, AI Transcriber, Chord Progression.</p><p><b>Sistem:</b> 12-TET 20 Nada per Oktaf | A4 = 440 Hz</p>`
         };
 
         function renderTab(tabId) {
