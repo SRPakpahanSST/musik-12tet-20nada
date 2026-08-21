@@ -217,7 +217,7 @@
             display: inline-block;
         }
 
-        /* Mode Radio Group (Keyboard) — hanya Deskripsi */
+        /* Mode Deskripsi saja — tanpa Prompt AI */
         .mode-desc-group {
             display: flex;
             align-items: center;
@@ -260,6 +260,30 @@
         }
         .desc-area textarea:focus { border-color: #e94560; }
         .desc-area .hint { color: #666; font-size: 0.7rem; margin-top: 3px; }
+        .desc-controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+            align-items: center;
+        }
+        .desc-controls label {
+            color: #aaa;
+            font-size: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .desc-controls select {
+            background: #0f3460;
+            color: #fff;
+            border: none;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            outline: none;
+        }
 
         /* ===== KEYBOARD ===== */
         .keyboard-wrapper {
@@ -586,11 +610,9 @@
             #welcome button { padding: 12px 30px; font-size: 1.2rem; }
             #welcome img { max-height: 40vh; }
             .tab-btn-nav { padding: 6px 12px; font-size: 0.7rem; }
-            .mode-radio-group { flex-wrap: wrap; gap: 3px; padding: 3px 8px; }
-            .mode-radio-group label { font-size: 0.65rem; padding: 2px 6px; }
-            .ai-row { grid-template-columns: 1fr; }
-            .ai-mode-radio { gap: 5px; padding: 4px 10px; }
-            .ai-mode-radio label { font-size: 0.65rem; padding: 2px 6px; }
+            .desc-controls { gap: 6px; }
+            .desc-controls label { font-size: 0.7rem; }
+            .desc-controls select { font-size: 0.65rem; }
         }
     </style>
 </head>
@@ -688,10 +710,31 @@
                     <span class="chord-info" id="modeIndicator">🎵 Mode: Tunggal</span>
                 </div>
 
-                <!-- Kotak Deskripsi — selalu tampil (tanpa Prompt AI) -->
+                <!-- Deskripsi Area dengan kontrol Generate -->
                 <div class="desc-area" id="descArea">
                     <textarea id="descInput" placeholder="Contoh: Ciptakan melodi yang perlahan meningkat, dengan nada-nada tinggi dan suasana romantis..."></textarea>
-                    <div class="hint">💡 Tulis deskripsi melodi yang diinginkan (mode Deskripsi)</div>
+                    <div class="hint">💡 Tulis deskripsi melodi, lalu pilih mood & skala, dan klik Generate & Play.</div>
+
+                    <div class="desc-controls">
+                        <label>🎭 Mood:
+                            <select id="descMoodSelect">
+                                <option value="happy">Happy</option>
+                                <option value="sad" selected>Sad</option>
+                                <option value="romantic">Romantic</option>
+                                <option value="mysterious">Mysterious</option>
+                                <option value="energetic">Energetic</option>
+                                <option value="calm">Calm</option>
+                            </select>
+                        </label>
+                        <label>🎼 Skala:
+                            <select id="descScaleSelect">
+                                <option value="mayor">Mayor</option>
+                                <option value="minor">Minor</option>
+                            </select>
+                        </label>
+                        <button class="btn btn-primary" id="descGenerateBtn">🎵 Generate & Play</button>
+                        <button class="btn btn-danger" id="descStopBtn">⏹ Stop</button>
+                    </div>
                 </div>
             </div>
 
@@ -1275,6 +1318,14 @@
             activeOscillators.forEach(osc => { try { osc.stop(); } catch (e) {} });
             activeOscillators = [];
             isPlaying = false;
+            // Juga hentikan pemutaran melodi dari deskripsi
+            if (keyboardMelodyTimeout) {
+                clearTimeout(keyboardMelodyTimeout);
+                keyboardMelodyTimeout = null;
+            }
+            keyboardMelodyPlaying = false;
+            document.getElementById('descGenerateBtn').disabled = false;
+            document.getElementById('descGenerateBtn').textContent = '🎵 Generate & Play';
         }
 
         // ================================================================
@@ -1311,7 +1362,15 @@
         const ampSlider = document.getElementById('ampSlider');
         const ampVal = document.getElementById('ampVal');
         const descInput = document.getElementById('descInput');
+        const descMoodSelect = document.getElementById('descMoodSelect');
+        const descScaleSelect = document.getElementById('descScaleSelect');
+        const descGenerateBtn = document.getElementById('descGenerateBtn');
+        const descStopBtn = document.getElementById('descStopBtn');
         let keyElements = {};
+
+        // Variabel untuk kontrol pemutaran melodi dari deskripsi
+        let keyboardMelodyPlaying = false;
+        let keyboardMelodyTimeout = null;
 
         function buildKeyboard(octaveCount) {
             container.innerHTML = '';
@@ -1450,6 +1509,46 @@
         }
 
         // ================================================================
+        // FUNGSI UNTUK MEMUTAR MELODI DARI DESKRIPSI
+        // ================================================================
+        function playMelody(melody, tempo = 120) {
+            if (!melody || melody.length === 0) return;
+            stopAllSounds(); // hentikan suara sebelumnya
+            keyboardMelodyPlaying = true;
+            descGenerateBtn.disabled = true;
+            descGenerateBtn.textContent = '⏳ Playing...';
+
+            const baseDuration = 60000 / tempo / 2; // durasi dasar per ketuk (ms)
+            let delay = 0;
+
+            melody.forEach((note, i) => {
+                const durMs = note.duration * baseDuration; // durasi dalam ms
+                const durSec = durMs / 1000;
+                setTimeout(() => {
+                    if (!keyboardMelodyPlaying) return;
+                    // Mainkan nada
+                    playSingleNote(note.freq, durSec);
+                    // Highlight tuts
+                    const key = keyElements[note.note];
+                    if (key) {
+                        key.classList.add('active');
+                        setTimeout(() => key.classList.remove('active'), durMs);
+                    }
+                    statusDisplay.innerHTML = `🎵 ${note.note} (${note.freq.toFixed(2)} Hz) [${currentInstrument}]`;
+                }, delay);
+                delay += durMs + 50; // jeda antar nada 50ms
+            });
+
+            // Setelah selesai
+            keyboardMelodyTimeout = setTimeout(() => {
+                keyboardMelodyPlaying = false;
+                descGenerateBtn.disabled = false;
+                descGenerateBtn.textContent = '🎵 Generate & Play';
+                statusDisplay.innerHTML = '✅ Melodi selesai dimainkan';
+            }, delay + 200);
+        }
+
+        // ================================================================
         // EVENT LISTENERS - KEYBOARD
         // ================================================================
 
@@ -1522,6 +1621,36 @@
             isPlaying = false;
             statusDisplay.innerHTML = '↺ Siap memainkan nada';
             document.querySelectorAll('.key.active').forEach(k => k.classList.remove('active'));
+        });
+
+        // Tombol Generate & Play di area deskripsi
+        descGenerateBtn.addEventListener('click', function() {
+            const text = descInput.value.trim();
+            if (!text) {
+                alert('Silakan tulis deskripsi melodi terlebih dahulu.');
+                return;
+            }
+            const mood = descMoodSelect.value;
+            const scale = descScaleSelect.value;
+            const tempo = 120; // bisa ditambahkan slider jika perlu
+
+            // Generate melodi menggunakan fungsi yang sudah ada
+            const melody = generateSimulation(mood, scale, tempo);
+            if (!melody || melody.length === 0) {
+                alert('Gagal menghasilkan melodi. Coba lagi.');
+                return;
+            }
+            // Putar melodi
+            playMelody(melody, tempo);
+        });
+
+        // Tombol Stop untuk melodi dari deskripsi
+        descStopBtn.addEventListener('click', function() {
+            stopAllSounds(); // ini akan menghentikan dan membersihkan timeout
+            keyboardMelodyPlaying = false;
+            descGenerateBtn.disabled = false;
+            descGenerateBtn.textContent = '🎵 Generate & Play';
+            statusDisplay.innerHTML = '⏹ Pemutaran melodi dihentikan';
         });
 
         document.addEventListener('keydown', (e) => {
@@ -2074,6 +2203,7 @@ Hasilkan notasi nada:`;
             console.log('🎵 PMD Musik 12-TET siap!');
             console.log('📊 A4 = 440 Hz (acuan)');
             console.log('🎹 8 Instrumen: Sine, Square, Sawtooth, Triangle, Organ, Piano, Flute, Trumpet');
+            console.log('📝 Fitur Generate & Play di tab Keyboard siap digunakan.');
         });
     </script>
 </body>
