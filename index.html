@@ -138,6 +138,14 @@
         .tab-btn-nav.transcriber-tab:hover { background: #3a9a5a; }
         .tab-btn-nav.chord-tab { background: #b8860b; color: #fff; }
         .tab-btn-nav.chord-tab:hover { background: #d4a017; }
+        /* Tombol Tutorial */
+        .tab-btn-nav.tutorial-btn {
+            background: #f5a623;
+            color: #000;
+        }
+        .tab-btn-nav.tutorial-btn:hover {
+            background: #e0951a;
+        }
 
         /* ===== TAB CONTENT ===== */
         .tab-content-main {
@@ -781,6 +789,137 @@
             .radio-group { gap: 6px; padding: 3px 10px; }
             .record-btn { width: 60px; height: 60px; font-size: 1.8rem; }
         }
+
+        /* ===== TUTORIAL OVERLAY ===== */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .tutorial-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.75);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            backdrop-filter: blur(4px);
+            padding: 20px;
+            animation: fadeIn 0.3s ease;
+        }
+        .tutorial-container {
+            background: #16213e;
+            border-radius: 20px;
+            max-width: 650px;
+            width: 100%;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+            border: 1px solid #2a3a5e;
+            max-height: 80vh;
+            overflow-y: auto;
+            color: #eee;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            position: relative;
+        }
+        .tutorial-container h2 {
+            color: #f5a623;
+            margin: 0 0 15px 0;
+            font-size: 1.4rem;
+        }
+        .tutorial-container .tutorial-close {
+            background: none;
+            border: none;
+            color: #aaa;
+            font-size: 1.8rem;
+            cursor: pointer;
+            transition: 0.2s;
+            position: absolute;
+            top: 12px;
+            right: 18px;
+        }
+        .tutorial-container .tutorial-close:hover {
+            color: #fff;
+        }
+        .tutorial-container .tutorial-content {
+            line-height: 1.7;
+            font-size: 0.95rem;
+            min-height: 200px;
+        }
+        .tutorial-container .tutorial-content ul {
+            padding-left: 20px;
+            margin: 8px 0;
+        }
+        .tutorial-container .tutorial-content li {
+            margin-bottom: 4px;
+        }
+        .tutorial-container .tutorial-content code {
+            background: #0d0d1a;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            color: #f5a623;
+        }
+        .tutorial-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .tutorial-nav .step-indicator {
+            color: #888;
+            font-size: 0.8rem;
+        }
+        .tutorial-nav .btn-group {
+            display: flex;
+            gap: 8px;
+        }
+        .tutorial-nav .btn-group button {
+            padding: 8px 18px;
+            border: none;
+            border-radius: 20px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: 0.2s;
+        }
+        .tutorial-nav .btn-group .prev-btn {
+            background: #0f3460;
+        }
+        .tutorial-nav .btn-group .prev-btn:hover {
+            background: #1a4a7a;
+        }
+        .tutorial-nav .btn-group .next-btn {
+            background: #e94560;
+        }
+        .tutorial-nav .btn-group .next-btn:hover {
+            background: #c73652;
+        }
+        .tutorial-nav .btn-group .done-btn {
+            background: #2d7d46;
+        }
+        .tutorial-nav .btn-group .done-btn:hover {
+            background: #3a9a5a;
+        }
+        .tutorial-dots {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+            margin-top: 12px;
+        }
+        .tutorial-dots span {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #2a3a5e;
+            display: inline-block;
+            transition: 0.3s;
+        }
+        .tutorial-dots span.active {
+            background: #e94560;
+        }
     </style>
 </head>
 <body>
@@ -809,6 +948,7 @@
                 <button class="tab-btn-nav composer-tab" data-tab="composer">🎵 AI Composer</button>
                 <button class="tab-btn-nav transcriber-tab" data-tab="transcriber">🎤 AI Transcriber</button>
                 <button class="tab-btn-nav chord-tab" data-tab="chord">🎶 Chord Progression</button>
+                <button class="tab-btn-nav tutorial-btn" id="tutorialBtn">📖 Tutorial</button>
             </div>
 
             <!-- ===== TAB 1: KEYBOARD ===== -->
@@ -2410,7 +2550,6 @@ Hasilkan notasi nada:`;
 
                     // Update waveform
                     if (mediaRecorder && mediaRecorder.state === 'recording') {
-                        // Sederhana: animasi kotak-kotak
                         ctxCanvas.fillStyle = '#0d0d1a';
                         ctxCanvas.fillRect(0, 0, canvas.width, canvas.height);
                         ctxCanvas.fillStyle = '#e94560';
@@ -2832,6 +2971,181 @@ Hasilkan notasi nada:`;
         });
 
         // ================================================================
+        // TUTORIAL
+        // ================================================================
+        const tutorialData = [{
+            title: "🎵 Selamat Datang di PMD Musik 12 TET!",
+            content: `
+                <p>Aplikasi ini adalah eksplorasi musik sistem <b>12-TET dengan 20 nada per oktaf</b>, 
+                berdasarkan karya tulis Sukma Riadi Pakpahan, SST.</p>
+                <p>Tutorial ini akan memandu Anda melalui semua fitur yang tersedia.</p>
+                <p><b>Mulai dengan mengklik tombol "Mulai" di layar pembuka.</b></p>
+            `
+        }, {
+            title: "🎹 Keyboard — Mode Nada Tunggal",
+            content: `
+                <p>Di tab <b>Keyboard</b>, Anda dapat memainkan nada dengan mengklik tuts.</p>
+                <ul>
+                    <li><b>Nada Tunggal:</b> Setiap tuts membunyikan satu nada. Nada yang Anda mainkan akan <b>direkam</b> secara otomatis.</li>
+                    <li>Pilih <b>oktaf</b> (3, 4, atau 5) dan <b>instrumen</b> (8 pilihan).</li>
+                    <li>Atur <b>Reverb</b>, <b>Delay</b>, dan <b>Amplifier</b> untuk efek suara.</li>
+                </ul>
+                <p><b>💡 Tombol "Mayor" dan "Minor" akan memutar ulang melodi yang telah Anda rekam!</b></p>
+            `
+        }, {
+            title: "🎹 Keyboard — Mode Akord",
+            content: `
+                <p>Pilih mode <b>Akord</b> untuk memainkan akord triad.</p>
+                <ul>
+                    <li><b>Rentang akord:</b> C2 – B#3 (20 nada).</li>
+                    <li><b>Tuts putih</b> = akord <b>Mayor</b>, <b>tuts hitam</b> = akord <b>Minor</b>.</li>
+                    <li>Akord akan <b>sustain</b> (terus berbunyi) hingga Anda menekan akord lain atau menekan tombol Stop/Reset.</li>
+                    <li>Akord selalu menggunakan suara <b>Piano</b> (statis) untuk iringan yang stabil.</li>
+                </ul>
+                <p><b>💡 Nada tunggal di luar rentang dapat dimainkan sebagai melodi tanpa menghentikan akord.</b></p>
+            `
+        }, {
+            title: "🎵 AI Composer",
+            content: `
+                <p>Tab ini memungkinkan Anda menciptakan melodi otomatis.</p>
+                <ul>
+                    <li><b>Mode Deskripsi:</b> Tulis deskripsi (misal: "melodi romantis yang perlahan"), pilih mood & skala, lalu klik <b>Generate</b>.</li>
+                    <li><b>Mode Prompt AI:</b> Masukkan <b>OpenAI API Key</b> dan prompt spesifik. AI GPT-3.5 akan menghasilkan notasi nada.</li>
+                    <li>Hasil melodi dapat diputar, dihentikan, atau dihapus.</li>
+                </ul>
+            `
+        }, {
+            title: "🎤 AI Transcriber",
+            content: `
+                <p>Rekam audio dari mikrofon dan transkripsi menjadi notasi 20 nada per oktaf.</p>
+                <ul>
+                    <li>Klik tombol 🎤 untuk mulai merekam (maks. 22 menit).</li>
+                    <li>Pilih algoritma: <b>Standar</b> (autokorelasi) atau <b>Improved (YIN)</b> (lebih akurat).</li>
+                    <li>Atur <b>Mode</b> (Vokal, Instrumental, Full Range) dan <b>Sensitivitas</b>.</li>
+                    <li>Setelah rekaman selesai, klik <b>AI Transcribe</b> untuk melihat hasil.</li>
+                    <li>Hasil transkripsi dapat diputar ulang dengan tombol <b>Play Hasil</b>.</li>
+                </ul>
+            `
+        }, {
+            title: "🎶 Chord Progression Generator",
+            content: `
+                <p>Analisis progresi akord dari hasil transkripsi.</p>
+                <ul>
+                    <li>Masukkan urutan nada (misal: <code>E3 → G3 → H3 → E4 → G4 → H4</code>) ke dalam kotak input.</li>
+                    <li>Pilih mode analisis: <b>Otomatis</b>, <b>Mayor</b>, atau <b>Minor</b>.</li>
+                    <li>Pilih jumlah akord yang ditampilkan (4, 6, atau 8).</li>
+                    <li>Klik <b>Generate Progresi</b> untuk melihat akord-akord yang terbentuk beserta notasi Romawi.</li>
+                </ul>
+            `
+        }, {
+            title: "📖 Informasi & Referensi",
+            content: `
+                <p>Panel <b>Informasi & Referensi</b> di bagian bawah menyediakan:</p>
+                <ul>
+                    <li><b>Teori</b>: dasar sistem 12-TET 20 nada per oktaf.</li>
+                    <li><b>Frekuensi</b>: tabel frekuensi nada di oktaf 4.</li>
+                    <li><b>Skala</b>: mayor dan minor dengan interval.</li>
+                    <li><b>Akord</b>: referensi pembentukan akord.</li>
+                    <li><b>Tentang</b>: informasi aplikasi dan penulis.</li>
+                </ul>
+                <p>Gunakan tab-tab ini untuk memahami teori di balik sistem musik baru ini.</p>
+            `
+        }, {
+            title: "🎯 Selesai!",
+            content: `
+                <p>Anda sekarang siap menjelajahi <b>PMD Musik 12 TET</b>!</p>
+                <p>Semoga aplikasi ini menginspirasi eksplorasi musik mikrotonal Anda.</p>
+                <p><b>Selamat berkarya! 🎵</b></p>
+            `
+        }];
+
+        let tutorialStep = 0;
+        let tutorialOverlay = null;
+
+        function startTutorial() {
+            if (tutorialOverlay) return;
+            tutorialStep = 0;
+            createTutorialOverlay();
+        }
+
+        function createTutorialOverlay() {
+            const overlay = document.createElement('div');
+            overlay.className = 'tutorial-overlay';
+            overlay.id = 'tutorialOverlay';
+
+            const container = document.createElement('div');
+            container.className = 'tutorial-container';
+
+            container.innerHTML = `
+                <button class="tutorial-close" id="tutorialCloseBtn">&times;</button>
+                <h2 id="tutorialTitle">${tutorialData[0].title}</h2>
+                <div class="tutorial-content" id="tutorialContent">${tutorialData[0].content}</div>
+                <div class="tutorial-nav">
+                    <span class="step-indicator" id="tutorialStepIndicator">Langkah 1 dari ${tutorialData.length}</span>
+                    <div class="btn-group">
+                        <button class="prev-btn" id="tutorialPrevBtn">← Sebelumnya</button>
+                        <button class="next-btn" id="tutorialNextBtn">Selanjutnya →</button>
+                        <button class="done-btn" id="tutorialDoneBtn" style="display:none;">Selesai</button>
+                    </div>
+                </div>
+                <div class="tutorial-dots" id="tutorialDots">
+                    ${tutorialData.map((_, i) => `<span class="${i===0?'active':''}"></span>`).join('')}
+                </div>
+            `;
+
+            overlay.appendChild(container);
+            document.body.appendChild(overlay);
+            tutorialOverlay = overlay;
+
+            document.getElementById('tutorialCloseBtn').addEventListener('click', closeTutorial);
+            document.getElementById('tutorialPrevBtn').addEventListener('click', () => navigateTutorial(-1));
+            document.getElementById('tutorialNextBtn').addEventListener('click', () => navigateTutorial(1));
+            document.getElementById('tutorialDoneBtn').addEventListener('click', closeTutorial);
+
+            document.addEventListener('keydown', handleEscape);
+
+            updateTutorialStep();
+        }
+
+        function updateTutorialStep() {
+            const data = tutorialData[tutorialStep];
+            document.getElementById('tutorialTitle').textContent = data.title;
+            document.getElementById('tutorialContent').innerHTML = data.content;
+            document.getElementById('tutorialStepIndicator').textContent = `Langkah ${tutorialStep+1} dari ${tutorialData.length}`;
+
+            document.getElementById('tutorialPrevBtn').style.display = tutorialStep === 0 ? 'none' : 'inline-block';
+            document.getElementById('tutorialNextBtn').style.display = tutorialStep === tutorialData.length - 1 ? 'none' : 'inline-block';
+            document.getElementById('tutorialDoneBtn').style.display = tutorialStep === tutorialData.length - 1 ? 'inline-block' : 'none';
+
+            const dots = document.querySelectorAll('#tutorialDots span');
+            dots.forEach((dot, i) => {
+                dot.className = i === tutorialStep ? 'active' : '';
+            });
+        }
+
+        function navigateTutorial(delta) {
+            const newStep = tutorialStep + delta;
+            if (newStep < 0 || newStep >= tutorialData.length) return;
+            tutorialStep = newStep;
+            updateTutorialStep();
+        }
+
+        function closeTutorial() {
+            if (tutorialOverlay) {
+                tutorialOverlay.remove();
+                tutorialOverlay = null;
+                document.removeEventListener('keydown', handleEscape);
+            }
+        }
+
+        function handleEscape(e) {
+            if (e.key === 'Escape') closeTutorial();
+        }
+
+        // Tombol Tutorial
+        document.getElementById('tutorialBtn').addEventListener('click', startTutorial);
+
+        // ================================================================
         // INISIALISASI
         // ================================================================
         document.addEventListener('DOMContentLoaded', function() {
@@ -2877,6 +3191,7 @@ Hasilkan notasi nada:`;
             console.log('🎹 Akord C2-B#3: putih=Mayor, hitam=Minor, sustain dengan piano.');
             console.log('📝 Tombol Mayor/Minor memutar ulang melodi yang direkam.');
             console.log('🎤 AI Transcriber dengan mikrofon dan deteksi pitch siap digunakan.');
+            console.log('📖 Tutorial siap dibuka dengan tombol Tutorial.');
         });
     </script>
 </body>
