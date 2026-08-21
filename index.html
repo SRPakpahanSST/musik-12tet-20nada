@@ -114,11 +114,11 @@
             border-radius: 12px;
         }
         .tab-btn-nav {
-            padding: 10px 25px;
+            padding: 8px 20px;
             border: none;
-            border-radius: 30px;
+            border-radius: 25px;
             font-weight: 700;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             cursor: pointer;
             transition: 0.3s;
             background: #0f3460;
@@ -147,50 +147,50 @@
             display: block;
         }
 
-        /* ===== KEYBOARD CONTROLS ===== */
+        /* ===== CONTROLS ===== */
         .controls {
             display: flex;
-            gap: 12px;
+            gap: 10px;
             flex-wrap: wrap;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             align-items: center;
             justify-content: center;
-            padding: 15px;
+            padding: 12px 15px;
             background: #0d0d1a;
             border-radius: 12px;
         }
         .controls label {
             color: #aaa;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             cursor: pointer;
             padding: 4px 10px;
             border-radius: 15px;
             transition: 0.2s;
         }
         .controls label:hover { background: #1a1a3e; }
-        .controls input[type="radio"] { margin-right: 5px; accent-color: #e94560; }
+        .controls input[type="radio"] { margin-right: 4px; accent-color: #e94560; }
         .controls label.active-mode { background: #e94560; color: #fff; border-radius: 15px; }
         .controls select, .controls input[type="range"] {
             background: #0f3460;
             color: #fff;
             border: none;
-            padding: 5px 12px;
+            padding: 4px 10px;
             border-radius: 15px;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             cursor: pointer;
             outline: none;
         }
         .controls select option { background: #0d0d1a; }
-        .controls input[type="range"] { width: 80px; padding: 0; accent-color: #e94560; background: transparent; }
-        .controls .effect-label { color: #aaa; font-size: 0.75rem; margin-right: 2px; }
+        .controls input[type="range"] { width: 70px; padding: 0; accent-color: #e94560; background: transparent; }
+        .controls .effect-label { color: #aaa; font-size: 0.7rem; margin-right: 2px; }
         .btn {
-            padding: 6px 16px;
+            padding: 5px 14px;
             border: none;
             border-radius: 20px;
             font-weight: 600;
             cursor: pointer;
             transition: 0.2s;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
         }
         .btn-primary { background: #e94560; color: #fff; }
         .btn-primary:hover { background: #c73652; transform: scale(1.04); }
@@ -203,34 +203,34 @@
         .effect-group {
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 4px;
             background: #111;
-            padding: 4px 12px;
+            padding: 3px 10px;
             border-radius: 20px;
         }
         .chord-info {
             background: #0f3460;
-            padding: 6px 14px;
+            padding: 4px 12px;
             border-radius: 20px;
             color: #ffd700;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             display: inline-block;
         }
 
         /* Mode Radio Group */
         .mode-radio-group {
             display: flex;
-            gap: 10px;
+            gap: 6px;
             align-items: center;
             background: #111;
-            padding: 4px 12px;
+            padding: 3px 10px;
             border-radius: 20px;
         }
         .mode-radio-group label {
             color: #aaa;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             cursor: pointer;
-            padding: 3px 10px;
+            padding: 2px 8px;
             border-radius: 12px;
             transition: 0.2s;
         }
@@ -241,14 +241,14 @@
         }
         .mode-radio-group input[type="radio"] {
             accent-color: #e94560;
-            margin-right: 4px;
+            margin-right: 3px;
         }
         .mode-badge {
             display: inline-block;
-            padding: 2px 12px;
+            padding: 2px 10px;
             border-radius: 12px;
-            font-size: 0.65rem;
-            margin-left: 5px;
+            font-size: 0.6rem;
+            margin-left: 4px;
         }
         .mode-badge.desc { background: #0f3460; color: #aaa; }
         .mode-badge.prompt { background: #2d7d46; color: #fff; }
@@ -257,21 +257,21 @@
         .prompt-area {
             display: none;
             width: 100%;
-            padding: 10px 0;
+            padding: 8px 0;
         }
         .prompt-area.show {
             display: block;
         }
         .prompt-area textarea {
             width: 100%;
-            padding: 10px 15px;
+            padding: 8px 12px;
             border: none;
             border-radius: 10px;
             background: #0d0d1a;
             color: #fff;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             resize: vertical;
-            min-height: 50px;
+            min-height: 40px;
             outline: none;
             border: 1px solid #2a3a5e;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -281,22 +281,22 @@
         }
         .prompt-area .hint {
             color: #666;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             margin-top: 3px;
         }
 
         /* ===== KEYBOARD ===== */
         .keyboard-wrapper {
             overflow-x: auto;
-            padding: 15px 0;
+            padding: 10px 0;
             background: #0d0d1a;
             border-radius: 12px;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
         }
         .keyboard-container {
             position: relative;
             min-width: 2800px;
-            height: 230px;
+            height: 210px;
             margin: 0 auto;
         }
         .key {
@@ -308,17 +308,17 @@
             flex-direction: column;
             align-items: center;
             justify-content: flex-end;
-            font-size: 7px;
+            font-size: 6px;
             user-select: none;
             border: 1px solid #333;
         }
         .key-white {
             background: #f0f0f0;
             color: #222;
-            width: 32px;
-            height: 170px;
+            width: 30px;
+            height: 155px;
             border-bottom: 3px solid #bbb;
-            padding-bottom: 6px;
+            padding-bottom: 4px;
             z-index: 1;
         }
         .key-white:hover { background: #e0e0e0; transform: scale(1.02); }
@@ -326,22 +326,22 @@
         .key-black {
             background: #222;
             color: #fff;
-            width: 20px;
-            height: 105px;
+            width: 18px;
+            height: 95px;
             border-bottom: 3px solid #111;
-            padding-bottom: 4px;
+            padding-bottom: 3px;
             z-index: 2;
-            margin-left: -10px;
+            margin-left: -9px;
         }
         .key-black:hover { background: #444; }
         .key-black.active { background: #ffd700; color: #222; transform: scale(0.95); }
-        .key-label { font-size: 6px; font-weight: 700; text-align: center; line-height: 1.2; pointer-events: none; }
+        .key-label { font-size: 5px; font-weight: 700; text-align: center; line-height: 1.2; pointer-events: none; }
         .key-white .key-label { color: #333; }
         .key-black .key-label { color: #ddd; }
         .octave-label {
             position: absolute;
             bottom: -5px;
-            font-size: 10px;
+            font-size: 9px;
             color: #f5a623;
             font-weight: bold;
             text-align: center;
@@ -349,35 +349,36 @@
             pointer-events: none;
         }
         .status {
-            margin-top: 12px;
-            font-size: 0.9rem;
+            margin-top: 10px;
+            font-size: 0.85rem;
             color: #aaa;
             text-align: center;
-            min-height: 24px;
+            min-height: 22px;
         }
         .status span { color: #f5a623; font-weight: 600; }
 
-        /* ===== AI TABS ===== */
+        /* ===== AI CONTAINER ===== */
         .ai-container {
             background: #0d0d1a;
             border-radius: 12px;
-            padding: 20px;
-            min-height: 400px;
+            padding: 15px;
+            min-height: 300px;
         }
         .ai-container h3 {
             color: #f5a623;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
         }
         .ai-container textarea {
             width: 100%;
-            padding: 10px 15px;
+            padding: 8px 12px;
             border: none;
             border-radius: 10px;
             background: #1a1a2e;
             color: #fff;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             resize: vertical;
-            min-height: 80px;
+            min-height: 60px;
             outline: none;
             border: 1px solid #2a3a5e;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -387,21 +388,63 @@
         }
         .ai-container .hint {
             color: #666;
-            font-size: 0.8rem;
-            margin-top: 5px;
+            font-size: 0.75rem;
+            margin-top: 3px;
         }
         .ai-result {
-            margin-top: 15px;
-            padding: 15px;
+            margin-top: 12px;
+            padding: 12px;
             background: #111;
             border-radius: 8px;
             color: #ffd700;
             font-family: monospace;
-            min-height: 60px;
+            min-height: 50px;
             word-wrap: break-word;
             line-height: 1.8;
+            font-size: 0.85rem;
         }
+        .ai-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .ai-row label {
+            color: #aaa;
+            display: block;
+            margin-bottom: 3px;
+            font-size: 0.8rem;
+        }
+        .ai-row select {
+            width: 100%;
+            padding: 6px 12px;
+            border: none;
+            border-radius: 10px;
+            background: #0d0d1a;
+            color: #fff;
+            outline: none;
+            font-size: 0.8rem;
+        }
+        .mood-tag {
+            padding: 4px 12px;
+            border-radius: 20px;
+            background: #0f3460;
+            color: #aaa;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 0.75rem;
+            border: 1px solid transparent;
+            display: inline-block;
+        }
+        .mood-tag:hover { background: #1a4a7a; }
+        .mood-tag.active {
+            border-color: #e94560;
+            color: #fff;
+            background: #e94560;
+        }
+        .mood-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
 
+        /* ===== INFO PANEL ===== */
         .info-section {
             background: #1a1a2e;
             border-radius: 16px;
@@ -478,19 +521,21 @@
 
         @media (max-width:600px) {
             .container { padding: 12px; }
-            .key-white { width: 26px; height: 140px; }
-            .key-black { width: 16px; height: 85px; }
-            .keyboard-container { min-width: 2200px; height: 190px; }
-            .controls { gap: 6px; padding: 10px; }
-            .btn { padding: 4px 10px; font-size: 0.7rem; }
-            .controls select { font-size: 0.7rem; padding: 3px 8px; }
-            .controls input[type="range"] { width: 60px; }
+            .key-white { width: 24px; height: 130px; }
+            .key-black { width: 15px; height: 80px; }
+            .keyboard-container { min-width: 2200px; height: 175px; }
+            .controls { gap: 5px; padding: 8px; }
+            .btn { padding: 3px 10px; font-size: 0.65rem; }
+            .controls select { font-size: 0.65rem; padding: 3px 8px; }
+            .controls input[type="range"] { width: 50px; }
             #welcome h1 { font-size: 1.8rem; }
             #welcome p { font-size: 1rem; }
             #welcome button { padding: 12px 30px; font-size: 1.2rem; }
             #welcome img { max-height: 40vh; }
-            .tab-btn-nav { padding: 6px 12px; font-size: 0.75rem; }
-            .mode-radio-group { flex-wrap: wrap; gap: 5px; }
+            .tab-btn-nav { padding: 6px 12px; font-size: 0.7rem; }
+            .mode-radio-group { flex-wrap: wrap; gap: 3px; padding: 3px 8px; }
+            .mode-radio-group label { font-size: 0.65rem; padding: 2px 6px; }
+            .ai-row { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -524,6 +569,13 @@
 
             <!-- ===== TAB 1: KEYBOARD ===== -->
             <div class="tab-content-main active" id="tab-keyboard">
+                <!-- Keyboard -->
+                <div class="keyboard-wrapper">
+                    <div class="keyboard-container" id="keyboardContainer"></div>
+                </div>
+
+                <div class="status" id="statusDisplay">Klik tuts atau tekan tombol untuk mendengar nada</div>
+
                 <!-- Controls -->
                 <div class="controls">
                     <label class="active-mode" id="singleModeLabel">
@@ -567,19 +619,19 @@
                     <div class="effect-group">
                         <span class="effect-label">🌊 Reverb:</span>
                         <input type="range" id="reverbMix" min="0" max="100" value="20" />
-                        <span id="reverbVal" style="font-size:0.7rem;color:#aaa;min-width:30px;">20%</span>
+                        <span id="reverbVal" style="font-size:0.65rem;color:#aaa;min-width:25px;">20%</span>
                     </div>
 
                     <div class="effect-group">
                         <span class="effect-label">⏳ Delay:</span>
                         <input type="range" id="delayMix" min="0" max="100" value="0" />
-                        <span id="delayVal" style="font-size:0.7rem;color:#aaa;min-width:30px;">0%</span>
+                        <span id="delayVal" style="font-size:0.65rem;color:#aaa;min-width:25px;">0%</span>
                     </div>
 
                     <div class="effect-group" style="background:#2a1a3e; border:1px solid #6c2bd9;">
                         <span class="effect-label" style="color:#d4a0ff;">🔊 Amplifier:</span>
                         <input type="range" id="ampSlider" min="50" max="300" value="100" style="accent-color:#b388ff;" />
-                        <span id="ampVal" style="font-size:0.75rem;color:#d4a0ff;min-width:40px;font-weight:bold;">1.0x</span>
+                        <span id="ampVal" style="font-size:0.7rem;color:#d4a0ff;min-width:35px;font-weight:bold;">1.0x</span>
                     </div>
 
                     <button class="btn btn-primary" id="playMayorBtn">▶ Mayor</button>
@@ -595,44 +647,37 @@
                     <textarea id="promptInput" placeholder="Contoh: Ciptakan melodi yang perlahan meningkat, dengan nada-nada tinggi dan suasana romantis..."></textarea>
                     <div class="hint" id="promptHint">💡 Tulis prompt untuk AI Chatbot (hanya jika mode Prompt AI aktif)</div>
                 </div>
-
-                <!-- Keyboard -->
-                <div class="keyboard-wrapper">
-                    <div class="keyboard-container" id="keyboardContainer"></div>
-                </div>
-
-                <div class="status" id="statusDisplay">Klik tuts atau tekan tombol untuk mendengar nada</div>
             </div>
 
             <!-- ===== TAB 2: AI COMPOSER ===== -->
             <div class="tab-content-main" id="tab-composer">
                 <div class="ai-container">
                     <h3>🎵 AI Music Composer</h3>
-                    <p style="color:#aaa;margin-bottom:15px;">Ciptakan melodi otomatis dengan AI (A4 = 440 Hz)</p>
+                    <p style="color:#aaa;margin-bottom:10px;font-size:0.85rem;">Ciptakan melodi otomatis dengan AI (A4 = 440 Hz)</p>
 
-                    <div style="margin-bottom:15px;">
-                        <label style="color:#aaa;display:block;margin-bottom:5px;">🎭 Mood / Suasana</label>
-                        <div style="display:flex;gap:8px;flex-wrap:wrap;" id="moodTags">
-                            <span class="mood-tag" style="padding:5px 15px;border-radius:20px;background:#0f3460;color:#aaa;cursor:pointer;border:1px solid transparent;" data-mood="happy">😊 Happy</span>
-                            <span class="mood-tag active" style="padding:5px 15px;border-radius:20px;background:#e94560;color:#fff;cursor:pointer;border:1px solid #e94560;" data-mood="sad">😢 Sad</span>
-                            <span class="mood-tag" style="padding:5px 15px;border-radius:20px;background:#0f3460;color:#aaa;cursor:pointer;border:1px solid transparent;" data-mood="romantic">🥰 Romantic</span>
-                            <span class="mood-tag" style="padding:5px 15px;border-radius:20px;background:#0f3460;color:#aaa;cursor:pointer;border:1px solid transparent;" data-mood="mysterious">🔮 Mysterious</span>
-                            <span class="mood-tag" style="padding:5px 15px;border-radius:20px;background:#0f3460;color:#aaa;cursor:pointer;border:1px solid transparent;" data-mood="energetic">⚡ Energetic</span>
-                            <span class="mood-tag" style="padding:5px 15px;border-radius:20px;background:#0f3460;color:#aaa;cursor:pointer;border:1px solid transparent;" data-mood="calm">🌊 Calm</span>
+                    <div style="margin-bottom:10px;">
+                        <label style="color:#aaa;display:block;margin-bottom:3px;font-size:0.8rem;">🎭 Mood / Suasana</label>
+                        <div class="mood-tags" id="moodTags">
+                            <span class="mood-tag" data-mood="happy">😊 Happy</span>
+                            <span class="mood-tag active" data-mood="sad">😢 Sad</span>
+                            <span class="mood-tag" data-mood="romantic">🥰 Romantic</span>
+                            <span class="mood-tag" data-mood="mysterious">🔮 Mysterious</span>
+                            <span class="mood-tag" data-mood="energetic">⚡ Energetic</span>
+                            <span class="mood-tag" data-mood="calm">🌊 Calm</span>
                         </div>
                     </div>
 
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:15px;">
+                    <div class="ai-row">
                         <div>
-                            <label style="color:#aaa;display:block;margin-bottom:5px;">🎼 Skala</label>
-                            <select id="aiScaleSelect" style="width:100%;padding:10px 15px;border:none;border-radius:10px;background:#0d0d1a;color:#fff;outline:none;">
+                            <label>🎼 Skala</label>
+                            <select id="aiScaleSelect">
                                 <option value="mayor">Mayor (E)</option>
                                 <option value="minor">Minor (A)</option>
                             </select>
                         </div>
                         <div>
-                            <label style="color:#aaa;display:block;margin-bottom:5px;">⏱️ Tempo (BPM)</label>
-                            <select id="aiTempoSelect" style="width:100%;padding:10px 15px;border:none;border-radius:10px;background:#0d0d1a;color:#fff;outline:none;">
+                            <label>⏱️ Tempo (BPM)</label>
+                            <select id="aiTempoSelect">
                                 <option value="60">Lambat (60)</option>
                                 <option value="90">Sedang (90)</option>
                                 <option value="120" selected>Cepat (120)</option>
@@ -641,23 +686,23 @@
                         </div>
                     </div>
 
-                    <div style="margin-bottom:15px;">
-                        <label style="color:#aaa;display:block;margin-bottom:5px;">📝 Deskripsi / Prompt</label>
-                        <textarea id="aiPromptInput" placeholder="Contoh: Ciptakan melodi yang sedih dengan tempo lambat..." style="width:100%;padding:10px 15px;border:none;border-radius:10px;background:#0d0d1a;color:#fff;min-height:60px;resize:vertical;outline:none;border:1px solid #2a3a5e;font-family:inherit;"></textarea>
+                    <div style="margin-bottom:10px;">
+                        <label style="color:#aaa;display:block;margin-bottom:3px;font-size:0.8rem;">📝 Deskripsi / Prompt</label>
+                        <textarea id="aiPromptInput" placeholder="Contoh: Ciptakan melodi yang sedih dengan tempo lambat..."></textarea>
                     </div>
 
-                    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:15px;">
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
                         <button class="btn btn-primary" id="aiGenerateBtn">🚀 Generate</button>
                         <button class="btn btn-success" id="aiPlayBtn" disabled>▶ Play</button>
                         <button class="btn btn-danger" id="aiStopBtn" disabled>⏹ Stop</button>
                         <button class="btn btn-secondary" id="aiClearBtn">🗑️ Clear</button>
                     </div>
 
-                    <div id="aiResultArea" style="display:none;background:#0d0d1a;border-radius:12px;padding:20px;margin-top:15px;">
-                        <h4 style="color:#f5a623;margin-bottom:10px;">🎶 Melodi Hasil</h4>
-                        <div id="aiMelodyDisplay" style="font-family:monospace;font-size:1.1rem;color:#ffd700;background:#111;padding:15px;border-radius:8px;word-wrap:break-word;line-height:1.8;">-</div>
-                        <div style="display:flex;gap:15px;margin-top:10px;">
-                            <span style="color:#888;font-size:0.85rem;" id="aiNoteCount">Jumlah nada: 0</span>
+                    <div id="aiResultArea" style="display:none;background:#0d0d1a;border-radius:12px;padding:15px;margin-top:10px;">
+                        <h4 style="color:#f5a623;margin-bottom:8px;font-size:0.95rem;">🎶 Melodi Hasil</h4>
+                        <div id="aiMelodyDisplay" class="ai-result">-</div>
+                        <div style="display:flex;gap:15px;margin-top:8px;">
+                            <span style="color:#888;font-size:0.8rem;" id="aiNoteCount">Jumlah nada: 0</span>
                         </div>
                     </div>
                 </div>
@@ -667,25 +712,25 @@
             <div class="tab-content-main" id="tab-transcriber">
                 <div class="ai-container">
                     <h3>🎤 AI Audio Transcriber</h3>
-                    <p style="color:#aaa;margin-bottom:15px;">Rekam lagu atau suara (maks. 22 menit), AI akan menuliskannya (A4 = 440 Hz)</p>
+                    <p style="color:#aaa;margin-bottom:10px;font-size:0.85rem;">Rekam lagu atau suara (maks. 22 menit), AI akan menuliskannya (A4 = 440 Hz)</p>
 
-                    <div style="text-align:center;padding:30px;background:#0d0d1a;border-radius:12px;border:2px dashed #2a3a5e;margin-bottom:20px;">
-                        <button id="recordBtn" style="width:80px;height:80px;border-radius:50%;border:none;font-size:2.5rem;cursor:pointer;background:#e94560;color:#fff;transition:0.2s;">🎤</button>
-                        <div style="font-size:1.5rem;color:#f5a623;margin-top:10px;font-family:monospace;" id="timerDisplay">00:00 / 22:00</div>
-                        <div style="margin-top:10px;color:#aaa;" id="recStatus">🔴 Klik tombol mikrofon untuk mulai merekam</div>
+                    <div style="text-align:center;padding:20px;background:#0d0d1a;border-radius:12px;border:2px dashed #2a3a5e;margin-bottom:15px;">
+                        <button id="recordBtn" style="width:65px;height:65px;border-radius:50%;border:none;font-size:2rem;cursor:pointer;background:#e94560;color:#fff;transition:0.2s;">🎤</button>
+                        <div style="font-size:1.2rem;color:#f5a623;margin-top:8px;font-family:monospace;" id="timerDisplay">00:00 / 22:00</div>
+                        <div style="margin-top:8px;color:#aaa;font-size:0.8rem;" id="recStatus">🔴 Klik tombol mikrofon untuk mulai merekam</div>
                     </div>
 
-                    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:15px;">
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:10px;">
                         <button class="btn btn-success" id="transcribeBtn" disabled>🧠 AI Transcribe</button>
                         <button class="btn btn-secondary" id="playResultBtn" disabled>▶ Play Hasil</button>
-                        <button class="btn btn-danger" id="clearBtn">🗑️ Clear</button>
+                        <button class="btn btn-danger" id="clearTranscribeBtn">🗑️ Clear</button>
                     </div>
 
-                    <div id="transcribeResult" style="display:none;background:#0d0d1a;border-radius:12px;padding:20px;">
-                        <h4 style="color:#f5a623;margin-bottom:10px;">📝 Hasil Transkripsi</h4>
-                        <div id="transcribedDisplay" style="font-family:monospace;font-size:1rem;color:#ffd700;background:#111;padding:15px;border-radius:8px;min-height:40px;word-wrap:break-word;line-height:1.8;">-</div>
-                        <div style="display:flex;gap:15px;margin-top:10px;">
-                            <span style="color:#888;font-size:0.85rem;" id="transcribeInfo">Jumlah nada: 0</span>
+                    <div id="transcribeResult" style="display:none;background:#0d0d1a;border-radius:12px;padding:15px;">
+                        <h4 style="color:#f5a623;margin-bottom:8px;font-size:0.95rem;">📝 Hasil Transkripsi</h4>
+                        <div id="transcribedDisplay" class="ai-result">-</div>
+                        <div style="display:flex;gap:15px;margin-top:8px;">
+                            <span style="color:#888;font-size:0.8rem;" id="transcribeInfo">Jumlah nada: 0</span>
                         </div>
                     </div>
                 </div>
@@ -695,26 +740,26 @@
             <div class="tab-content-main" id="tab-chord">
                 <div class="ai-container">
                     <h3>🎶 Chord Progression Generator</h3>
-                    <p style="color:#aaa;margin-bottom:15px;">Ubah hasil transkripsi nada menjadi progresi akord (20 nada per oktaf)</p>
+                    <p style="color:#aaa;margin-bottom:10px;font-size:0.85rem;">Ubah hasil transkripsi nada menjadi progresi akord (20 nada per oktaf)</p>
 
-                    <div style="margin-bottom:15px;">
-                        <label style="color:#aaa;display:block;margin-bottom:5px;">📝 Masukkan Hasil Transkripsi Nada:</label>
-                        <textarea id="chordInput" placeholder="Contoh: E3 → G3 → H3 → E3 → G3 → H3 → E3 ..." style="width:100%;padding:10px 15px;border:none;border-radius:10px;background:#0d0d1a;color:#fff;min-height:80px;resize:vertical;outline:none;border:1px solid #2a3a5e;font-family:monospace;"></textarea>
-                        <div style="color:#666;font-size:0.8rem;margin-top:5px;">💡 Copy hasil transkripsi dari AI Transcriber</div>
+                    <div style="margin-bottom:10px;">
+                        <label style="color:#aaa;display:block;margin-bottom:3px;font-size:0.8rem;">📝 Masukkan Hasil Transkripsi Nada:</label>
+                        <textarea id="chordInput" placeholder="Contoh: E3 → G3 → H3 → E3 → G3 → H3 → E3 ..."></textarea>
+                        <div style="color:#666;font-size:0.7rem;margin-top:3px;">💡 Copy hasil transkripsi dari AI Transcriber</div>
                     </div>
 
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:15px;">
+                    <div class="ai-row">
                         <div>
-                            <label style="color:#aaa;display:block;margin-bottom:5px;">🎯 Mode Analisis:</label>
-                            <select id="chordModeSelect" style="width:100%;padding:10px 15px;border:none;border-radius:10px;background:#0d0d1a;color:#fff;outline:none;">
+                            <label>🎯 Mode Analisis:</label>
+                            <select id="chordModeSelect">
                                 <option value="auto">Otomatis (Deteksi)</option>
                                 <option value="mayor">Mayor</option>
                                 <option value="minor">Minor</option>
                             </select>
                         </div>
                         <div>
-                            <label style="color:#aaa;display:block;margin-bottom:5px;">📊 Jumlah Akord:</label>
-                            <select id="chordCountSelect" style="width:100%;padding:10px 15px;border:none;border-radius:10px;background:#0d0d1a;color:#fff;outline:none;">
+                            <label>📊 Jumlah Akord:</label>
+                            <select id="chordCountSelect">
                                 <option value="4">4 Akord (Sederhana)</option>
                                 <option value="6">6 Akord</option>
                                 <option value="8" selected>8 Akord (Lengkap)</option>
@@ -722,18 +767,18 @@
                         </div>
                     </div>
 
-                    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:15px;">
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
                         <button class="btn btn-primary" id="chordGenerateBtn">🎵 Generate Progresi</button>
                         <button class="btn btn-secondary" id="chordClearBtn">🗑️ Clear</button>
                     </div>
 
-                    <div id="chordResult" style="display:none;background:#0d0d1a;border-radius:12px;padding:20px;">
-                        <h4 style="color:#f5a623;margin-bottom:10px;">🎶 Hasil Analisis</h4>
-                        <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:15px;">
-                            <span style="color:#aaa;">🎯 Nada Dasar: <span id="chordKey" style="color:#ffd700;font-weight:bold;">-</span></span>
-                            <span style="color:#aaa;">🎼 Skala: <span id="chordScale" style="color:#f5a623;font-weight:bold;">-</span></span>
+                    <div id="chordResult" style="display:none;background:#0d0d1a;border-radius:12px;padding:15px;">
+                        <h4 style="color:#f5a623;margin-bottom:8px;font-size:0.95rem;">🎶 Hasil Analisis</h4>
+                        <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:10px;">
+                            <span style="color:#aaa;font-size:0.85rem;">🎯 Nada Dasar: <span id="chordKey" style="color:#ffd700;font-weight:bold;">-</span></span>
+                            <span style="color:#aaa;font-size:0.85rem;">🎼 Skala: <span id="chordScale" style="color:#f5a623;font-weight:bold;">-</span></span>
                         </div>
-                        <div id="chordGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;"></div>
+                        <div id="chordGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;"></div>
                     </div>
                 </div>
             </div>
@@ -840,7 +885,7 @@
         const SCALE_MINOR = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'A'];
 
         // ================================================================
-        // AUDIO ENGINE (Keyboard)
+        // AUDIO ENGINE
         // ================================================================
         let audioCtx = null;
         let activeOscillators = [];
@@ -868,7 +913,8 @@
             masterGain.gain.setValueAtTime(1.0, audioCtx.currentTime);
 
             reverbNode = audioCtx.createConvolver();
-            const impulseLength = 2.0, sampleRate = audioCtx.sampleRate;
+            const impulseLength = 2.0,
+                sampleRate = audioCtx.sampleRate;
             const numSamples = Math.floor(impulseLength * sampleRate);
             const impulse = audioCtx.createBuffer(2, numSamples, sampleRate);
             for (let ch = 0; ch < 2; ch++) {
@@ -1198,10 +1244,10 @@
             container.innerHTML = '';
             keyElements = {};
             const noteSeq = generateNoteSequence(octaveCount);
-            const whiteWidth = 32,
-                whiteHeight = 170,
-                blackWidth = 20,
-                blackHeight = 105,
+            const whiteWidth = 30,
+                whiteHeight = 155,
+                blackWidth = 18,
+                blackHeight = 95,
                 startX = 10,
                 yWhite = 10;
             let whiteIndex = 0;
@@ -1234,7 +1280,7 @@
                 const { note, isBlack } = noteSeq[i];
                 if (!isBlack) whiteIndex++;
                 else {
-                    const x = startX + (whiteIndex - 1) * whiteWidth + whiteWidth - 10;
+                    const x = startX + (whiteIndex - 1) * whiteWidth + whiteWidth - 9;
                     const key = document.createElement('div');
                     key.className = 'key key-black';
                     key.style.left = x + 'px';
@@ -1439,7 +1485,7 @@
         });
 
         // ================================================================
-        // AI COMPOSER FUNCTIONS
+        // AI COMPOSER
         // ================================================================
         const moodTags = document.querySelectorAll('#moodTags .mood-tag');
         let selectedMood = 'sad';
@@ -1451,24 +1497,9 @@
             tag.addEventListener('click', function() {
                 moodTags.forEach(t => t.classList.remove('active'));
                 this.classList.add('active');
-                this.style.background = '#e94560';
-                this.style.color = '#fff';
-                this.style.borderColor = '#e94560';
-                moodTags.forEach(t => {
-                    if (t !== this) {
-                        t.style.background = '#0f3460';
-                        t.style.color = '#aaa';
-                        t.style.borderColor = 'transparent';
-                    }
-                });
                 selectedMood = this.dataset.mood;
             });
         });
-
-        // Set active style for default
-        document.querySelector('#moodTags .mood-tag.active').style.background = '#e94560';
-        document.querySelector('#moodTags .mood-tag.active').style.color = '#fff';
-        document.querySelector('#moodTags .mood-tag.active').style.borderColor = '#e94560';
 
         function generateSimulation(mood, scaleType, tempo) {
             const scale = scaleType === 'mayor' ?
@@ -1651,7 +1682,6 @@
         });
 
         document.getElementById('transcribeBtn').addEventListener('click', function() {
-            // Simulasi transkripsi
             const resultDiv = document.getElementById('transcribeResult');
             const display = document.getElementById('transcribedDisplay');
             const info = document.getElementById('transcribeInfo');
@@ -1661,7 +1691,6 @@
             this.disabled = true;
 
             setTimeout(() => {
-                // Generate random notes
                 const notes = ['E4', 'G4', 'H4', 'E5', 'G5', 'H5', 'E6', 'G6', 'H6', 'A4', 'B4', 'C5', 'D5'];
                 const selected = [];
                 const count = Math.floor(Math.random() * 10) + 5;
@@ -1679,7 +1708,6 @@
 
         document.getElementById('playResultBtn').addEventListener('click', function() {
             if (transcribedNotes.length === 0) return;
-            // Play transcribed notes
             transcribedNotes.forEach((note, i) => {
                 const freq = FREQ_MAP[note];
                 if (freq) {
@@ -1690,7 +1718,7 @@
             });
         });
 
-        document.getElementById('clearBtn').addEventListener('click', function() {
+        document.getElementById('clearTranscribeBtn').addEventListener('click', function() {
             transcribedNotes = [];
             document.getElementById('transcribeResult').style.display = 'none';
             document.getElementById('transcribedDisplay').textContent = '-';
@@ -1716,14 +1744,12 @@
                 return;
             }
 
-            // Count notes
             const count = {};
             notes.forEach(n => {
                 const clean = n.replace(/[0-9]/g, '');
                 count[clean] = (count[clean] || 0) + 1;
             });
 
-            // Find key
             let maxCount = 0;
             let key = 'E';
             for (let [n, c] of Object.entries(count)) {
@@ -1731,13 +1757,11 @@
                     key = n; }
             }
 
-            // Detect scale
             const scaleMayor = new Set(['E', 'F', 'G', 'H', 'I', 'J', 'K', 'A', 'B', 'C', 'D']);
             const scaleMinor = new Set(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K']);
             let scaleType = 'Mayor';
             if (scaleMinor.has(key) && !scaleMayor.has(key)) scaleType = 'Minor';
 
-            // Generate chords
             const chordRoots = scaleType === 'Mayor' ?
                 ['E', 'F', 'G', 'H', 'I', 'J', 'K', 'A'] :
                 ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
@@ -1768,11 +1792,11 @@
                 const notes3 = getChordNotes20(root, type);
 
                 const card = document.createElement('div');
-                card.style.cssText = 'background:#1a1a2e;border-radius:12px;padding:15px;border:1px solid #2a3a5e;text-align:center;transition:0.2s;';
+                card.style.cssText = 'background:#1a1a2e;border-radius:10px;padding:12px;border:1px solid #2a3a5e;text-align:center;transition:0.2s;';
                 card.innerHTML = `
-                    <div style="font-size:1.3rem;font-weight:700;color:#ffd700;">${root}${typeSymbol}</div>
-                    <div style="font-size:0.8rem;color:#aaa;margin-top:5px;">${notes3.join(' + ')}</div>
-                    <div style="font-size:0.7rem;color:#888;margin-top:3px;">${roman[i]}</div>
+                    <div style="font-size:1.2rem;font-weight:700;color:#ffd700;">${root}${typeSymbol}</div>
+                    <div style="font-size:0.75rem;color:#aaa;margin-top:3px;">${notes3.join(' + ')}</div>
+                    <div style="font-size:0.65rem;color:#888;margin-top:2px;">${roman[i]}</div>
                 `;
                 grid.appendChild(card);
             }
