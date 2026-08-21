@@ -514,3 +514,517 @@
                 case 'organ':
                     osc = ctx.createOscillator();
                     osc.type = 'sawtooth';
+                    osc2 = ctx.createOscillator();
+                    osc2.type = 'square';
+                    osc2.frequency.setValueAtTime(freq * 0.999, now);
+                    gain2 = ctx.createGain();
+                    gain2.gain.setValueAtTime(0.5, now);
+                    osc2.connect(gain2);
+                    return { mainOsc: osc, extraOsc: osc2, extraGain: gain2 };
+
+                case 'piano':
+                    osc = ctx.createOscillator();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, now);
+                    osc2 = ctx.createOscillator();
+                    osc2.type = 'sine';
+                    osc2.frequency.setValueAtTime(freq * 2.0, now);
+                    gain2 = ctx.createGain();
+                    gain2.gain.setValueAtTime(0.08, now);
+                    osc2.connect(gain2);
+                    osc3 = ctx.createOscillator();
+                    osc3.type = 'sine';
+                    osc3.frequency.setValueAtTime(freq * 3.0, now);
+                    gain3 = ctx.createGain();
+                    gain3.gain.setValueAtTime(0.04, now);
+                    osc3.connect(gain3);
+                    return { mainOsc: osc, extraOsc: osc2, extraOsc2: osc3, extraGain: gain2, extraGain2: gain3 };
+
+                case 'flute':
+                    osc = ctx.createOscillator();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, now);
+                    osc2 = ctx.createOscillator();
+                    osc2.type = 'sine';
+                    osc2.frequency.setValueAtTime(freq * 1.003, now);
+                    gain2 = ctx.createGain();
+                    gain2.gain.setValueAtTime(0.15, now);
+                    osc2.connect(gain2);
+                    return { mainOsc: osc, extraOsc: osc2, extraGain: gain2 };
+
+                case 'trumpet':
+                    osc = ctx.createOscillator();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(freq, now);
+                    osc2 = ctx.createOscillator();
+                    osc2.type = 'square';
+                    osc2.frequency.setValueAtTime(freq * 0.999, now);
+                    gain2 = ctx.createGain();
+                    gain2.gain.setValueAtTime(0.4, now);
+                    osc2.connect(gain2);
+                    osc3 = ctx.createOscillator();
+                    osc3.type = 'sawtooth';
+                    osc3.frequency.setValueAtTime(freq * 2.0, now);
+                    gain3 = ctx.createGain();
+                    gain3.gain.setValueAtTime(0.1, now);
+                    osc3.connect(gain3);
+                    return { mainOsc: osc, extraOsc: osc2, extraOsc2: osc3, extraGain: gain2, extraGain2: gain3 };
+
+                default:
+                    osc = ctx.createOscillator();
+                    osc.type = type;
+                    return { mainOsc: osc };
+            }
+        }
+
+        function playSingleNote(freq, duration = 0.6) {
+            try {
+                const ctx = initAudio();
+                const type = currentInstrument;
+                const oscData = createInstrumentOscillator(freq, type);
+                const mainOsc = oscData.mainOsc;
+                const gain = ctx.createGain();
+
+                const now = ctx.currentTime;
+                gain.gain.setValueAtTime(0.001, now);
+                
+                let attack = 0.03, decay = 0.15, sustain = 0.2, release = 0.01;
+                if (type === 'piano') { attack = 0.01; decay = 0.3; sustain = 0.15; release = 0.2; }
+                else if (type === 'flute') { attack = 0.05; decay = 0.2; sustain = 0.3; release = 0.05; }
+                else if (type === 'trumpet') { attack = 0.02; decay = 0.1; sustain = 0.35; release = 0.05; }
+                
+                gain.gain.linearRampToValueAtTime(0.4, now + attack);
+                gain.gain.exponentialRampToValueAtTime(sustain, now + attack + decay);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + duration - release);
+
+                mainOsc.connect(gain);
+                gain.connect(dryGain);
+                gain.connect(wetGain);
+
+                const delayInput = ctx.createGain();
+                gain.connect(delayInput);
+                delayInput.connect(delayNode);
+                delayInput.connect(delayDryGain);
+
+                if (oscData.extraOsc) {
+                    const eg = ctx.createGain();
+                    let extraVol = 0.3;
+                    if (type === 'piano') extraVol = 0.08;
+                    else if (type === 'flute') extraVol = 0.15;
+                    else if (type === 'trumpet') extraVol = 0.4;
+                    eg.gain.setValueAtTime(extraVol, now);
+                    oscData.extraOsc.connect(eg);
+                    eg.connect(gain);
+                    oscData.extraOsc.start(now);
+                    oscData.extraOsc.stop(now + duration);
+                    activeOscillators.push(oscData.extraOsc);
+                }
+                
+                if (oscData.extraOsc2) {
+                    const eg2 = ctx.createGain();
+                    let extraVol2 = 0.04;
+                    if (type === 'piano') extraVol2 = 0.04;
+                    else if (type === 'trumpet') extraVol2 = 0.1;
+                    eg2.gain.setValueAtTime(extraVol2, now);
+                    oscData.extraOsc2.connect(eg2);
+                    eg2.connect(gain);
+                    oscData.extraOsc2.start(now);
+                    oscData.extraOsc2.stop(now + duration);
+                    activeOscillators.push(oscData.extraOsc2);
+                }
+
+                mainOsc.start(now);
+                mainOsc.stop(now + duration);
+                activeOscillators.push(mainOsc);
+                if (oscData.extraOsc) activeOscillators.push(oscData.extraOsc);
+                if (oscData.extraOsc2) activeOscillators.push(oscData.extraOsc2);
+
+                mainOsc.onended = () => {
+                    const idx = activeOscillators.indexOf(mainOsc);
+                    if (idx > -1) activeOscillators.splice(idx, 1);
+                };
+                return mainOsc;
+            } catch (e) { console.warn(e); return null; }
+        }
+
+        function playChord(freqs, duration = 0.8) {
+            try {
+                const ctx = initAudio();
+                const type = currentInstrument;
+                freqs.forEach(f => {
+                    if (f <= 0) return;
+                    const oscData = createInstrumentOscillator(f, type);
+                    const mainOsc = oscData.mainOsc;
+                    const gain = ctx.createGain();
+
+                    const now = ctx.currentTime;
+                    gain.gain.setValueAtTime(0.001, now);
+                    
+                    let attack = 0.03, decay = 0.15, sustain = 0.2, release = 0.01;
+                    if (type === 'piano') { attack = 0.01; decay = 0.3; sustain = 0.15; release = 0.2; }
+                    else if (type === 'flute') { attack = 0.05; decay = 0.2; sustain = 0.3; release = 0.05; }
+                    else if (type === 'trumpet') { attack = 0.02; decay = 0.1; sustain = 0.35; release = 0.05; }
+                    
+                    gain.gain.linearRampToValueAtTime(0.25, now + attack);
+                    gain.gain.exponentialRampToValueAtTime(sustain, now + attack + decay);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + duration - release);
+
+                    mainOsc.connect(gain);
+                    gain.connect(dryGain);
+                    gain.connect(wetGain);
+
+                    const delayInput = ctx.createGain();
+                    gain.connect(delayInput);
+                    delayInput.connect(delayNode);
+                    delayInput.connect(delayDryGain);
+
+                    if (oscData.extraOsc) {
+                        const eg = ctx.createGain();
+                        let extraVol = 0.3;
+                        if (type === 'piano') extraVol = 0.08;
+                        else if (type === 'flute') extraVol = 0.15;
+                        else if (type === 'trumpet') extraVol = 0.4;
+                        eg.gain.setValueAtTime(extraVol, now);
+                        oscData.extraOsc.connect(eg);
+                        eg.connect(gain);
+                        oscData.extraOsc.start(now);
+                        oscData.extraOsc.stop(now + duration);
+                        activeOscillators.push(oscData.extraOsc);
+                    }
+                    
+                    if (oscData.extraOsc2) {
+                        const eg2 = ctx.createGain();
+                        let extraVol2 = 0.04;
+                        if (type === 'piano') extraVol2 = 0.04;
+                        else if (type === 'trumpet') extraVol2 = 0.1;
+                        eg2.gain.setValueAtTime(extraVol2, now);
+                        oscData.extraOsc2.connect(eg2);
+                        eg2.connect(gain);
+                        oscData.extraOsc2.start(now);
+                        oscData.extraOsc2.stop(now + duration);
+                        activeOscillators.push(oscData.extraOsc2);
+                    }
+
+                    mainOsc.start(now);
+                    mainOsc.stop(now + duration);
+                    activeOscillators.push(mainOsc);
+                    if (oscData.extraOsc) activeOscillators.push(oscData.extraOsc);
+                    if (oscData.extraOsc2) activeOscillators.push(oscData.extraOsc2);
+                });
+                return true;
+            } catch (e) { console.warn(e); return false; }
+        }
+
+        function stopAllSounds() {
+            activeOscillators.forEach(osc => { try { osc.stop(); } catch(e) {} });
+            activeOscillators = [];
+            isPlaying = false;
+        }
+
+        // ================================================================
+        // KEYBOARD GENERATION
+        // ================================================================
+
+        function generateNoteSequence(octaveCount) {
+            const seq = [];
+            const octave2 = ['C2','C#2','D2'];
+            octave2.forEach(n => seq.push({ note: n, isBlack: n.includes('#') }));
+            for (let o=3; o <= 2 + octaveCount - 1; o++) {
+                const notes = [
+                    'E'+o, 'E#'+o, 'F'+o, 'F#'+o, 'G'+o, 'G#'+o,
+                    'H'+o, 'H#'+o, 'I'+o, 'J'+o, 'J#'+o,
+                    'K'+o, 'K#'+o, 'A'+o, 'A#'+o,
+                    'B'+o, 'B#'+o, 'C'+o, 'C#'+o, 'D'+o
+                ];
+                notes.forEach(n => seq.push({ note: n, isBlack: n.includes('#') }));
+            }
+            return seq;
+        }
+
+        const container = document.getElementById('keyboardContainer');
+        const statusDisplay = document.getElementById('statusDisplay');
+        const modeIndicator = document.getElementById('modeIndicator');
+        const singleModeLabel = document.getElementById('singleModeLabel');
+        const chordModeLabel = document.getElementById('chordModeLabel');
+        const octaveSelector = document.getElementById('octaveSelector');
+        const instrumentSelector = document.getElementById('instrumentSelector');
+        const reverbSlider = document.getElementById('reverbMix');
+        const delaySlider = document.getElementById('delayMix');
+        const reverbVal = document.getElementById('reverbVal');
+        const delayVal = document.getElementById('delayVal');
+        const ampSlider = document.getElementById('ampSlider');
+        const ampVal = document.getElementById('ampVal');
+        let keyElements = {};
+
+        function buildKeyboard(octaveCount) {
+            container.innerHTML = '';
+            keyElements = {};
+            const noteSeq = generateNoteSequence(octaveCount);
+            const whiteWidth=32, whiteHeight=170, blackWidth=20, blackHeight=105, startX=10, yWhite=10;
+            let whiteIndex=0;
+
+            for (let i=0; i<noteSeq.length; i++) {
+                const { note, isBlack } = noteSeq[i];
+                if (!isBlack) {
+                    const x = startX + whiteIndex * whiteWidth;
+                    const key = document.createElement('div');
+                    key.className = 'key key-white';
+                    key.style.left = x + 'px';
+                    key.style.top = yWhite + 'px';
+                    key.style.width = whiteWidth + 'px';
+                    key.style.height = whiteHeight + 'px';
+                    const label = document.createElement('span');
+                    label.className = 'key-label';
+                    label.textContent = note;
+                    key.appendChild(label);
+                    key.dataset.note = note;
+                    key.dataset.freq = FREQ_MAP[note] || 0;
+                    key.addEventListener('mousedown', (e) => { e.preventDefault(); handleKeyPress(note); });
+                    container.appendChild(key);
+                    keyElements[note] = key;
+                    whiteIndex++;
+                }
+            }
+            whiteIndex=0;
+            for (let i=0; i<noteSeq.length; i++) {
+                const { note, isBlack } = noteSeq[i];
+                if (!isBlack) whiteIndex++;
+                else {
+                    const x = startX + (whiteIndex-1)*whiteWidth + whiteWidth - 10;
+                    const key = document.createElement('div');
+                    key.className = 'key key-black';
+                    key.style.left = x + 'px';
+                    key.style.top = yWhite + 'px';
+                    key.style.width = blackWidth + 'px';
+                    key.style.height = blackHeight + 'px';
+                    const label = document.createElement('span');
+                    label.className = 'key-label';
+                    label.textContent = note;
+                    key.appendChild(label);
+                    key.dataset.note = note;
+                    key.dataset.freq = FREQ_MAP[note] || 0;
+                    key.addEventListener('mousedown', (e) => { e.preventDefault(); handleKeyPress(note); });
+                    container.appendChild(key);
+                    keyElements[note] = key;
+                }
+            }
+            let posX = startX;
+            let octaveGroups = [{ octave:2, count:3 }];
+            for (let o=3; o<= 2+octaveCount-1; o++) octaveGroups.push({ octave:o, count:20 });
+            for (let g of octaveGroups) {
+                const width = g.count * whiteWidth;
+                const label = document.createElement('div');
+                label.className = 'octave-label';
+                label.style.left = posX + 'px';
+                label.style.top = (yWhite + whiteHeight + 5) + 'px';
+                label.style.width = width + 'px';
+                label.textContent = `Oktaf ${g.octave}`;
+                container.appendChild(label);
+                posX += width;
+            }
+            const lastOctave = 1 + octaveCount;
+            statusDisplay.innerHTML = `🎹 ${octaveCount} oktaf (C2 sampai D${lastOctave}) — Klik tuts untuk bermain`;
+        }
+
+        function handleKeyPress(note) {
+            const key = keyElements[note];
+            if (!key) return;
+            key.classList.add('active');
+            setTimeout(() => key.classList.remove('active'), 400);
+            if (playMode === 'single') {
+                const freq = FREQ_MAP[note];
+                if (freq) {
+                    playSingleNote(freq);
+                    statusDisplay.innerHTML = `🎵 Memainkan <span>${note}</span> (${freq.toFixed(2)} Hz) [${currentInstrument}]`;
+                }
+            } else {
+                const chordNotes = CHORD_DICT[note];
+                if (chordNotes && chordNotes.length > 0) {
+                    const freqs = chordNotes.map(n => FREQ_MAP[n]).filter(f => f>0);
+                    if (freqs.length > 0) {
+                        playChord(freqs);
+                        statusDisplay.innerHTML = `🎵 Akord <span>${note}</span>: ${chordNotes.join(' + ')} [${currentInstrument}]`;
+                    } else {
+                        statusDisplay.innerHTML = `⚠️ Akord untuk ${note} tidak valid`;
+                    }
+                } else {
+                    const freq = FREQ_MAP[note];
+                    if (freq) {
+                        playSingleNote(freq);
+                        statusDisplay.innerHTML = `🎵 ${note} (Tidak ada akord, dimainkan tunggal)`;
+                    }
+                }
+            }
+        }
+
+        function playScale(scaleNotes, octave=4) {
+            stopAllSounds();
+            isPlaying = true;
+            const notes = [];
+            for (let name of scaleNotes) {
+                const full = name + octave;
+                const f = FREQ_MAP[full];
+                if (f) notes.push({ name: full, freq: f });
+            }
+            if (notes.length === 0) return;
+            let delay=0;
+            const dur=0.4, gap=0.1;
+            notes.forEach((note,i) => {
+                setTimeout(() => {
+                    if (!isPlaying) return;
+                    playSingleNote(note.freq, dur);
+                    const key = keyElements[note.name];
+                    if (key) { key.classList.add('active'); setTimeout(() => key.classList.remove('active'), dur*1000); }
+                    statusDisplay.innerHTML = `🎵 ${note.name} (${note.freq.toFixed(2)} Hz)`;
+                }, delay*1000);
+                delay += dur + gap;
+            });
+            setTimeout(() => { isPlaying = false; statusDisplay.innerHTML = '✅ Skala selesai dimainkan'; }, delay*1000 + 300);
+        }
+
+        // ================================================================
+        // EVENT LISTENERS
+        // ================================================================
+
+        document.querySelectorAll('input[name="playMode"]').forEach(r => {
+            r.addEventListener('change', function() {
+                if (this.checked) {
+                    playMode = this.value;
+                    document.querySelectorAll('.controls label').forEach(l => l.classList.remove('active-mode'));
+                    if (playMode === 'single') {
+                        singleModeLabel.classList.add('active-mode');
+                        modeIndicator.textContent = '🎵 Mode: Tunggal';
+                    } else {
+                        chordModeLabel.classList.add('active-mode');
+                        modeIndicator.textContent = '🎵 Mode: Akord';
+                    }
+                    statusDisplay.innerHTML = `🔄 Mode berubah ke: ${playMode==='single'?'Tunggal':'Akord'}`;
+                }
+            });
+        });
+
+        octaveSelector.addEventListener('change', function() {
+            const val = parseInt(this.value);
+            stopAllSounds();
+            buildKeyboard(val);
+            statusDisplay.innerHTML = `🔄 Berubah ke ${val} oktaf`;
+        });
+
+        instrumentSelector.addEventListener('change', function() {
+            currentInstrument = this.value;
+            const names = {
+                sine: 'Sine', square: 'Square', sawtooth: 'Sawtooth', triangle: 'Triangle',
+                organ: 'Organ', piano: '🎹 Piano', flute: '🎵 Flute', trumpet: '🎺 Trumpet'
+            };
+            statusDisplay.innerHTML = `🎹 Instrumen berubah ke: ${names[this.value] || this.value}`;
+        });
+
+        reverbSlider.addEventListener('input', function() {
+            const val = parseInt(this.value);
+            reverbVal.textContent = val + '%';
+            updateReverbMix(val/100);
+        });
+
+        delaySlider.addEventListener('input', function() {
+            const val = parseInt(this.value);
+            delayVal.textContent = val + '%';
+            updateDelayMix(val/100);
+        });
+
+        ampSlider.addEventListener('input', function() {
+            const val = parseInt(this.value)/100;
+            ampVal.textContent = val.toFixed(1) + 'x';
+            if (masterGain && audioCtx) masterGain.gain.setValueAtTime(val, audioCtx.currentTime);
+        });
+
+        document.getElementById('playMayorBtn').addEventListener('click', () => playScale(SCALE_MAYOR, 4));
+        document.getElementById('playMinorBtn').addEventListener('click', () => playScale(SCALE_MINOR, 4));
+        document.getElementById('stopBtn').addEventListener('click', () => {
+            stopAllSounds();
+            isPlaying = false;
+            statusDisplay.innerHTML = '⏹ Semua suara dihentikan';
+        });
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            stopAllSounds();
+            isPlaying = false;
+            statusDisplay.innerHTML = '↺ Siap memainkan nada';
+            document.querySelectorAll('.key.active').forEach(k => k.classList.remove('active'));
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === ' ' || e.key === 'Escape') {
+                e.preventDefault();
+                stopAllSounds();
+                isPlaying = false;
+                statusDisplay.innerHTML = '⏹ Dihentikan (keyboard)';
+            }
+        });
+
+        // ================================================================
+        // TAB KONTEN
+        // ================================================================
+
+        const tabContent = document.getElementById('tabContent');
+        const tabData = {
+            teori: `<h3>🎼 Dasar Teoritis</h3><p><b>Rumus:</b> f_n = 440 × 3^(n/20), A4 = 440 Hz (acuan)</p><p><b>Oktaf:</b> f_oktaf berikutnya = f_oktaf sebelumnya × 3</p><h3>🎵 Skala Mayor (E=1)</h3><p>E - F - G - H - I - J - K - A - B - C - D - E</p><h3>🎵 Skala Minor (A=1)</h3><p>A - B - C - D - E - F - G - H - I - J - K - A</p>`,
+            freq: `<h3>📊 Frekuensi (Oktaf 4)</h3><table class="freq-table"><thead><tr><th>Nada</th><th>Hz</th><th>Tuts</th></tr></thead><tbody>
+                <tr><td class="note-name">E4</td><td>215.44</td><td>⬜</td></tr>
+                <tr><td class="note-name black-note">E#4</td><td>227.60</td><td>⬛</td></tr>
+                <tr><td class="note-name">F4</td><td>240.46</td><td>⬜</td></tr>
+                <tr><td class="note-name black-note">F#4</td><td>254.03</td><td>⬛</td></tr>
+                <tr><td class="note-name">G4</td><td>268.38</td><td>⬜</td></tr>
+                <tr><td class="note-name black-note">G#4</td><td>283.53</td><td>⬛</td></tr>
+                <tr><td class="note-name">H4</td><td>299.54</td><td>⬜</td></tr>
+                <tr><td class="note-name black-note">H#4</td><td>316.46</td><td>⬛</td></tr>
+                <tr><td class="note-name">I4</td><td>334.33</td><td>⬜</td></tr>
+                <tr><td class="note-name">J4</td><td>353.21</td><td>⬜</td></tr>
+                <tr><td class="note-name black-note">J#4</td><td>373.15</td><td>⬛</td></tr>
+                <tr><td class="note-name">K4</td><td>394.22</td><td>⬜</td></tr>
+                <tr><td class="note-name black-note">K#4</td><td>416.48</td><td>⬛</td></tr>
+                <tr><td class="note-name" style="color:#f5a623;font-weight:bold;">A4</td><td style="color:#f5a623;font-weight:bold;">440.00</td><td>⬜</td></tr>
+                <tr><td class="note-name black-note">A#4</td><td>464.85</td><td>⬛</td></tr>
+                <tr><td class="note-name">B4</td><td>491.09</td><td>⬜</td></tr>
+                <tr><td class="note-name black-note">B#4</td><td>518.83</td><td>⬛</td></tr>
+                <tr><td class="note-name">C4</td><td>548.12</td><td>⬜</td></tr>
+                <tr><td class="note-name black-note">C#4</td><td>579.07</td><td>⬛</td></tr>
+                <tr><td class="note-name">D4</td><td>611.77</td><td>⬜</td></tr>
+            </tbody></table><p style="font-size:0.8rem;color:#888;font-weight:bold;">A4 = 440 Hz (acuan) | Oktaf berikutnya × 3</p>`,
+            skala: `<h3>🎹 Skala Mayor (E=1)</h3><p>E - F - G - H - I - J - K - A - B - C - D - E</p><p>Interval: 1 1 1 1 ½ 1 1 1 1 1 ½</p><h3>🎹 Skala Minor (A=1)</h3><p>A - B - C - D - E - F - G - H - I - J - K - A</p><p>Interval: 1 1 1 ½ 1 1 1 1 ½ 1 1</p>`,
+            chord: `<h3>🎵 Akord</h3><table class="freq-table"><thead><tr><th>Root</th><th>Akord</th></tr></thead><tbody>${Object.entries(CHORD_DICT).map(([root,notes]) => `<tr><td style="color:#ffd700;">${root}</td><td>${notes.join(' + ')}</td></tr>`).join('')}</tbody></table>`,
+            tentang: `<h3>📖 Tentang Aplikasi</h3><p>Berdasarkan karya tulis Sukma Riadi Pakpahan, SST.</p><p><b>Fitur:</b> 8 instrumen (Sine, Square, Sawtooth, Triangle, Organ, Piano, Flute, Trumpet), Reverb, Delay, Amplifier, 3/4/5 oktaf, Akord.</p><p><b>Sistem:</b> 12-TET 20 Nada per Oktaf | A4 = 440 Hz</p>`
+        };
+
+        function renderTab(tabId) {
+            tabContent.innerHTML = tabData[tabId] || '<p>Kosong</p>';
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tabId));
+        }
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => renderTab(btn.dataset.tab));
+        });
+
+        // ================================================================
+        // INISIALISASI
+        // ================================================================
+
+        document.addEventListener('DOMContentLoaded', function() {
+            octaveSelector.value = '4';
+            buildKeyboard(4);
+            renderTab('teori');
+            playMode = 'single';
+            singleModeLabel.classList.add('active-mode');
+            modeIndicator.textContent = '🎵 Mode: Tunggal';
+            instrumentSelector.value = 'organ';
+            currentInstrument = 'organ';
+            reverbSlider.value = 20;
+            reverbVal.textContent = '20%';
+            delaySlider.value = 0;
+            delayVal.textContent = '0%';
+            ampSlider.value = 100;
+            ampVal.textContent = '1.0x';
+            console.log('🎹 Keyboard Digital 12-TET siap!');
+            console.log('📊 A4 = 440 Hz (acuan)');
+            console.log('🎹 Instrumen: Sine, Square, Sawtooth, Triangle, Organ, Piano, Flute, Trumpet');
+        });
+    </script>
+</body>
+</html>
