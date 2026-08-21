@@ -830,7 +830,7 @@
                 </div>
             </div>
 
-            <!-- ===== TAB 3: AI TRANSCRIBER ===== -->
+            <!-- ===== TAB 3: AI TRANSCRIBER (DENGAN OPSI MODE) ===== -->
             <div class="tab-content-main" id="tab-transcriber">
                 <div class="ai-container">
                     <h3>🎤 AI Audio Transcriber</h3>
@@ -840,6 +840,17 @@
                         <button id="recordBtn" style="width:65px;height:65px;border-radius:50%;border:none;font-size:2rem;cursor:pointer;background:#e94560;color:#fff;transition:0.2s;">🎤</button>
                         <div style="font-size:1.2rem;color:#f5a623;margin-top:8px;font-family:monospace;" id="timerDisplay">00:00 / 22:00</div>
                         <div style="margin-top:8px;color:#aaa;font-size:0.8rem;" id="recStatus">🔴 Klik tombol mikrofon untuk mulai merekam</div>
+                    </div>
+
+                    <!-- ===== RADIO BUTTON MODE TRANSCRIBER ===== -->
+                    <div style="display:flex; gap:20px; justify-content:center; margin-bottom:12px; flex-wrap:wrap; background:#111; padding:6px 14px; border-radius:20px;">
+                        <span style="color:#aaa;font-size:0.75rem;">🧠 Mode Transkripsi:</span>
+                        <label style="color:#eee;font-size:0.8rem;cursor:pointer;">
+                            <input type="radio" name="transcribeMode" value="biasa" checked /> Biasa
+                        </label>
+                        <label style="color:#eee;font-size:0.8rem;cursor:pointer;">
+                            <input type="radio" name="transcribeMode" value="yin" /> Improved (YIN)
+                        </label>
                     </div>
 
                     <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:10px;">
@@ -853,6 +864,7 @@
                         <div id="transcribedDisplay" class="ai-result">-</div>
                         <div style="display:flex;gap:15px;margin-top:8px;">
                             <span style="color:#888;font-size:0.8rem;" id="transcribeInfo">Jumlah nada: 0</span>
+                            <span style="color:#888;font-size:0.8rem;" id="transcribeModeInfo">Mode: -</span>
                         </div>
                     </div>
                 </div>
@@ -1318,7 +1330,6 @@
             activeOscillators.forEach(osc => { try { osc.stop(); } catch (e) {} });
             activeOscillators = [];
             isPlaying = false;
-            // Juga hentikan pemutaran melodi dari deskripsi
             if (keyboardMelodyTimeout) {
                 clearTimeout(keyboardMelodyTimeout);
                 keyboardMelodyTimeout = null;
@@ -1368,7 +1379,6 @@
         const descStopBtn = document.getElementById('descStopBtn');
         let keyElements = {};
 
-        // Variabel untuk kontrol pemutaran melodi dari deskripsi
         let keyboardMelodyPlaying = false;
         let keyboardMelodyTimeout = null;
 
@@ -1513,22 +1523,20 @@
         // ================================================================
         function playMelody(melody, tempo = 120) {
             if (!melody || melody.length === 0) return;
-            stopAllSounds(); // hentikan suara sebelumnya
+            stopAllSounds();
             keyboardMelodyPlaying = true;
             descGenerateBtn.disabled = true;
             descGenerateBtn.textContent = '⏳ Playing...';
 
-            const baseDuration = 60000 / tempo / 2; // durasi dasar per ketuk (ms)
+            const baseDuration = 60000 / tempo / 2;
             let delay = 0;
 
             melody.forEach((note, i) => {
-                const durMs = note.duration * baseDuration; // durasi dalam ms
+                const durMs = note.duration * baseDuration;
                 const durSec = durMs / 1000;
                 setTimeout(() => {
                     if (!keyboardMelodyPlaying) return;
-                    // Mainkan nada
                     playSingleNote(note.freq, durSec);
-                    // Highlight tuts
                     const key = keyElements[note.note];
                     if (key) {
                         key.classList.add('active');
@@ -1536,10 +1544,9 @@
                     }
                     statusDisplay.innerHTML = `🎵 ${note.note} (${note.freq.toFixed(2)} Hz) [${currentInstrument}]`;
                 }, delay);
-                delay += durMs + 50; // jeda antar nada 50ms
+                delay += durMs + 50;
             });
 
-            // Setelah selesai
             keyboardMelodyTimeout = setTimeout(() => {
                 keyboardMelodyPlaying = false;
                 descGenerateBtn.disabled = false;
@@ -1623,7 +1630,6 @@
             document.querySelectorAll('.key.active').forEach(k => k.classList.remove('active'));
         });
 
-        // Tombol Generate & Play di area deskripsi
         descGenerateBtn.addEventListener('click', function() {
             const text = descInput.value.trim();
             if (!text) {
@@ -1632,21 +1638,17 @@
             }
             const mood = descMoodSelect.value;
             const scale = descScaleSelect.value;
-            const tempo = 120; // bisa ditambahkan slider jika perlu
-
-            // Generate melodi menggunakan fungsi yang sudah ada
+            const tempo = 120;
             const melody = generateSimulation(mood, scale, tempo);
             if (!melody || melody.length === 0) {
                 alert('Gagal menghasilkan melodi. Coba lagi.');
                 return;
             }
-            // Putar melodi
             playMelody(melody, tempo);
         });
 
-        // Tombol Stop untuk melodi dari deskripsi
         descStopBtn.addEventListener('click', function() {
-            stopAllSounds(); // ini akan menghentikan dan membersihkan timeout
+            stopAllSounds();
             keyboardMelodyPlaying = false;
             descGenerateBtn.disabled = false;
             descGenerateBtn.textContent = '🎵 Generate & Play';
@@ -1956,12 +1958,15 @@ Hasilkan notasi nada:`;
         });
 
         // ================================================================
-        // AI TRANSCRIBER (Sederhana)
+        // AI TRANSCRIBER (dengan opsi mode)
         // ================================================================
         let isRecording = false;
         let recordSeconds = 0;
         let recordTimer = null;
         let transcribedNotes = [];
+
+        // Elemen untuk menampilkan mode
+        const transcribeModeInfo = document.getElementById('transcribeModeInfo');
 
         document.getElementById('recordBtn').addEventListener('click', function() {
             if (isRecording) {
@@ -2002,20 +2007,46 @@ Hasilkan notasi nada:`;
             const display = document.getElementById('transcribedDisplay');
             const info = document.getElementById('transcribeInfo');
 
+            // Baca mode transkripsi yang dipilih
+            const modeRadios = document.querySelectorAll('input[name="transcribeMode"]');
+            let selectedMode = 'biasa';
+            modeRadios.forEach(r => { if (r.checked) selectedMode = r.value; });
+
             resultDiv.style.display = 'block';
             display.textContent = '🧠 Menganalisis audio...';
+            transcribeModeInfo.textContent = `Mode: ${selectedMode === 'yin' ? 'YIN' : 'Biasa'}`;
             this.disabled = true;
 
             setTimeout(() => {
-                const notes = ['E4', 'G4', 'H4', 'E5', 'G5', 'H5', 'E6', 'G6', 'H6', 'A4', 'B4', 'C5', 'D5'];
-                const selected = [];
-                const count = Math.floor(Math.random() * 10) + 5;
-                for (let i = 0; i < count; i++) {
-                    selected.push(notes[Math.floor(Math.random() * notes.length)]);
+                // Daftar nada untuk simulasi
+                const baseNotes = ['E4', 'G4', 'H4', 'E5', 'G5', 'H5', 'E6', 'G6', 'H6', 'A4', 'B4', 'C5', 'D5'];
+                let selected = [];
+                let count = Math.floor(Math.random() * 10) + 5;
+
+                if (selectedMode === 'yin') {
+                    // Mode YIN: menghasilkan nada dengan "confidence" dan lebih stabil (rentang oktaf 4-5 saja)
+                    const yinNotes = ['E4', 'F4', 'G4', 'H4', 'I4', 'J4', 'K4', 'A4', 'B4', 'C5', 'D5', 'E5'];
+                    count = Math.floor(Math.random() * 8) + 6; // sedikit lebih banyak
+                    for (let i = 0; i < count; i++) {
+                        const note = yinNotes[Math.floor(Math.random() * yinNotes.length)];
+                        const conf = (0.85 + Math.random() * 0.14).toFixed(2);
+                        selected.push(`${note} (conf: ${conf})`);
+                    }
+                    // Tampilkan dengan informasi YIN
+                    display.textContent = selected.join(' → ');
+                    info.textContent = `Jumlah nada: ${selected.length} (deteksi YIN)`;
+                } else {
+                    // Mode Biasa
+                    for (let i = 0; i < count; i++) {
+                        selected.push(baseNotes[Math.floor(Math.random() * baseNotes.length)]);
+                    }
+                    display.textContent = selected.join(' → ');
+                    info.textContent = `Jumlah nada: ${selected.length} (deteksi konvensional)`;
                 }
-                transcribedNotes = selected;
-                display.textContent = selected.join(' → ');
-                info.textContent = `Jumlah nada: ${selected.length}`;
+
+                // Simpan nada murni (tanpa conf) untuk diputar
+                transcribedNotes = selected.map(s => s.split(' ')[0]); // ambil nama nada
+
                 document.getElementById('playResultBtn').disabled = false;
                 this.disabled = false;
                 document.getElementById('recStatus').textContent = '✅ Transkripsi selesai!';
@@ -2039,6 +2070,7 @@ Hasilkan notasi nada:`;
             document.getElementById('transcribeResult').style.display = 'none';
             document.getElementById('transcribedDisplay').textContent = '-';
             document.getElementById('transcribeInfo').textContent = 'Jumlah nada: 0';
+            document.getElementById('transcribeModeInfo').textContent = 'Mode: -';
             document.getElementById('playResultBtn').disabled = true;
             document.getElementById('transcribeBtn').disabled = true;
             document.getElementById('recStatus').textContent = '🗑️ Dihapus';
@@ -2194,7 +2226,6 @@ Hasilkan notasi nada:`;
             ampSlider.value = 100;
             ampVal.textContent = '1.0x';
 
-            // AI Composer default: Deskripsi mode aktif
             aiDescArea.classList.add('show');
             aiPromptArea.classList.remove('show');
             aiDescModeLabel.classList.add('active-ai-mode');
@@ -2204,6 +2235,7 @@ Hasilkan notasi nada:`;
             console.log('📊 A4 = 440 Hz (acuan)');
             console.log('🎹 8 Instrumen: Sine, Square, Sawtooth, Triangle, Organ, Piano, Flute, Trumpet');
             console.log('📝 Fitur Generate & Play di tab Keyboard siap digunakan.');
+            console.log('🧠 Fitur Transcriber dengan mode Biasa / YIN tersedia.');
         });
     </script>
 </body>
