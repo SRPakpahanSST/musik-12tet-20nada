@@ -596,6 +596,168 @@
         .keyboard-wrapper::-webkit-scrollbar-track { background: #0d0d1a; }
         .keyboard-wrapper::-webkit-scrollbar-thumb { background: #e94560; border-radius: 10px; }
 
+        /* ===== TRANSCRIBER CUSTOM ===== */
+        .record-area {
+            text-align: center;
+            padding: 20px;
+            background: #0d0d1a;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 2px dashed #2a3a5e;
+            transition: 0.3s;
+        }
+        .record-area.recording {
+            border-color: #e94560;
+            background: #1a0d1a;
+        }
+        .record-btn {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            border: none;
+            font-size: 2.2rem;
+            cursor: pointer;
+            transition: 0.2s;
+            background: #e94560;
+            color: #fff;
+        }
+        .record-btn:hover { transform: scale(1.05); }
+        .record-btn.recording {
+            background: #a04040;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(233,69,96,0.4); }
+            50% { transform: scale(1.05); box-shadow: 0 0 20px 10px rgba(233,69,96,0.2); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(233,69,96,0); }
+        }
+        .timer {
+            font-size: 1.3rem;
+            color: #f5a623;
+            margin-top: 8px;
+            font-family: monospace;
+        }
+        .waveform {
+            width: 100%;
+            height: 70px;
+            background: #0d0d1a;
+            border-radius: 8px;
+            margin-top: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #555;
+            font-size: 0.8rem;
+            overflow: hidden;
+        }
+        .waveform canvas {
+            width: 100%;
+            height: 100%;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #0d0d1a;
+            border-radius: 2px;
+            margin-top: 10px;
+            overflow: hidden;
+            display: none;
+        }
+        .progress-bar.show { display: block; }
+        .progress-bar .fill {
+            height: 100%;
+            background: linear-gradient(90deg, #e94560, #f5a623);
+            width: 0%;
+            transition: width 0.3s;
+        }
+        .transcriber-controls {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            margin: 10px 0 15px;
+        }
+        .transcriber-controls label {
+            color: #aaa;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+        .transcriber-controls input[type="radio"] {
+            accent-color: #e94560;
+            margin-right: 4px;
+        }
+        .transcriber-controls .radio-group {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            background: #0d0d1a;
+            padding: 4px 14px;
+            border-radius: 20px;
+        }
+        .radio-group label.active-radio { color: #f5a623; }
+        .transcriber-controls select {
+            background: #0f3460;
+            color: #fff;
+            border: none;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            outline: none;
+        }
+        .mode-indicator {
+            display: inline-block;
+            padding: 2px 12px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            margin-left: 8px;
+        }
+        .mode-indicator.standard {
+            background: #0f3460;
+            color: #aaa;
+        }
+        .mode-indicator.improved {
+            background: #2d7d46;
+            color: #fff;
+        }
+        .badge {
+            display: inline-block;
+            background: #e94560;
+            color: #fff;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            margin-left: 5px;
+        }
+        .error-message {
+            background: #2a0d0d;
+            border: 1px solid #e94560;
+            color: #e94560;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: none;
+        }
+        .error-message.show { display: block; }
+        .warning-text {
+            color: #f5a623;
+            font-size: 0.8rem;
+            text-align: center;
+            margin-top: 8px;
+        }
+        .result-area .info-row {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 10px;
+        }
+        .result-area .info-row span {
+            color: #888;
+            font-size: 0.85rem;
+        }
+
         @media (max-width:600px) {
             .container { padding: 12px; }
             .key-white { width: 24px; height: 130px; }
@@ -613,6 +775,11 @@
             .desc-controls { gap: 6px; }
             .desc-controls label { font-size: 0.7rem; }
             .desc-controls select { font-size: 0.65rem; }
+            .transcriber-controls { gap: 8px; }
+            .transcriber-controls label { font-size: 0.7rem; }
+            .transcriber-controls select { font-size: 0.65rem; }
+            .radio-group { gap: 6px; padding: 3px 10px; }
+            .record-btn { width: 60px; height: 60px; font-size: 1.8rem; }
         }
     </style>
 </head>
@@ -659,7 +826,6 @@
                         <input type="radio" name="playMode" value="chord" /> Akord
                     </label>
 
-                    <!-- Mode Deskripsi saja — tanpa Prompt AI -->
                     <div class="mode-desc-group">
                         <span class="mode-label">🎯 Mode:</span>
                         <span class="mode-badge-desc">Deskripsi</span>
@@ -710,7 +876,6 @@
                     <span class="chord-info" id="modeIndicator">🎵 Mode: Tunggal</span>
                 </div>
 
-                <!-- Deskripsi Area dengan kontrol Generate -->
                 <div class="desc-area" id="descArea">
                     <textarea id="descInput" placeholder="Contoh: Ciptakan melodi yang perlahan meningkat, dengan nada-nada tinggi dan suasana romantis..."></textarea>
                     <div class="hint">💡 Tulis deskripsi melodi, lalu pilih mood & skala, dan klik Generate & Play.</div>
@@ -744,7 +909,6 @@
                     <h3>🎵 AI Music Composer</h3>
                     <p style="color:#aaa;margin-bottom:10px;font-size:0.85rem;">Ciptakan melodi otomatis dengan AI (A4 = 440 Hz)</p>
 
-                    <!-- ===== AI MODE RADIO ===== -->
                     <div class="ai-mode-radio" id="aiModeRadio">
                         <span style="color:#aaa;font-size:0.75rem;">🎯 Mode Input:</span>
                         <label id="aiDescModeLabel" class="active-ai-mode">
@@ -756,7 +920,6 @@
                         <span id="aiModeBadge" class="ai-mode-badge desc">Mode: Deskripsi</span>
                     </div>
 
-                    <!-- ===== AI DESKRIPSI AREA ===== -->
                     <div class="ai-input-area show" id="aiDescArea">
                         <div class="input-group">
                             <label>📝 Deskripsi Melodi</label>
@@ -765,7 +928,6 @@
                         </div>
                     </div>
 
-                    <!-- ===== AI PROMPT AREA ===== -->
                     <div class="ai-input-area" id="aiPromptArea">
                         <div class="input-group">
                             <label>🔑 OpenAI API Key</label>
@@ -781,7 +943,6 @@
                         </div>
                     </div>
 
-                    <!-- ===== MOOD, SKALA, TEMPO ===== -->
                     <div style="margin-bottom:10px;">
                         <label style="color:#aaa;display:block;margin-bottom:3px;font-size:0.8rem;">🎭 Mood / Suasana</label>
                         <div class="mood-tags" id="moodTags">
@@ -830,42 +991,88 @@
                 </div>
             </div>
 
-            <!-- ===== TAB 3: AI TRANSCRIBER (DENGAN OPSI MODE) ===== -->
+            <!-- ===== TAB 3: AI TRANSCRIBER (OPTIMASI) ===== -->
             <div class="tab-content-main" id="tab-transcriber">
                 <div class="ai-container">
-                    <h3>🎤 AI Audio Transcriber</h3>
+                    <h3>
+                        🎤 AI Audio Transcriber
+                        <span class="badge">20 Nada/Oktaf</span>
+                        <span id="modeBadge" class="mode-indicator standard">⚡ Standar</span>
+                    </h3>
                     <p style="color:#aaa;margin-bottom:10px;font-size:0.85rem;">Rekam lagu atau suara (maks. 22 menit), AI akan menuliskannya (A4 = 440 Hz)</p>
 
-                    <div style="text-align:center;padding:20px;background:#0d0d1a;border-radius:12px;border:2px dashed #2a3a5e;margin-bottom:15px;">
-                        <button id="recordBtn" style="width:65px;height:65px;border-radius:50%;border:none;font-size:2rem;cursor:pointer;background:#e94560;color:#fff;transition:0.2s;">🎤</button>
-                        <div style="font-size:1.2rem;color:#f5a623;margin-top:8px;font-family:monospace;" id="timerDisplay">00:00 / 22:00</div>
-                        <div style="margin-top:8px;color:#aaa;font-size:0.8rem;" id="recStatus">🔴 Klik tombol mikrofon untuk mulai merekam</div>
+                    <!-- Error -->
+                    <div class="error-message" id="errorMessage">
+                        ⚠️ <span id="errorText">Terjadi kesalahan. Pastikan browser mengizinkan akses mikrofon.</span>
                     </div>
 
-                    <!-- ===== RADIO BUTTON MODE TRANSCRIBER ===== -->
-                    <div style="display:flex; gap:20px; justify-content:center; margin-bottom:12px; flex-wrap:wrap; background:#111; padding:6px 14px; border-radius:20px;">
-                        <span style="color:#aaa;font-size:0.75rem;">🧠 Mode Transkripsi:</span>
-                        <label style="color:#eee;font-size:0.8rem;cursor:pointer;">
-                            <input type="radio" name="transcribeMode" value="biasa" checked /> Biasa
-                        </label>
-                        <label style="color:#eee;font-size:0.8rem;cursor:pointer;">
-                            <input type="radio" name="transcribeMode" value="yin" /> Improved (YIN)
-                        </label>
+                    <!-- Record Area -->
+                    <div class="record-area" id="recordArea">
+                        <button class="record-btn" id="recordBtn">🎤</button>
+                        <div class="timer" id="timerDisplay">00:00 / 22:00</div>
+                        <div class="waveform" id="waveformContainer">
+                            <canvas id="waveformCanvas"></canvas>
+                        </div>
+                        <div class="progress-bar" id="progressBar">
+                            <div class="fill" id="progressFill"></div>
+                        </div>
                     </div>
 
-                    <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:10px;">
+                    <!-- Controls -->
+                    <div class="transcriber-controls">
+                        <!-- Radio Button Algoritma -->
+                        <div class="radio-group">
+                            <label id="standardLabel" class="active-radio">
+                                <input type="radio" name="algorithm" value="standard" checked /> Standar
+                            </label>
+                            <label id="improvedLabel">
+                                <input type="radio" name="algorithm" value="improved" /> Improved (YIN)
+                            </label>
+                        </div>
+
+                        <label>🎯 Mode:</label>
+                        <select id="modeSelect">
+                            <option value="vocal">Vokal (200-800 Hz)</option>
+                            <option value="instrument">Instrumental (80-1200 Hz)</option>
+                            <option value="full" selected>Full Range (60-1800 Hz)</option>
+                        </select>
+
+                        <label>🎚️ Sensitivitas:</label>
+                        <select id="sensitivitySelect">
+                            <option value="0.008">Sangat Tinggi</option>
+                            <option value="0.012" selected>Tinggi</option>
+                            <option value="0.018">Sedang</option>
+                            <option value="0.03">Rendah (kurang noise)</option>
+                        </select>
+
+                        <!-- Filter hanya untuk Improved -->
+                        <span id="filterContainer" style="display:none;">
+                            <label>🧹 Filter:</label>
+                            <select id="filterSelect">
+                                <option value="highpass" selected>High-pass (kurangi noise)</option>
+                                <option value="none">Tanpa filter</option>
+                            </select>
+                        </span>
+                    </div>
+
+                    <div class="status" id="status">🔴 Klik tombol mikrofon untuk mulai merekam (maks. 22 menit)</div>
+
+                    <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-top:12px;">
                         <button class="btn btn-success" id="transcribeBtn" disabled>🧠 AI Transcribe</button>
                         <button class="btn btn-secondary" id="playResultBtn" disabled>▶ Play Hasil</button>
                         <button class="btn btn-danger" id="clearTranscribeBtn">🗑️ Clear</button>
                     </div>
 
-                    <div id="transcribeResult" style="display:none;background:#0d0d1a;border-radius:12px;padding:15px;">
-                        <h4 style="color:#f5a623;margin-bottom:8px;font-size:0.95rem;">📝 Hasil Transkripsi</h4>
+                    <div id="transcribeResult" style="display:none; background:#0d0d1a; border-radius:12px; padding:15px; margin-top:15px;">
+                        <h4 style="color:#f5a623;margin-bottom:8px;font-size:0.95rem;">📝 Hasil Transkripsi (20 Nada per Oktaf)</h4>
                         <div id="transcribedDisplay" class="ai-result">-</div>
-                        <div style="display:flex;gap:15px;margin-top:8px;">
-                            <span style="color:#888;font-size:0.8rem;" id="transcribeInfo">Jumlah nada: 0</span>
-                            <span style="color:#888;font-size:0.8rem;" id="transcribeModeInfo">Mode: -</span>
+                        <div class="info-row">
+                            <span id="transcribeInfo">Jumlah nada: 0</span>
+                            <span id="durationInfo">Durasi rekaman: 0 detik</span>
+                            <span id="algoInfo">Algoritma: Standar</span>
                         </div>
+                        <div class="warning-text">💡 Nada dengan tanda <b>#</b> adalah nada kromatik (tuts hitam).</div>
+                        <div class="warning-text">⚠️ Rekaman panjang membutuhkan waktu analisis lebih lama.</div>
                     </div>
                 </div>
             </div>
@@ -974,7 +1181,7 @@
         });
 
         // ================================================================
-        // DATA FREKUENSI 12-TET
+        // DATA FREKUENSI 12-TET (20 NADA PER OKTAF)
         // ================================================================
         const FREQ_MAP = {
             'C2': 60.90, 'C#2': 64.34, 'D2': 67.974,
@@ -1000,6 +1207,9 @@
             'B#6': 4669.425, 'C6': 4933.095, 'C#6': 5211.653, 'D6': 5505.942
         };
 
+        const NOTE_FREQS = Object.values(FREQ_MAP);
+        const NOTE_NAMES = Object.keys(FREQ_MAP);
+
         const CHORD_DICT = {
             "A2": ["A2", "C#3", "E3"],
             "B2": ["B2", "D#3", "F#3"],
@@ -1019,7 +1229,7 @@
         const SCALE_MINOR = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'A'];
 
         // ================================================================
-        // AUDIO ENGINE
+        // AUDIO ENGINE (umum)
         // ================================================================
         let audioCtx = null;
         let activeOscillators = [];
@@ -1340,25 +1550,8 @@
         }
 
         // ================================================================
-        // KEYBOARD GENERATION
+        // KEYBOARD
         // ================================================================
-
-        function generateNoteSequence(octaveCount) {
-            const seq = [];
-            const octave2 = ['C2', 'C#2', 'D2'];
-            octave2.forEach(n => seq.push({ note: n, isBlack: n.includes('#') }));
-            for (let o = 3; o <= 2 + octaveCount - 1; o++) {
-                const notes = [
-                    'E' + o, 'E#' + o, 'F' + o, 'F#' + o, 'G' + o, 'G#' + o,
-                    'H' + o, 'H#' + o, 'I' + o, 'J' + o, 'J#' + o,
-                    'K' + o, 'K#' + o, 'A' + o, 'A#' + o,
-                    'B' + o, 'B#' + o, 'C' + o, 'C#' + o, 'D' + o
-                ];
-                notes.forEach(n => seq.push({ note: n, isBlack: n.includes('#') }));
-            }
-            return seq;
-        }
-
         const container = document.getElementById('keyboardContainer');
         const statusDisplay = document.getElementById('statusDisplay');
         const modeIndicator = document.getElementById('modeIndicator');
@@ -1381,6 +1574,22 @@
 
         let keyboardMelodyPlaying = false;
         let keyboardMelodyTimeout = null;
+
+        function generateNoteSequence(octaveCount) {
+            const seq = [];
+            const octave2 = ['C2', 'C#2', 'D2'];
+            octave2.forEach(n => seq.push({ note: n, isBlack: n.includes('#') }));
+            for (let o = 3; o <= 2 + octaveCount - 1; o++) {
+                const notes = [
+                    'E' + o, 'E#' + o, 'F' + o, 'F#' + o, 'G' + o, 'G#' + o,
+                    'H' + o, 'H#' + o, 'I' + o, 'J' + o, 'J#' + o,
+                    'K' + o, 'K#' + o, 'A' + o, 'A#' + o,
+                    'B' + o, 'B#' + o, 'C' + o, 'C#' + o, 'D' + o
+                ];
+                notes.forEach(n => seq.push({ note: n, isBlack: n.includes('#') }));
+            }
+            return seq;
+        }
 
         function buildKeyboard(octaveCount) {
             container.innerHTML = '';
@@ -1518,9 +1727,6 @@
                 statusDisplay.innerHTML = '✅ Skala selesai dimainkan'; }, delay * 1000 + 300);
         }
 
-        // ================================================================
-        // FUNGSI UNTUK MEMUTAR MELODI DARI DESKRIPSI
-        // ================================================================
         function playMelody(melody, tempo = 120) {
             if (!melody || melody.length === 0) return;
             stopAllSounds();
@@ -1555,10 +1761,7 @@
             }, delay + 200);
         }
 
-        // ================================================================
-        // EVENT LISTENERS - KEYBOARD
-        // ================================================================
-
+        // Keyboard event listeners
         document.querySelectorAll('input[name="playMode"]').forEach(r => {
             r.addEventListener('change', function() {
                 if (this.checked) {
@@ -1958,122 +2161,520 @@ Hasilkan notasi nada:`;
         });
 
         // ================================================================
-        // AI TRANSCRIBER (dengan opsi mode)
+        // AI TRANSCRIBER (OPTIMASI DENGAN YIN)
         // ================================================================
-        let isRecording = false;
-        let recordSeconds = 0;
-        let recordTimer = null;
-        let transcribedNotes = [];
+        // ===== YIN ALGORITHM =====
+        function yinPitchDetection(signal, sampleRate, minFreq, maxFreq) {
+            const bufferSize = signal.length;
+            const minLag = Math.floor(sampleRate / maxFreq);
+            const maxLag = Math.floor(sampleRate / minFreq);
+            if (maxLag >= bufferSize) return 0;
 
-        // Elemen untuk menampilkan mode
-        const transcribeModeInfo = document.getElementById('transcribeModeInfo');
-
-        document.getElementById('recordBtn').addEventListener('click', function() {
-            if (isRecording) {
-                isRecording = false;
-                if (recordTimer) { clearInterval(recordTimer);
-                    recordTimer = null; }
-                this.textContent = '🎤';
-                document.getElementById('recStatus').textContent = '⏹ Rekaman berhenti';
-                document.getElementById('transcribeBtn').disabled = false;
-                return;
+            const autocorr = new Float32Array(maxLag + 1);
+            for (let lag = minLag; lag <= maxLag; lag++) {
+                let sum = 0;
+                for (let i = 0; i < bufferSize - lag; i++) {
+                    sum += signal[i] * signal[i + lag];
+                }
+                autocorr[lag] = sum;
             }
 
-            isRecording = true;
-            recordSeconds = 0;
-            this.textContent = '⏹';
-            document.getElementById('recStatus').textContent = '🔴 Merekam... (maks. 22 menit)';
-            document.getElementById('timerDisplay').textContent = '00:00 / 22:00';
-            document.getElementById('transcribeBtn').disabled = true;
-
-            recordTimer = setInterval(() => {
-                recordSeconds++;
-                const m = String(Math.floor(recordSeconds / 60)).padStart(2, '0');
-                const s = String(recordSeconds % 60).padStart(2, '0');
-                document.getElementById('timerDisplay').textContent = `${m}:${s} / 22:00`;
-                if (recordSeconds >= 1320) {
-                    clearInterval(recordTimer);
-                    recordTimer = null;
-                    isRecording = false;
-                    document.getElementById('recordBtn').textContent = '🎤';
-                    document.getElementById('recStatus').textContent = '⏹ Rekaman otomatis berhenti (maks. 22 menit)';
-                    document.getElementById('transcribeBtn').disabled = false;
+            const diff = new Float32Array(maxLag + 1);
+            let runningSum = 0;
+            for (let lag = minLag; lag <= maxLag; lag++) {
+                let sum = 0;
+                for (let i = 0; i < bufferSize - lag; i++) {
+                    sum += (signal[i] - signal[i + lag]) ** 2;
                 }
-            }, 1000);
-        });
-
-        document.getElementById('transcribeBtn').addEventListener('click', function() {
-            const resultDiv = document.getElementById('transcribeResult');
-            const display = document.getElementById('transcribedDisplay');
-            const info = document.getElementById('transcribeInfo');
-
-            // Baca mode transkripsi yang dipilih
-            const modeRadios = document.querySelectorAll('input[name="transcribeMode"]');
-            let selectedMode = 'biasa';
-            modeRadios.forEach(r => { if (r.checked) selectedMode = r.value; });
-
-            resultDiv.style.display = 'block';
-            display.textContent = '🧠 Menganalisis audio...';
-            transcribeModeInfo.textContent = `Mode: ${selectedMode === 'yin' ? 'YIN' : 'Biasa'}`;
-            this.disabled = true;
-
-            setTimeout(() => {
-                // Daftar nada untuk simulasi
-                const baseNotes = ['E4', 'G4', 'H4', 'E5', 'G5', 'H5', 'E6', 'G6', 'H6', 'A4', 'B4', 'C5', 'D5'];
-                let selected = [];
-                let count = Math.floor(Math.random() * 10) + 5;
-
-                if (selectedMode === 'yin') {
-                    // Mode YIN: menghasilkan nada dengan "confidence" dan lebih stabil (rentang oktaf 4-5 saja)
-                    const yinNotes = ['E4', 'F4', 'G4', 'H4', 'I4', 'J4', 'K4', 'A4', 'B4', 'C5', 'D5', 'E5'];
-                    count = Math.floor(Math.random() * 8) + 6; // sedikit lebih banyak
-                    for (let i = 0; i < count; i++) {
-                        const note = yinNotes[Math.floor(Math.random() * yinNotes.length)];
-                        const conf = (0.85 + Math.random() * 0.14).toFixed(2);
-                        selected.push(`${note} (conf: ${conf})`);
-                    }
-                    // Tampilkan dengan informasi YIN
-                    display.textContent = selected.join(' → ');
-                    info.textContent = `Jumlah nada: ${selected.length} (deteksi YIN)`;
+                runningSum += sum;
+                if (runningSum > 0) {
+                    diff[lag] = sum / (runningSum / lag);
                 } else {
-                    // Mode Biasa
-                    for (let i = 0; i < count; i++) {
-                        selected.push(baseNotes[Math.floor(Math.random() * baseNotes.length)]);
-                    }
-                    display.textContent = selected.join(' → ');
-                    info.textContent = `Jumlah nada: ${selected.length} (deteksi konvensional)`;
+                    diff[lag] = 1;
                 }
+            }
 
-                // Simpan nada murni (tanpa conf) untuk diputar
-                transcribedNotes = selected.map(s => s.split(' ')[0]); // ambil nama nada
+            const threshold = 0.1;
+            for (let lag = minLag; lag <= maxLag; lag++) {
+                if (diff[lag] < threshold) {
+                    let betterLag = lag;
+                    if (lag > minLag && lag < maxLag) {
+                        const a = diff[lag - 1];
+                        const b = diff[lag];
+                        const c = diff[lag + 1];
+                        if (a > 0 && c > 0) {
+                            betterLag = lag + (a - c) / (2 * (a - 2 * b + c));
+                        }
+                    }
+                    const pitch = sampleRate / betterLag;
+                    if (pitch > minFreq && pitch < maxFreq) return pitch;
+                }
+            }
 
-                document.getElementById('playResultBtn').disabled = false;
-                this.disabled = false;
-                document.getElementById('recStatus').textContent = '✅ Transkripsi selesai!';
-            }, 1500);
-        });
+            let minDiff = 1;
+            let bestLag = minLag;
+            for (let lag = minLag; lag <= maxLag; lag++) {
+                if (diff[lag] < minDiff) {
+                    minDiff = diff[lag];
+                    bestLag = lag;
+                }
+            }
+            return sampleRate / bestLag;
+        }
 
-        document.getElementById('playResultBtn').addEventListener('click', function() {
-            if (transcribedNotes.length === 0) return;
-            transcribedNotes.forEach((note, i) => {
-                const freq = FREQ_MAP[note];
-                if (freq) {
-                    setTimeout(() => {
-                        playSingleNote(freq, 0.3);
-                    }, i * 350);
+        // ===== HIGH-PASS FILTER =====
+        function highPassFilter(signal, sampleRate, cutoff = 80) {
+            const alpha = 0.95;
+            const result = new Float32Array(signal.length);
+            let prev = 0;
+            for (let i = 0; i < signal.length; i++) {
+                result[i] = alpha * (prev + signal[i] - (signal[i-1] || 0));
+                prev = result[i];
+            }
+            return result;
+        }
+
+        // ===== NORMALIZE =====
+        function normalizeAudio(data) {
+            let max = 0.001;
+            for (let i = 0; i < data.length; i++) {
+                if (Math.abs(data[i]) > max) max = Math.abs(data[i]);
+            }
+            const gain = 0.9 / max;
+            const result = new Float32Array(data.length);
+            for (let i = 0; i < data.length; i++) {
+                result[i] = data[i] * gain;
+            }
+            return result;
+        }
+
+        // ===== MEDIAN FILTER =====
+        function medianFilter(notes, windowSize = 5) {
+            if (notes.length < windowSize) return notes;
+            const result = [];
+            const half = Math.floor(windowSize / 2);
+            for (let i = 0; i < notes.length; i++) {
+                const start = Math.max(0, i - half);
+                const end = Math.min(notes.length, i + half + 1);
+                const slice = notes.slice(start, end);
+                const sorted = [...slice].sort();
+                result.push(sorted[Math.floor(sorted.length / 2)]);
+            }
+            return result;
+        }
+
+        // ===== STANDARD AUTOCORRELATION =====
+        function standardPitchDetection(windowData, sampleRate, minFreq, maxFreq) {
+            const windowSize = windowData.length;
+            let maxCorr = 0;
+            let pitch = 0;
+            const minLag = Math.floor(sampleRate / maxFreq);
+            const maxLag = Math.floor(sampleRate / minFreq);
+            for (let lag = minLag; lag < maxLag && lag < windowSize; lag++) {
+                let corr = 0;
+                for (let i = 0; i < windowSize - lag; i++) {
+                    corr += windowData[i] * windowData[i + lag];
+                }
+                if (corr > maxCorr) {
+                    maxCorr = corr;
+                    pitch = sampleRate / lag;
+                }
+            }
+            return pitch;
+        }
+
+        // ===== FIND CLOSEST NOTE =====
+        function findClosestNote(freq) {
+            let closest = NOTE_FREQS[0];
+            let minDiff = Math.abs(freq - closest);
+            for (let f of NOTE_FREQS) {
+                const diff = Math.abs(freq - f);
+                if (diff < minDiff) {
+                    minDiff = diff;
+                    closest = f;
+                }
+            }
+            const tolerance = currentAlgorithm === 'improved' ? 0.04 : 0.05;
+            if (minDiff / closest > tolerance) return null;
+            const idx = NOTE_FREQS.indexOf(closest);
+            return { name: NOTE_NAMES[idx], freq: closest };
+        }
+
+        // ===== TRANSCRIBER VARIABLES =====
+        let recorderAudioCtx = null;
+        let analyser = null;
+        let dataArray = null;
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let isRecording = false;
+        let recordTimer = null;
+        let seconds = 0;
+        let recordedAudioBuffer = null;
+        let transcribedNotes = [];
+        let isPlayingResult = false;
+        let currentAlgorithm = 'standard';
+        const MAX_RECORD_SECONDS = 1320;
+
+        // DOM refs
+        const recordBtn = document.getElementById('recordBtn');
+        const timerDisplay = document.getElementById('timerDisplay');
+        const statusEl = document.getElementById('status');
+        const transcribeBtn = document.getElementById('transcribeBtn');
+        const playResultBtn = document.getElementById('playResultBtn');
+        const clearTranscribeBtn = document.getElementById('clearTranscribeBtn');
+        const resultArea = document.getElementById('transcribeResult');
+        const transcribedDisplay = document.getElementById('transcribedDisplay');
+        const transcribeInfo = document.getElementById('transcribeInfo');
+        const durationInfo = document.getElementById('durationInfo');
+        const algoInfo = document.getElementById('algoInfo');
+        const modeBadge = document.getElementById('modeBadge');
+        const recordArea = document.getElementById('recordArea');
+        const canvas = document.getElementById('waveformCanvas');
+        const ctxCanvas = canvas.getContext('2d');
+        const errorMessage = document.getElementById('errorMessage');
+        const errorText = document.getElementById('errorText');
+        const progressBar = document.getElementById('progressBar');
+        const progressFill = document.getElementById('progressFill');
+        const modeSelect = document.getElementById('modeSelect');
+        const sensitivitySelect = document.getElementById('sensitivitySelect');
+        const filterSelect = document.getElementById('filterSelect');
+        const filterContainer = document.getElementById('filterContainer');
+        const standardLabel = document.getElementById('standardLabel');
+        const improvedLabel = document.getElementById('improvedLabel');
+
+        // Resize canvas
+        function resizeCanvas() {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width || 600;
+            canvas.height = 70;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // ===== RADIO BUTTON LOGIC =====
+        document.querySelectorAll('input[name="algorithm"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                if (this.checked) {
+                    currentAlgorithm = this.value;
+                    if (currentAlgorithm === 'improved') {
+                        modeBadge.textContent = '✨ YIN';
+                        modeBadge.className = 'mode-indicator improved';
+                        filterContainer.style.display = 'inline';
+                        algoInfo.textContent = 'Algoritma: YIN + Median Filter';
+                    } else {
+                        modeBadge.textContent = '⚡ Standar';
+                        modeBadge.className = 'mode-indicator standard';
+                        filterContainer.style.display = 'none';
+                        algoInfo.textContent = 'Algoritma: Standar (Autocorrelation)';
+                    }
+                    standardLabel.classList.toggle('active-radio', currentAlgorithm === 'standard');
+                    improvedLabel.classList.toggle('active-radio', currentAlgorithm === 'improved');
                 }
             });
         });
+        filterContainer.style.display = 'none';
 
-        document.getElementById('clearTranscribeBtn').addEventListener('click', function() {
+        // ===== RECORDING =====
+        async function startRecording() {
+            try {
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    showError('Browser tidak mendukung akses mikrofon.');
+                    return;
+                }
+
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                hideError();
+
+                const ctx = initAudio(); // gunakan audioCtx global
+                recorderAudioCtx = ctx;
+                const source = ctx.createMediaStreamSource(stream);
+                analyser = ctx.createAnalyser();
+                analyser.fftSize = 2048;
+                source.connect(analyser);
+                dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) audioChunks.push(event.data);
+                };
+                mediaRecorder.onstop = async () => {
+                    const blob = new Blob(audioChunks, { type: 'audio/wav' });
+                    const arrayBuffer = await blob.arrayBuffer();
+                    const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+                    recordedAudioBuffer = audioBuffer;
+                    statusEl.textContent = '✅ Rekaman selesai! Klik "AI Transcribe" untuk analisis.';
+                    transcribeBtn.disabled = false;
+                    recordArea.classList.remove('recording');
+                    progressBar.classList.remove('show');
+                };
+
+                mediaRecorder.start();
+                isRecording = true;
+                recordArea.classList.add('recording');
+                recordBtn.textContent = '⏹';
+                statusEl.textContent = '🔴 Merekam... (maks. 22 menit)';
+                transcribeBtn.disabled = true;
+                seconds = 0;
+                timerDisplay.textContent = '00:00 / 22:00';
+                if (recordTimer) clearInterval(recordTimer);
+                recordTimer = setInterval(() => {
+                    seconds++;
+                    const m = String(Math.floor(seconds/60)).padStart(2,'0');
+                    const s = String(seconds%60).padStart(2,'0');
+                    const maxM = String(Math.floor(MAX_RECORD_SECONDS/60)).padStart(2,'0');
+                    const maxS = String(MAX_RECORD_SECONDS%60).padStart(2,'0');
+                    timerDisplay.textContent = `${m}:${s} / ${maxM}:${maxS}`;
+
+                    if (analyser) {
+                        analyser.getByteTimeDomainData(dataArray);
+                        ctxCanvas.fillStyle = '#0d0d1a';
+                        ctxCanvas.fillRect(0, 0, canvas.width, canvas.height);
+                        ctxCanvas.lineWidth = 2;
+                        ctxCanvas.strokeStyle = '#e94560';
+                        ctxCanvas.beginPath();
+                        const sliceWidth = canvas.width / dataArray.length;
+                        let x = 0;
+                        for (let i=0; i<dataArray.length; i++) {
+                            const v = dataArray[i] / 128.0;
+                            const y = v * canvas.height / 2;
+                            if (i===0) ctxCanvas.moveTo(x, y);
+                            else ctxCanvas.lineTo(x, y);
+                            x += sliceWidth;
+                        }
+                        ctxCanvas.stroke();
+                    }
+
+                    if (seconds >= MAX_RECORD_SECONDS) {
+                        stopRecording();
+                        statusEl.textContent = '⏹ Rekaman otomatis berhenti (maks. 22 menit)';
+                    }
+                }, 200);
+
+            } catch (e) {
+                console.error('Mikrofon error:', e);
+                let msg = 'Gagal akses mikrofon. ';
+                if (e.name === 'NotAllowedError') {
+                    msg += 'Izin mikrofon ditolak. Berikan izin di pengaturan browser.';
+                } else if (e.name === 'NotFoundError') {
+                    msg += 'Tidak ada mikrofon terdeteksi.';
+                } else {
+                    msg += 'Error: ' + e.message;
+                }
+                showError(msg);
+                statusEl.textContent = '❌ ' + msg;
+                statusEl.className = 'status error';
+            }
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && isRecording) {
+                mediaRecorder.stop();
+                isRecording = false;
+                if (recordTimer) clearInterval(recordTimer);
+                recordTimer = null;
+                recordBtn.textContent = '🎤';
+                mediaRecorder.stream.getTracks().forEach(t => t.stop());
+                recordArea.classList.remove('recording');
+            }
+        }
+
+        recordBtn.addEventListener('click', function() {
+            if (isRecording) {
+                stopRecording();
+            } else {
+                startRecording();
+            }
+        });
+
+        // ===== ERROR HANDLING =====
+        function showError(msg) {
+            errorText.textContent = msg;
+            errorMessage.classList.add('show');
+        }
+        function hideError() {
+            errorMessage.classList.remove('show');
+            statusEl.className = 'status';
+        }
+
+        // ===== TRANSCRIBE =====
+        function transcribeAudio() {
+            if (!recordedAudioBuffer) {
+                statusEl.textContent = '❌ Tidak ada rekaman. Rekam dulu!';
+                return;
+            }
+
+            const algoLabel = currentAlgorithm === 'improved' ? 'YIN' : 'Standar';
+            statusEl.textContent = `🧠 AI menganalisis dengan algoritma ${algoLabel}... (20 nada per oktaf)`;
+            statusEl.className = 'status loading';
+            transcribeBtn.disabled = true;
+            progressBar.classList.add('show');
+
+            setTimeout(() => {
+                let data = recordedAudioBuffer.getChannelData(0);
+                const sampleRate = recordedAudioBuffer.sampleRate;
+                const duration = data.length / sampleRate;
+                durationInfo.textContent = `Durasi rekaman: ${duration.toFixed(1)} detik`;
+
+                if (currentAlgorithm === 'improved') {
+                    data = normalizeAudio(data);
+                    if (filterSelect.value === 'highpass') {
+                        data = highPassFilter(data, sampleRate, 80);
+                    }
+                }
+
+                const mode = modeSelect.value;
+                const sensitivity = parseFloat(sensitivitySelect.value);
+
+                let minFreq = 60, maxFreq = 1800;
+                if (mode === 'vocal') { minFreq = 200; maxFreq = 800; }
+                else if (mode === 'instrument') { minFreq = 80; maxFreq = 1200; }
+
+                const windowSize = currentAlgorithm === 'improved' ? Math.floor(sampleRate * 0.06) : Math.floor(sampleRate * 0.05);
+                const hopSize = currentAlgorithm === 'improved' ? Math.floor(windowSize * 0.3) : Math.floor(windowSize * 0.5);
+                const detected = [];
+                const totalSteps = Math.floor((data.length - windowSize) / hopSize);
+                let stepCount = 0;
+
+                for (let start=0; start < data.length - windowSize; start += hopSize) {
+                    stepCount++;
+                    if (stepCount % Math.floor(totalSteps/20) === 0) {
+                        const pct = Math.min(100, Math.round((stepCount / totalSteps) * 100));
+                        progressFill.style.width = pct + '%';
+                    }
+
+                    const windowData = data.slice(start, start + windowSize);
+                    let sum = 0;
+                    for (let i=0; i<windowSize; i++) {
+                        sum += Math.abs(windowData[i]);
+                    }
+                    const rms = Math.sqrt(sum / windowSize);
+                    if (rms < sensitivity) continue;
+
+                    let pitch = 0;
+                    if (currentAlgorithm === 'improved') {
+                        pitch = yinPitchDetection(windowData, sampleRate, minFreq, maxFreq);
+                    } else {
+                        pitch = standardPitchDetection(windowData, sampleRate, minFreq, maxFreq);
+                    }
+
+                    if (pitch > minFreq && pitch < maxFreq) {
+                        const note = findClosestNote(pitch);
+                        if (note) detected.push(note);
+                    }
+                }
+
+                let uniqueNotes = [];
+                if (currentAlgorithm === 'improved') {
+                    const noteNames = detected.map(n => n.name);
+                    const smoothed = medianFilter(noteNames, 5);
+                    let lastNote = null;
+                    for (let n of smoothed) {
+                        if (n !== lastNote) {
+                            if (lastNote) {
+                                const freqKey = NOTE_NAMES.find(k => k === lastNote);
+                                if (freqKey) {
+                                    uniqueNotes.push({ name: lastNote, freq: FREQ_MAP[freqKey] });
+                                }
+                            }
+                            lastNote = n;
+                        }
+                    }
+                    if (lastNote) {
+                        const freqKey = NOTE_NAMES.find(k => k === lastNote);
+                        if (freqKey) {
+                            uniqueNotes.push({ name: lastNote, freq: FREQ_MAP[freqKey] });
+                        }
+                    }
+                } else {
+                    let lastNote = null;
+                    for (let n of detected) {
+                        if (!lastNote || n.name !== lastNote.name) {
+                            if (lastNote) uniqueNotes.push(lastNote);
+                            lastNote = n;
+                        }
+                    }
+                    if (lastNote) uniqueNotes.push(lastNote);
+                }
+
+                transcribedNotes = uniqueNotes;
+                if (uniqueNotes.length === 0) {
+                    transcribedDisplay.textContent = '(Tidak ada nada terdeteksi. Coba mode/sensitivitas berbeda)';
+                    transcribeInfo.textContent = 'Jumlah nada: 0';
+                } else {
+                    const names = uniqueNotes.map(n => n.name).join(' → ');
+                    transcribedDisplay.textContent = names;
+                    transcribeInfo.textContent = `Jumlah nada: ${uniqueNotes.length}`;
+                    resultArea.style.display = 'block';
+                    playResultBtn.disabled = false;
+                    transcribedDisplay.scrollTop = 0;
+                }
+
+                statusEl.textContent = `✅ Transkripsi selesai! ${uniqueNotes.length} nada ditemukan (${algoLabel} algorithm).`;
+                statusEl.className = 'status';
+                transcribeBtn.disabled = false;
+                progressBar.classList.remove('show');
+                progressFill.style.width = '0%';
+            }, 300);
+        }
+
+        transcribeBtn.addEventListener('click', transcribeAudio);
+
+        // ===== PLAY RESULT =====
+        function playTranscribed() {
+            if (transcribedNotes.length === 0 || isPlayingResult) return;
+            isPlayingResult = true;
+            playResultBtn.textContent = '⏹ Playing...';
+            statusEl.textContent = '🎵 Memutar hasil transkripsi...';
+
+            let delay = 0;
+            const duration = 0.25;
+            transcribedNotes.forEach((note, i) => {
+                setTimeout(() => {
+                    if (!isPlayingResult) return;
+                    playSingleNote(note.freq, duration);
+                }, delay * 1000);
+                delay += duration + 0.05;
+            });
+            setTimeout(() => {
+                isPlayingResult = false;
+                playResultBtn.textContent = '▶ Play Hasil';
+                statusEl.textContent = '✅ Selesai diputar';
+            }, delay * 1000 + 200);
+        }
+
+        playResultBtn.addEventListener('click', function() {
+            if (isPlayingResult) {
+                isPlayingResult = false;
+                this.textContent = '▶ Play Hasil';
+                statusEl.textContent = '⏹ Dihentikan';
+                return;
+            }
+            playTranscribed();
+        });
+
+        // ===== CLEAR =====
+        clearTranscribeBtn.addEventListener('click', function() {
+            isPlayingResult = false;
+            recordedAudioBuffer = null;
             transcribedNotes = [];
-            document.getElementById('transcribeResult').style.display = 'none';
-            document.getElementById('transcribedDisplay').textContent = '-';
-            document.getElementById('transcribeInfo').textContent = 'Jumlah nada: 0';
-            document.getElementById('transcribeModeInfo').textContent = 'Mode: -';
-            document.getElementById('playResultBtn').disabled = true;
-            document.getElementById('transcribeBtn').disabled = true;
-            document.getElementById('recStatus').textContent = '🗑️ Dihapus';
+            transcribedDisplay.textContent = '-';
+            transcribeInfo.textContent = 'Jumlah nada: 0';
+            durationInfo.textContent = 'Durasi rekaman: 0 detik';
+            resultArea.style.display = 'none';
+            playResultBtn.disabled = true;
+            transcribeBtn.disabled = true;
+            statusEl.textContent = '🗑️ Dihapus. Rekam ulang untuk transkripsi.';
+            statusEl.className = 'status';
+            ctxCanvas.fillStyle = '#0d0d1a';
+            ctxCanvas.fillRect(0, 0, canvas.width, canvas.height);
+            ctxCanvas.fillStyle = '#555';
+            ctxCanvas.font = '14px sans-serif';
+            ctxCanvas.textAlign = 'center';
+            ctxCanvas.fillText('Tunggu rekaman...', canvas.width/2, canvas.height/2 + 5);
+            hideError();
+            progressBar.classList.remove('show');
+            progressFill.style.width = '0%';
         });
 
         // ================================================================
@@ -2231,11 +2832,27 @@ Hasilkan notasi nada:`;
             aiDescModeLabel.classList.add('active-ai-mode');
             aiPromptModeLabel.classList.remove('active-ai-mode');
 
+            // Status awal transcriber
+            statusEl.textContent = '🔴 Klik tombol mikrofon untuk mulai merekam (maks. 22 menit)';
+            ctxCanvas.fillStyle = '#0d0d1a';
+            ctxCanvas.fillRect(0, 0, canvas.width, canvas.height);
+            ctxCanvas.fillStyle = '#555';
+            ctxCanvas.font = '14px sans-serif';
+            ctxCanvas.textAlign = 'center';
+            ctxCanvas.fillText('Tunggu rekaman...', canvas.width/2, canvas.height/2 + 5);
+
+            if (navigator.permissions && navigator.permissions.query) {
+                navigator.permissions.query({ name: 'microphone' }).then(result => {
+                    if (result.state === 'denied') {
+                        showError('Izin mikrofon telah ditolak. Mohon izinkan akses mikrofon di pengaturan browser.');
+                    }
+                }).catch(() => {});
+            }
+
             console.log('🎵 PMD Musik 12-TET siap!');
             console.log('📊 A4 = 440 Hz (acuan)');
             console.log('🎹 8 Instrumen: Sine, Square, Sawtooth, Triangle, Organ, Piano, Flute, Trumpet');
-            console.log('📝 Fitur Generate & Play di tab Keyboard siap digunakan.');
-            console.log('🧠 Fitur Transcriber dengan mode Biasa / YIN tersedia.');
+            console.log('🧠 AI Transcriber dengan YIN + Median Filter siap digunakan.');
         });
     </script>
 </body>
