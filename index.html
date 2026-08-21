@@ -1612,26 +1612,27 @@
             key.classList.add('active');
             setTimeout(() => key.classList.remove('active'), 400);
 
+            // Hentikan semua suara sebelum memainkan yang baru
+            stopAllSounds();
+
             if (playMode === 'single') {
                 const freq = FREQ_MAP[note];
                 if (freq) {
-                    playSingleNote(freq);
+                    playSingleNote(freq, 0.6);
                     statusDisplay.innerHTML = `🎵 Memainkan <span>${note}</span> (${freq.toFixed(2)} Hz) [${currentInstrument}]`;
                 }
             } else {
-                // ===== MODE AKORD dengan batasan C2-D3 =====
+                // Mode akord
                 const match = note.match(/^([A-Z#]+)(\d+)$/);
                 if (!match) return;
                 const noteName = match[1];
                 const octave = parseInt(match[2]);
 
-                // Cek apakah nada berada dalam rentang C2-D3
                 const isValidChordRoot = (() => {
                     if (octave === 2) {
                         return ['C2', 'C#2', 'D2'].includes(note);
                     }
                     if (octave === 3) {
-                        // semua 20 nada di oktaf 3 termasuk
                         return NOTES_20.includes(noteName);
                     }
                     return false;
@@ -1641,7 +1642,7 @@
                     // Mainkan nada tunggal
                     const freq = FREQ_MAP[note];
                     if (freq) {
-                        playSingleNote(freq);
+                        playSingleNote(freq, 0.6);
                         statusDisplay.innerHTML = `⚠️ Akord hanya untuk C2-D3. Memainkan tunggal <span>${note}</span>`;
                     }
                     return;
@@ -1650,7 +1651,6 @@
                 const idx = NOTES_20.indexOf(noteName);
                 if (idx === -1) return;
 
-                // Build chord mayor
                 const chordNotes = buildChord20(idx, 'mayor');
                 const freqs = chordNotes.map(n => {
                     const fullNote = n + octave;
@@ -1658,8 +1658,9 @@
                 }).filter(f => f > 0);
 
                 if (freqs.length > 0) {
-                    playChordFreqs(freqs);
-                    statusDisplay.innerHTML = `🎵 Akord <span>${note}</span> mayor: ${chordNotes.join(' + ')} [${currentInstrument}]`;
+                    const LONG_DURATION = 999; // durasi sangat panjang untuk sustain
+                    freqs.forEach(f => playSingleNote(f, LONG_DURATION));
+                    statusDisplay.innerHTML = `🎵 Akord <span>${note}</span> mayor: ${chordNotes.join(' + ')} [${currentInstrument}] (sustain)`;
                 } else {
                     statusDisplay.innerHTML = `⚠️ Akord untuk ${note} tidak valid (tidak ada frekuensi).`;
                 }
@@ -1741,6 +1742,8 @@
                         chordModeLabel.classList.add('active-mode');
                         modeIndicator.textContent = '🎵 Mode: Akord (C2-D3)';
                     }
+                    // Hentikan semua suara saat berpindah mode
+                    stopAllSounds();
                     statusDisplay.innerHTML = `🔄 Mode berubah ke: ${playMode === 'single' ? 'Tunggal' : 'Akord (C2-D3)'}`;
                 }
             });
@@ -2858,7 +2861,7 @@ Hasilkan notasi nada:`;
 
             console.log('🎵 PMD Musik 12-TET siap!');
             console.log('📊 A4 = 440 Hz (acuan)');
-            console.log('🎹 Akord hanya tersedia untuk C2-D3 (23 nada).');
+            console.log('🎹 Akord hanya tersedia untuk C2-D3 (23 nada) dengan sustain.');
         });
     </script>
 </body>
