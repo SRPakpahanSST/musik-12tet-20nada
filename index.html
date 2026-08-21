@@ -253,16 +253,27 @@
         .mode-badge.desc { background: #0f3460; color: #aaa; }
         .mode-badge.prompt { background: #2d7d46; color: #fff; }
 
-        /* Prompt Area */
-        .prompt-area {
+        /* ===== DESKRIPSI / PROMPT AREA ===== */
+        .input-area {
             display: none;
             width: 100%;
-            padding: 8px 0;
+            padding: 10px 0;
         }
-        .prompt-area.show {
+        .input-area.show {
             display: block;
         }
-        .prompt-area textarea {
+
+        .input-area .input-group {
+            margin-bottom: 10px;
+        }
+        .input-area .input-group label {
+            display: block;
+            color: #aaa;
+            font-size: 0.8rem;
+            margin-bottom: 3px;
+        }
+        .input-area .input-group textarea,
+        .input-area .input-group input[type="password"] {
             width: 100%;
             padding: 8px 12px;
             border: none;
@@ -270,19 +281,34 @@
             background: #0d0d1a;
             color: #fff;
             font-size: 0.85rem;
-            resize: vertical;
-            min-height: 40px;
             outline: none;
             border: 1px solid #2a3a5e;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        .prompt-area textarea:focus {
+        .input-area .input-group textarea {
+            resize: vertical;
+            min-height: 50px;
+        }
+        .input-area .input-group textarea:focus,
+        .input-area .input-group input[type="password"]:focus {
             border-color: #e94560;
         }
-        .prompt-area .hint {
+        .input-area .input-group .hint {
             color: #666;
             font-size: 0.7rem;
             margin-top: 3px;
+        }
+        .input-area .input-group .api-hint {
+            color: #888;
+            font-size: 0.7rem;
+            margin-top: 3px;
+            background: #1a0d0d;
+            padding: 5px 10px;
+            border-radius: 8px;
+            border-left: 3px solid #a04040;
+        }
+        .input-area .input-group .api-hint a {
+            color: #f5a623;
         }
 
         /* ===== KEYBOARD ===== */
@@ -642,10 +668,28 @@
                     <span class="chord-info" id="modeIndicator">🎵 Mode: Tunggal</span>
                 </div>
 
-                <!-- Prompt Area -->
-                <div class="prompt-area" id="promptArea">
-                    <textarea id="promptInput" placeholder="Contoh: Ciptakan melodi yang perlahan meningkat, dengan nada-nada tinggi dan suasana romantis..."></textarea>
-                    <div class="hint" id="promptHint">💡 Tulis prompt untuk AI Chatbot (hanya jika mode Prompt AI aktif)</div>
+                <!-- ===== DESKRIPSI / PROMPT AREA ===== -->
+                <div class="input-area show" id="descArea">
+                    <div class="input-group">
+                        <label>📝 Deskripsi Melodi</label>
+                        <textarea id="descInput" placeholder="Contoh: melodi yang perlahan meningkat, dengan nada-nada tinggi dan suasana romantis..."></textarea>
+                        <div class="hint">💡 Tulis deskripsi melodi yang diinginkan. Sistem akan mensimulasikannya.</div>
+                    </div>
+                </div>
+
+                <div class="input-area" id="promptArea">
+                    <div class="input-group">
+                        <label>🔑 OpenAI API Key</label>
+                        <input type="password" id="apiKeyInput" placeholder="sk-... (masukkan API Key OpenAI Anda)" />
+                        <div class="api-hint">
+                            💡 Dapatkan API Key di <a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com</a>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>🤖 Prompt untuk AI Chatbot</label>
+                        <textarea id="promptInput" placeholder="Contoh: Ciptakan melodi jazz yang romantis dengan tempo sedang, menggunakan skala minor..."></textarea>
+                        <div class="hint">💡 Tulis prompt spesifik untuk AI. AI akan menciptakan melodi berdasarkan prompt ini.</div>
+                    </div>
                 </div>
             </div>
 
@@ -1235,9 +1279,11 @@
         const delayVal = document.getElementById('delayVal');
         const ampSlider = document.getElementById('ampSlider');
         const ampVal = document.getElementById('ampVal');
+        const descArea = document.getElementById('descArea');
         const promptArea = document.getElementById('promptArea');
+        const descInput = document.getElementById('descInput');
+        const apiKeyInput = document.getElementById('apiKeyInput');
         const promptInput = document.getElementById('promptInput');
-        const promptHint = document.getElementById('promptHint');
         let keyElements = {};
 
         function buildKeyboard(octaveCount) {
@@ -1409,13 +1455,13 @@
                     if (currentInputMode === 'deskripsi') {
                         modeBadge.textContent = 'Mode: Deskripsi';
                         modeBadge.className = 'mode-badge desc';
+                        descArea.classList.add('show');
                         promptArea.classList.remove('show');
-                        promptHint.textContent = '💡 Tulis deskripsi melodi (mode Deskripsi)';
                     } else {
                         modeBadge.textContent = 'Mode: Prompt AI';
                         modeBadge.className = 'mode-badge prompt';
+                        descArea.classList.remove('show');
                         promptArea.classList.add('show');
-                        promptHint.textContent = '💡 Tulis prompt untuk AI Chatbot (mode Prompt AI)';
                     }
                 }
             });
@@ -1877,6 +1923,9 @@
             delayVal.textContent = '0%';
             ampSlider.value = 100;
             ampVal.textContent = '1.0x';
+            // Default: Deskripsi mode aktif
+            descArea.classList.add('show');
+            promptArea.classList.remove('show');
             console.log('🎵 PMD Musik 12-TET siap!');
             console.log('📊 A4 = 440 Hz (acuan)');
             console.log('🎹 8 Instrumen: Sine, Square, Sawtooth, Triangle, Organ, Piano, Flute, Trumpet');
