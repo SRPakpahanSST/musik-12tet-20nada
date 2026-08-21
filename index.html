@@ -1230,6 +1230,35 @@
         const SCALE_MINOR = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'A'];
 
         // ================================================================
+        // SISTEM 20 NADA PER OKTAF – FUNGSI DASAR (digunakan di seluruh aplikasi)
+        // ================================================================
+        const NOTES_20 = ['E','E#','F','F#','G','G#','H','H#','I','J','J#','K','K#','A','A#','B','B#','C','C#','D'];
+        const MAYOR_INTERVALS = [2,2,1,2,2,2,1];
+        const MINOR_INTERVALS = [2,1,2,2,1,2,2];
+
+        function buildScale20(rootIdx, intervals) {
+            const scale = [rootIdx];
+            let current = rootIdx;
+            for (let step of intervals) {
+                current = (current + step) % 20;
+                scale.push(current);
+            }
+            return scale;
+        }
+
+        function getNoteName20(idx) {
+            return NOTES_20[idx % 20];
+        }
+
+        function buildChord20(rootIdx, type) {
+            let third = (type === 'mayor') ? 4 : 3;
+            const fifth = 7;
+            const thirdIdx = (rootIdx + third) % 20;
+            const fifthIdx = (rootIdx + fifth) % 20;
+            return [getNoteName20(rootIdx), getNoteName20(thirdIdx), getNoteName20(fifthIdx)];
+        }
+
+        // ================================================================
         // AUDIO ENGINE (umum)
         // ================================================================
         let audioCtx = null;
@@ -2679,45 +2708,8 @@ Hasilkan notasi nada:`;
         });
 
         // ================================================================
-        // CHORD PROGRESSION (20 NADA PER OKTAF) — DIPERBAIKI
+        // CHORD PROGRESSION (20 NADA PER OKTAF) — menggunakan fungsi dasar yang sudah didefinisikan
         // ================================================================
-
-        // 20 not dalam satu oktaf (indeks 0–19)
-        const NOTES_20 = ['E','E#','F','F#','G','G#','H','H#','I','J','J#','K','K#','A','A#','B','B#','C','C#','D'];
-
-        // Interval skala mayor: 2,2,1,2,2,2,1 (dalam langkah 20-TET)
-        const MAYOR_INTERVALS = [2,2,1,2,2,2,1];
-        // Interval skala minor: 2,1,2,2,1,2,2
-        const MINOR_INTERVALS = [2,1,2,2,1,2,2];
-
-        // Membangun skala dari root (indeks 0–19) dengan pola interval
-        function buildScale(rootIdx, intervals) {
-            const scale = [rootIdx];
-            let current = rootIdx;
-            for (let step of intervals) {
-                current = (current + step) % 20;
-                scale.push(current);
-            }
-            return scale; // 7 not (termasuk root di akhir oktaf)
-        }
-
-        // Mendapatkan nama not dari indeks
-        function getNoteName(idx) {
-            return NOTES_20[idx % 20];
-        }
-
-        // Membangun akord dari root indeks dan tipe (mayor/minor/diminished)
-        function buildChord(rootIdx, type) {
-            let third;
-            if (type === 'mayor') third = 4;
-            else if (type === 'minor') third = 3;
-            else if (type === 'diminished') third = 3; // diminished juga menggunakan terts minor
-            else third = 4; // default mayor
-            const fifth = 7; // kwint = 7 langkah (konsisten dengan 12-TET)
-            const thirdIdx = (rootIdx + third) % 20;
-            const fifthIdx = (rootIdx + fifth) % 20;
-            return [getNoteName(rootIdx), getNoteName(thirdIdx), getNoteName(fifthIdx)];
-        }
 
         // Event listener untuk Generate Progresi
         document.getElementById('chordGenerateBtn').addEventListener('click', function() {
@@ -2772,18 +2764,18 @@ Hasilkan notasi nada:`;
 
             if (modeAnalisis === 'mayor') {
                 scaleType = 'Mayor';
-                const scaleIdx = buildScale(rootIdx, MAYOR_INTERVALS);
-                scaleNames = scaleIdx.map(i => getNoteName(i));
+                const scaleIdx = buildScale20(rootIdx, MAYOR_INTERVALS);
+                scaleNames = scaleIdx.map(i => getNoteName20(i));
             } else if (modeAnalisis === 'minor') {
                 scaleType = 'Minor';
-                const scaleIdx = buildScale(rootIdx, MINOR_INTERVALS);
-                scaleNames = scaleIdx.map(i => getNoteName(i));
+                const scaleIdx = buildScale20(rootIdx, MINOR_INTERVALS);
+                scaleNames = scaleIdx.map(i => getNoteName20(i));
             } else { // auto
                 // Coba kedua skala dan lihat mana yang lebih cocok dengan not-not yang muncul
-                const mayorScaleIdx = buildScale(rootIdx, MAYOR_INTERVALS);
-                const minorScaleIdx = buildScale(rootIdx, MINOR_INTERVALS);
-                const mayorScaleNames = mayorScaleIdx.map(i => getNoteName(i));
-                const minorScaleNames = minorScaleIdx.map(i => getNoteName(i));
+                const mayorScaleIdx = buildScale20(rootIdx, MAYOR_INTERVALS);
+                const minorScaleIdx = buildScale20(rootIdx, MINOR_INTERVALS);
+                const mayorScaleNames = mayorScaleIdx.map(i => getNoteName20(i));
+                const minorScaleNames = minorScaleIdx.map(i => getNoteName20(i));
 
                 const matchMayor = noteNames.filter(n => mayorScaleNames.includes(n)).length;
                 const matchMinor = noteNames.filter(n => minorScaleNames.includes(n)).length;
@@ -2806,12 +2798,12 @@ Hasilkan notasi nada:`;
                 const rootIdx2 = NOTES_20.indexOf(chordRoots[i]);
                 // Ambil not ketiga (derajat ke-3 dalam skala) dengan interval 4 langkah dari root
                 const thirdIdx = (rootIdx2 + 4) % 20;
-                const thirdName = getNoteName(thirdIdx);
+                const thirdName = getNoteName20(thirdIdx);
                 // Cek apakah third ada dalam skala (untuk menentukan mayor/minor)
                 const isMajor = scaleNames.includes(thirdName);
                 // Cek apakah kwint (7 langkah) ada dalam skala? untuk diminished
                 const fifthIdx = (rootIdx2 + 7) % 20;
-                const fifthName = getNoteName(fifthIdx);
+                const fifthName = getNoteName20(fifthIdx);
                 const isDiminished = !scaleNames.includes(fifthName);
                 if (isDiminished) {
                     chordTypes.push('diminished');
@@ -2845,7 +2837,7 @@ Hasilkan notasi nada:`;
                 const type = chordTypes[i];
                 const typeSymbol = type === 'mayor' ? '' : (type === 'minor' ? 'm' : '°');
                 const rootIdx2 = NOTES_20.indexOf(root);
-                const chordNotes = buildChord(rootIdx2, type);
+                const chordNotes = buildChord20(rootIdx2, type);
 
                 const card = document.createElement('div');
                 card.style.cssText = 'background:#1a1a2e;border-radius:10px;padding:12px;border:1px solid #2a3a5e;text-align:center;transition:0.2s;';
