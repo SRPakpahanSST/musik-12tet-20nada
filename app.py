@@ -1,139 +1,27 @@
 # app.py
 import streamlit as st
-import base64
-
-# ============================================================
-# KONFIGURASI HALAMAN
-# ============================================================
 
 st.set_page_config(
-    page_title="Musik 12-TET (20 Nada per Oktaf)",
+    page_title="PMD Musik 12 TET",
     page_icon="🎵",
     layout="wide"
 )
 
-# ============================================================
-# JUDUL
-# ============================================================
+st.title("🎵 PMD Musik 12 TET")
+st.markdown("*Eksplorasi Mikrotonal — Inovasi Sistem 20 Nada per Oktaf*")
 
-st.title("🎵 Musik 12-TET (20 Nada per Oktaf)")
+st.markdown("---")
+
 st.markdown("""
-*Eksplorasi Mikrotonal — Inovasi Sistem 20 Nada per Oktaf*
+### Pilih Fitur
+
+| Fitur | Deskripsi |
+|-------|-----------|
+| [🎹 Keyboard Digital](keyboard.html) | Mainkan 20 nada per oktaf dengan 8 instrumen |
+| [🎵 AI Composer](ai_composer.html) | Ciptakan melodi dengan AI |
+| [🎤 AI Transcriber](ai_transcriber.html) | Rekam & transkripsi nada |
+| [🎶 Chord Progression](ai_chord_progression.html) | Ubah melodi menjadi akord |
 """)
 
 st.markdown("---")
-
-# ============================================================
-# BACA FILE HTML
-# ============================================================
-
-def load_html():
-    """Membaca file index.html"""
-    try:
-        with open("index.html", "r", encoding="utf-8") as f:
-            return f.read()
-    except FileNotFoundError:
-        return create_minimal_html()
-
-def create_minimal_html():
-    """Membuat HTML minimal jika index.html tidak ditemukan"""
-    return """
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="UTF-8">
-        <title>Musik 12-TET</title>
-        <style>
-            body { 
-                font-family: Arial; 
-                background: #1a1a2e; 
-                color: #eee; 
-                text-align: center;
-                padding: 50px;
-            }
-            .error {
-                color: #e94560;
-                font-size: 24px;
-            }
-        </style>
-    </head>
-    <body>
-        <div class="error">⚠️ File index.html tidak ditemukan</div>
-        <p>Pastikan file index.html berada di folder yang sama dengan app.py</p>
-    </body>
-    </html>
-    """
-
-# ============================================================
-# TAMPILKAN APLIKASI
-# ============================================================
-
-# TAMPILKAN APLIKASI
-html_content = load_html()
-st.components.v1.html(
-    html_content,
-    height=750,
-    scrolling=True
-)
-
-# ============================================================
-# SIDEBAR - INFORMASI
-# ============================================================
-
-with st.sidebar:
-    st.header("📖 Informasi")
-    
-    st.markdown("""
-    ### Sistem 12-TET (20 Nada per Oktaf)
-    
-    **Rumus Frekuensi:**
-    ```
-    f_n = f_0 × 3^(n/20)
-    ```
-    
-    **Skala Mayor (E=1):**
-    ```
-    E - F - G - H - I - J - K - A - B - C - D - E
-    ```
-    
-    **Skala Minor (A=1):**
-    ```
-    A - B - C - D - E - F - G - H - I - J - K - A
-    ```
-    """)
-    
-    st.markdown("---")
-    
-    st.markdown("""
-    ### 🎹 Keyboard
-    - **Tuts Putih**: Nada Natural
-    - **Tuts Hitam**: Nada Kromatik (#)
-    - Klik tuts untuk mendengar nada
-    """)
-    
-    st.markdown("---")
-    
-    # ===== FITUR AI (gunakan st.page_link untuk navigasi handal) =====
-    st.markdown("### 🤖 Fitur AI")
-    st.page_link("pages/ai_composer.py", label="🎵 AI Composer")
-    st.page_link("pages/ai_transcriber.py", label="🎤 AI Transcriber")
-    
-    st.markdown("---")
-    
-    st.markdown("""
-    ### 📚 Referensi
-    1. Helmholtz, H. (1954). *On the Sensations of Tone*
-    2. Sethares, W. A. (2005). *Tuning, Timbre, Spectrum, Scale*
-    3. Tenney, J. (1988). *Meta-Hodos*
-    """)
-    
-    st.markdown("---")
-    
-    st.caption("© 2026 Sukma Riadi Pakpahan, SST")
-
-# ============================================================
-# FOOTER
-# ============================================================
-
-st.markdown("---")
-st.caption("Berdasarkan Karya Tulis Ilmiah: Eksplorasi Musik Sistem 12-TET (20 Nada per Oktaf)")
+st.caption("Berdasarkan Karya Tulis Ilmiah: Eksplorasi Musik Sistem 12-TET (20 Nada per Oktaf) — Sukma Riadi Pakpahan, SST")
