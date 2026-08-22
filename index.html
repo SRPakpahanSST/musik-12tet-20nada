@@ -1376,8 +1376,9 @@
         // SISTEM 20 NADA PER OKTAF – FUNGSI DASAR
         // ================================================================
         const NOTES_20 = ['E','E#','F','F#','G','G#','H','H#','I','J','J#','K','K#','A','A#','B','B#','C','C#','D'];
-        const MAYOR_INTERVALS = [2,2,1,2,2,2,1];
-        const MINOR_INTERVALS = [2,1,2,2,1,2,2];
+        // ===== PERBAIKAN : interval yang benar sesuai dokumen =====
+        const MAYOR_INTERVALS = [2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 1];
+        const MINOR_INTERVALS = [2, 2, 2, 1, 2, 2, 2, 2, 1, 2, 2];
 
         function buildScale20(rootIdx, intervals) {
             const scale = [rootIdx];
@@ -1393,9 +1394,14 @@
             return NOTES_20[idx % 20];
         }
 
+        // ===== PERBAIKAN : buildChord20 dengan interval yang benar =====
         function buildChord20(rootIdx, type) {
-            let third = (type === 'mayor') ? 4 : 3;
-            const fifth = 7;
+            let third = 4;
+            let fifth;
+            if (type === 'mayor') fifth = 8;
+            else if (type === 'minor') fifth = 7;
+            else if (type === 'diminished') fifth = 6; // perkiraan
+            else fifth = 7;
             const thirdIdx = (rootIdx + third) % 20;
             const fifthIdx = (rootIdx + fifth) % 20;
             return [getNoteName20(rootIdx), getNoteName20(thirdIdx), getNoteName20(fifthIdx)];
