@@ -3334,18 +3334,10 @@ Hasilkan notasi nada:`;
             aiDescModeLabel.classList.add('active-ai-mode');
             aiPromptModeLabel.classList.remove('active-ai-mode');
 
-            const statusEl = document.getElementById('status');
-            if (statusEl) statusEl.textContent = '🔴 Klik tombol mikrofon untuk mulai merekam (maks. 22 menit)';
-            const canvas = document.getElementById('waveformCanvas');
-            if (canvas) {
-                const ctxCanvas = canvas.getContext('2d');
-                ctxCanvas.fillStyle = '#0d0d1a';
-                ctxCanvas.fillRect(0, 0, canvas.width, canvas.height);
-                ctxCanvas.fillStyle = '#555';
-                ctxCanvas.font = '14px sans-serif';
-                ctxCanvas.textAlign = 'center';
-                ctxCanvas.fillText('Tunggu rekaman...', canvas.width / 2, canvas.height / 2 + 5);
-            }
+            // Status awal transcriber
+            const statusElLocal = document.getElementById('status');
+            if (statusElLocal) statusElLocal.textContent = '🔴 Klik tombol mikrofon untuk mulai merekam (maks. 22 menit)';
+            resizeWaveformCanvas();
 
             if (navigator.permissions && navigator.permissions.query) {
                 navigator.permissions.query({ name: 'microphone' }).then(result => {
