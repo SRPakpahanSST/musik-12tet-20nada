@@ -1204,6 +1204,7 @@
                     <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-top:12px;">
                         <button class="btn btn-success" id="transcribeBtn" disabled>🧠 AI Transcribe</button>
                         <button class="btn btn-secondary" id="playResultBtn" disabled>▶ Play Hasil</button>
+                        <button class="btn btn-primary" id="sendToChordBtn" disabled>📥 Kirim ke Chord Progression</button>
                         <button class="btn btn-danger" id="clearTranscribeBtn">🗑️ Clear</button>
                     </div>
 
@@ -1422,7 +1423,6 @@
         // SISTEM 20 NADA PER OKTAF – FUNGSI DASAR
         // ================================================================
         const NOTES_20 = ['E','E#','F','F#','G','G#','H','H#','I','J','J#','K','K#','A','A#','B','B#','C','C#','D'];
-        // Interval sesuai dokumen (dalam satuan ½ laras)
         const MAYOR_INTERVALS = [2,2,2,2,1,2,2,2,2,2,1];
         const MINOR_INTERVALS = [2,2,2,1,2,2,2,2,1,2,2];
 
@@ -1440,15 +1440,14 @@
             return NOTES_20[idx % 20];
         }
 
-        // ===== PERBAIKAN : buildChord20 dengan interval yang benar =====
         function buildChord20(rootIdx, type) {
-            let third = 4;      // mayor third (2 laras)
-            let fifth = 7;      // perfect fifth (3.5 laras)
+            let third = 4;
+            let fifth = 7;
             if (type === 'minor') {
-                third = 3;      // minor third (1.5 laras)
+                third = 3;
             } else if (type === 'diminished') {
                 third = 3;
-                fifth = 6;      // diminished fifth (3 laras)
+                fifth = 6;
             }
             const thirdIdx = (rootIdx + third) % 20;
             const fifthIdx = (rootIdx + fifth) % 20;
@@ -2534,6 +2533,432 @@ Hasilkan notasi nada:`;
             document.getElementById('aiPlayBtn').disabled = true;
             document.getElementById('aiStopBtn').disabled = true;
             document.getElementById('aiPlayBtn').textContent = '▶ Play';
+        });
+
+        // ================================================================
+        // AI TRANSCRIBER — LOGIKA LENGKAP
+        // ================================================================
+        let transcriberCtx = null;
+        let transcriberAnalyser = null;
+        let transcriberDataArray = null;
+        let transcriberSource = null;
+        let transcriberStream = null;
+        let isRecordingTranscriber = false;
+        let transcriberStartTime = 0;
+        let detectedNotes = [];
+        let lastDetectedNote = null;
+        let transcriberAnimationId = null;
+        let waveformData = [];
+        let isTranscriberPlaying = false;
+        let transcribePlayTimeouts = [];
+
+        const recordBtn = document.getElementById('recordBtn');
+        const timerDisplay = document.getElementById('timerDisplay');
+        const statusEl = document.getElementById('status');
+        const transcribeBtn = document.getElementById('transcribeBtn');
+        const playResultBtn = document.getElementById('playResultBtn');
+        const sendToChordBtn = document.getElementById('sendToChordBtn');
+        const clearTranscribeBtn = document.getElementById('clearTranscribeBtn');
+        const transcribeResult = document.getElementById('transcribeResult');
+        const transcribedDisplay = document.getElementById('transcribedDisplay');
+        const transcribeInfo = document.getElementById('transcribeInfo');
+        const durationInfo = document.getElementById('durationInfo');
+        const algoInfo = document.getElementById('algoInfo');
+        const progressFill = document.getElementById('progressFill');
+        const progressBar = document.getElementById('progressBar');
+        const waveformCanvas = document.getElementById('waveformCanvas');
+        const wctx = waveformCanvas.getContext('2d');
+
+        let timerInterval = null;
+
+        function resizeWaveformCanvas() {
+            const rect = waveformCanvas.parentElement.getBoundingClientRect();
+            waveformCanvas.width = rect.width || 800;
+            waveformCanvas.height = 70;
+        }
+        resizeWaveformCanvas();
+        window.addEventListener('resize', resizeWaveformCanvas);
+
+        // === Fungsi deteksi pitch ===
+        function autoCorrelate(buf, sampleRate, sensitivity) {
+            const threshold = parseFloat(sensitivity) || 0.012;
+            let maxSamples = Math.floor(buf.length / 2);
+            let bestOffset = -1;
+            let bestCorrelation = 0;
+            let foundGoodCorrelation = false;
+            let correlations = new Array(maxSamples);
+
+            for (let offset = 0; offset < maxSamples; offset++) {
+                let sum = 0;
+                for (let i = 0; i < maxSamples; i++) {
+                    sum += buf[i] * buf[i + offset];
+                }
+                correlations[offset] = sum;
+                let norm = 0;
+                for (let i = 0; i < maxSamples; i++) {
+                    norm += buf[i] * buf[i];
+                }
+                if (norm > 0) {
+                    correlations[offset] /= norm;
+                }
+            }
+
+            for (let offset = 1; offset < maxSamples; offset++) {
+                if (correlations[offset] > bestCorrelation) {
+                    bestCorrelation = correlations[offset];
+                    bestOffset = offset;
+                }
+                if (correlations[offset] > threshold) {
+                    foundGoodCorrelation = true;
+                }
+            }
+
+            if (!foundGoodCorrelation || bestOffset < 1) return -1;
+
+            const x0 = bestOffset - 1;
+            const x1 = bestOffset;
+            const x2 = bestOffset + 1;
+            if (x0 < 0 || x2 >= maxSamples) return sampleRate / bestOffset;
+            const y0 = correlations[x0];
+            const y1 = correlations[x1];
+            const y2 = correlations[x2];
+            const denom = y0 - 2 * y1 + y2;
+            let peakOffset = 0;
+            if (denom !== 0) {
+                peakOffset = (y0 - y2) / (2 * denom);
+            }
+            const finalOffset = x1 + peakOffset;
+            if (finalOffset < 1) return -1;
+            return sampleRate / finalOffset;
+        }
+
+        function yinPitch(buf, sampleRate, sensitivity) {
+            const threshold = parseFloat(sensitivity) || 0.012;
+            const maxSamples = Math.floor(buf.length / 2);
+            let cum = 0;
+            let tau = -1;
+
+            for (let t = 1; t < maxSamples; t++) {
+                let diff = 0;
+                for (let i = 0; i < maxSamples; i++) {
+                    diff += (buf[i] - buf[i + t]) * (buf[i] - buf[i + t]);
+                }
+                cum += diff;
+                if (cum === 0) continue;
+                const d = diff / (cum / t);
+                if (d < threshold) {
+                    tau = t;
+                    break;
+                }
+            }
+
+            if (tau === -1 || tau < 1) return -1;
+            return sampleRate / tau;
+        }
+
+        function detectPitchFromBuffer(timeData, sampleRate) {
+            const algo = document.querySelector('input[name="algorithm"]:checked')?.value || 'standard';
+            const sensitivity = document.getElementById('sensitivitySelect').value;
+            const buf = new Float32Array(timeData.length);
+            for (let i = 0; i < timeData.length; i++) {
+                buf[i] = (timeData[i] - 128) / 128;
+            }
+
+            let freq = -1;
+            if (algo === 'improved') {
+                freq = yinPitch(buf, sampleRate, sensitivity);
+            } else {
+                freq = autoCorrelate(buf, sampleRate, sensitivity);
+            }
+
+            const mode = document.getElementById('modeSelect').value;
+            if (freq > 0) {
+                if (mode === 'vocal' && (freq < 200 || freq > 800)) return -1;
+                if (mode === 'instrument' && (freq < 80 || freq > 1200)) return -1;
+                if (mode === 'full' && (freq < 60 || freq > 1800)) return -1;
+            }
+            return freq;
+        }
+
+        function getFullNoteFromFreq(freq) {
+            if (freq <= 0) return null;
+            const n = 20 * Math.log(freq / 440) / Math.log(3);
+            const rounded = Math.round(n);
+            const targetFreq = 440 * Math.pow(3, rounded / 20);
+            const diff = Math.abs(targetFreq - freq);
+            if (diff / freq > 0.015) return null;
+            const mod = ((rounded % 20) + 20) % 20;
+            const note = NOTES_20[mod];
+            const octave = 4 + Math.floor(rounded / 20);
+            return note + octave;
+        }
+
+        function drawWaveform() {
+            const w = waveformCanvas.width;
+            const h = waveformCanvas.height;
+            wctx.clearRect(0, 0, w, h);
+            if (waveformData.length === 0) {
+                wctx.fillStyle = '#333';
+                wctx.font = '14px sans-serif';
+                wctx.textAlign = 'center';
+                wctx.fillText('Menunggu sinyal...', w / 2, h / 2 + 5);
+                return;
+            }
+            wctx.beginPath();
+            wctx.strokeStyle = '#e94560';
+            wctx.lineWidth = 2;
+            const step = Math.floor(waveformData.length / w);
+            for (let i = 0; i < w; i++) {
+                const val = (waveformData[i * step] - 128) / 128;
+                const y = h / 2 + val * (h / 2 - 5);
+                if (i === 0) wctx.moveTo(i, y);
+                else wctx.lineTo(i, y);
+            }
+            wctx.stroke();
+        }
+
+        function updateTranscriptionDisplay() {
+            if (detectedNotes.length === 0) {
+                transcribedDisplay.textContent = '(Belum ada nada terdeteksi)';
+                transcribeInfo.textContent = 'Jumlah nada: 0';
+                return;
+            }
+            const names = detectedNotes.map(n => n.note).join(' → ');
+            transcribedDisplay.textContent = names;
+            transcribeInfo.textContent = `Jumlah nada: ${detectedNotes.length}`;
+            transcribeResult.style.display = 'block';
+            sendToChordBtn.disabled = false;
+            playResultBtn.disabled = false;
+        }
+
+        function updateTimerDisplay() {
+            if (!isRecordingTranscriber) return;
+            const elapsed = (Date.now() - transcriberStartTime) / 1000;
+            const mins = Math.floor(elapsed / 60);
+            const secs = Math.floor(elapsed % 60);
+            timerDisplay.textContent = `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')} / 22:00`;
+            const progress = Math.min(elapsed / 1320, 1);
+            progressFill.style.width = (progress * 100) + '%';
+            if (elapsed > 1320) {
+                stopTranscriberRecording();
+                statusEl.textContent = '⏹ Maksimum 22 menit tercapai. Rekaman berhenti.';
+            }
+        }
+
+        function processTranscriberAudio() {
+            if (!transcriberAnalyser || !isRecordingTranscriber) return;
+
+            transcriberAnalyser.getByteTimeDomainData(transcriberDataArray);
+            const sampleRate = transcriberCtx.sampleRate;
+
+            waveformData = Array.from(transcriberDataArray);
+            drawWaveform();
+
+            const freq = detectPitchFromBuffer(transcriberDataArray, sampleRate);
+
+            if (freq > 0) {
+                const note = getFullNoteFromFreq(freq);
+                if (note) {
+                    const now = Date.now();
+                    if (lastDetectedNote !== note) {
+                        const elapsed = (now - transcriberStartTime) / 1000;
+                        detectedNotes.push({
+                            note: note,
+                            freq: freq,
+                            time: elapsed
+                        });
+                        lastDetectedNote = note;
+                        updateTranscriptionDisplay();
+                        statusEl.innerHTML = `🎵 Terdeteksi: <span>${note}</span> (${freq.toFixed(2)} Hz)`;
+                    }
+                }
+            }
+
+            transcriberAnimationId = requestAnimationFrame(processTranscriberAudio);
+        }
+
+        async function startTranscriberRecording() {
+            if (isRecordingTranscriber) return;
+
+            try {
+                transcriberStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+                transcriberCtx = new(window.AudioContext || window.webkitAudioContext)();
+                transcriberAnalyser = transcriberCtx.createAnalyser();
+                transcriberAnalyser.fftSize = 2048;
+                transcriberAnalyser.smoothingTimeConstant = 0.8;
+
+                transcriberSource = transcriberCtx.createMediaStreamSource(transcriberStream);
+                transcriberSource.connect(transcriberAnalyser);
+
+                transcriberDataArray = new Uint8Array(transcriberAnalyser.fftSize);
+
+                isRecordingTranscriber = true;
+                transcriberStartTime = Date.now();
+                detectedNotes = [];
+                lastDetectedNote = null;
+                waveformData = [];
+
+                recordBtn.classList.add('recording');
+                recordBtn.textContent = '⏹';
+                document.getElementById('recordArea').classList.add('recording');
+                transcribeBtn.disabled = true;
+                transcribeBtn.textContent = '⏳ Merekam...';
+                progressBar.classList.add('show');
+                statusEl.textContent = '🔴 Merekam... Deteksi pitch aktif.';
+
+                timerInterval = setInterval(updateTimerDisplay, 500);
+
+                processTranscriberAudio();
+
+            } catch (err) {
+                statusEl.textContent = '❌ Error: ' + err.message;
+                console.error(err);
+            }
+        }
+
+        function stopTranscriberRecording() {
+            if (!isRecordingTranscriber) return;
+
+            isRecordingTranscriber = false;
+
+            if (transcriberAnimationId) {
+                cancelAnimationFrame(transcriberAnimationId);
+                transcriberAnimationId = null;
+            }
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+
+            if (transcriberSource) {
+                try { transcriberSource.disconnect(); } catch (e) {}
+                transcriberSource = null;
+            }
+            if (transcriberStream) {
+                transcriberStream.getTracks().forEach(track => track.stop());
+                transcriberStream = null;
+            }
+            if (transcriberCtx && transcriberCtx.state !== 'closed') {
+                try { transcriberCtx.close(); } catch (e) {}
+                transcriberCtx = null;
+                transcriberAnalyser = null;
+                transcriberDataArray = null;
+            }
+
+            recordBtn.classList.remove('recording');
+            recordBtn.textContent = '🎤';
+            document.getElementById('recordArea').classList.remove('recording');
+            progressBar.classList.remove('show');
+            transcribeBtn.disabled = false;
+            transcribeBtn.textContent = '🧠 AI Transcribe';
+
+            const duration = detectedNotes.length > 0 ?
+                detectedNotes[detectedNotes.length - 1].time.toFixed(1) :
+                '0';
+            durationInfo.textContent = duration + ' detik';
+            algoInfo.textContent = document.querySelector('input[name="algorithm"]:checked')?.value === 'improved' ? 'YIN' :
+            'Autokorelasi';
+
+            statusEl.innerHTML = '⏹ Rekaman berhenti. ' + (detectedNotes.length > 0 ?
+                `<span>${detectedNotes.length}</span> nada terdeteksi.` :
+                'Tidak ada nada terdeteksi.');
+
+            updateTranscriptionDisplay();
+            playResultBtn.disabled = (detectedNotes.length === 0);
+            sendToChordBtn.disabled = (detectedNotes.length === 0);
+        }
+
+        recordBtn.addEventListener('click', function() {
+            if (isRecordingTranscriber) {
+                stopTranscriberRecording();
+            } else {
+                startTranscriberRecording();
+            }
+        });
+
+        transcribeBtn.addEventListener('click', function() {
+            // Sebenarnya tombol ini hanya untuk info, karena transkripsi sudah real-time
+            if (detectedNotes.length === 0) {
+                statusEl.textContent = '⚠️ Belum ada nada yang terdeteksi. Coba rekam suara/instrumen.';
+                return;
+            }
+            statusEl.innerHTML = `✅ Transkripsi selesai: ${detectedNotes.length} nada terdeteksi.`;
+            updateTranscriptionDisplay();
+        });
+
+        playResultBtn.addEventListener('click', function() {
+            if (isTranscriberPlaying) {
+                transcribePlayTimeouts.forEach(t => clearTimeout(t));
+                transcribePlayTimeouts = [];
+                isTranscriberPlaying = false;
+                playResultBtn.textContent = '▶ Play Hasil';
+                return;
+            }
+
+            if (detectedNotes.length === 0) return;
+
+            const ctx = new(window.AudioContext || window.webkitAudioContext)();
+
+            detectedNotes.forEach((item, index) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(item.freq, ctx.currentTime);
+
+                gain.gain.setValueAtTime(0.3, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
+
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+
+                const startTime = ctx.currentTime + item.time;
+                osc.start(startTime);
+                osc.stop(startTime + 0.2);
+            });
+
+            isTranscriberPlaying = true;
+            playResultBtn.textContent = '⏹ Stop';
+
+            const totalTime = detectedNotes[detectedNotes.length - 1].time + 0.3;
+            const timeout = setTimeout(() => {
+                isTranscriberPlaying = false;
+                playResultBtn.textContent = '▶ Play Hasil';
+                if (ctx.state !== 'closed') ctx.close();
+            }, totalTime * 1000 + 200);
+            transcribePlayTimeouts.push(timeout);
+        });
+
+        sendToChordBtn.addEventListener('click', function() {
+            if (detectedNotes.length === 0) return;
+            const noteNames = detectedNotes.map(n => n.note).join(' → ');
+            const chordInput = document.getElementById('chordInput');
+            if (chordInput) {
+                chordInput.value = noteNames;
+                // Pindah ke tab chord
+                document.querySelector('.tab-btn-nav[data-tab="chord"]')?.click();
+                statusEl.innerHTML = '✅ Data dikirim ke Chord Progression! Klik "Generate Progresi" untuk melihat hasil.';
+            }
+        });
+
+        clearTranscribeBtn.addEventListener('click', function() {
+            if (isTranscriberPlaying) {
+                transcribePlayTimeouts.forEach(t => clearTimeout(t));
+                transcribePlayTimeouts = [];
+                isTranscriberPlaying = false;
+                playResultBtn.textContent = '▶ Play Hasil';
+            }
+            detectedNotes = [];
+            lastDetectedNote = null;
+            transcribedDisplay.textContent = '-';
+            transcribeInfo.textContent = 'Jumlah nada: 0';
+            durationInfo.textContent = '0 detik';
+            transcribeResult.style.display = 'none';
+            sendToChordBtn.disabled = true;
+            playResultBtn.disabled = true;
+            statusEl.textContent = '🗑️ Hasil transkripsi dibersihkan.';
+            waveformData = [];
+            drawWaveform();
+            if (isRecordingTranscriber) stopTranscriberRecording();
         });
 
         // ================================================================
