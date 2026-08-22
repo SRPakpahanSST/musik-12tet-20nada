@@ -1649,6 +1649,10 @@
             keyboardMelodyPlaying = false;
             document.getElementById('descGenerateBtn').disabled = false;
             document.getElementById('descGenerateBtn').textContent = '🎵 Generate & Play';
+            // Jika ada playback rekaman, hentikan juga
+            if (isPlayingRecorded) {
+                // akan ditangani di stopRecordedPlayback
+            }
         }
 
         // === Hentikan hanya akord (tidak menghentikan melodi) ===
@@ -1666,15 +1670,11 @@
         // ================================================================
         // KEYBOARD GENERATION & RANGE
         // ================================================================
-        // generateNoteSequence: startOctave default 3 (agar mulai dari C3)
-        function generateNoteSequence(octaveCount, startOctave = 3) {
+        function generateNoteSequence(octaveCount) {
             const seq = [];
-            // Oktaf pertama: tambahkan C, C#, D dari startOctave
-            const startOctaveStr = startOctave;
-            const notesStart = ['C' + startOctaveStr, 'C#' + startOctaveStr, 'D' + startOctaveStr];
-            notesStart.forEach(n => seq.push({ note: n, isBlack: n.includes('#') }));
-            // Kemudian untuk oktaf berikutnya (startOctave+1 sampai startOctave+octaveCount-1)
-            for (let o = startOctave + 1; o <= startOctave + octaveCount - 1; o++) {
+            const octave2 = ['C2', 'C#2', 'D2'];
+            octave2.forEach(n => seq.push({ note: n, isBlack: n.includes('#') }));
+            for (let o = 3; o <= 2 + octaveCount - 1; o++) {
                 const notes = [
                     'E' + o, 'E#' + o, 'F' + o, 'F#' + o, 'G' + o, 'G#' + o,
                     'H' + o, 'H#' + o, 'I' + o, 'J' + o, 'J#' + o,
@@ -1758,37 +1758,33 @@
                     keyElements[note] = key;
                 }
             }
-            // Tampilkan label oktaf (perkiraan sederhana)
+            // Tampilkan label oktaf
             let posX = startX;
-            // Oktaf pertama: 3 tuts putih (C, C#, D)
-            const widthOctaveFirst = 3 * whiteWidth;
-            const labelFirst = document.createElement('div');
-            labelFirst.className = 'octave-label';
-            labelFirst.style.left = posX + 'px';
-            labelFirst.style.top = (yWhite + whiteHeight + 5) + 'px';
-            labelFirst.style.width = widthOctaveFirst + 'px';
-            const firstOctaveNum = parseInt(noteSeq[0].note.match(/\d+$/)[0]);
-            labelFirst.textContent = 'Oktaf ' + firstOctaveNum;
-            container.appendChild(labelFirst);
-            posX += widthOctaveFirst;
-            // Oktaf berikutnya: 20 tuts (E sampai D)
-            const widthFullOctave = 20 * whiteWidth;
-            const labelFull = document.createElement('div');
-            labelFull.className = 'octave-label';
-            labelFull.style.left = posX + 'px';
-            labelFull.style.top = (yWhite + whiteHeight + 5) + 'px';
-            labelFull.style.width = widthFullOctave + 'px';
-            const nextOctaveNum = firstOctaveNum + 1;
-            labelFull.textContent = 'Oktaf ' + nextOctaveNum;
-            container.appendChild(labelFull);
+            const widthOctave2 = 3 * whiteWidth;
+            const label2 = document.createElement('div');
+            label2.className = 'octave-label';
+            label2.style.left = posX + 'px';
+            label2.style.top = (yWhite + whiteHeight + 5) + 'px';
+            label2.style.width = widthOctave2 + 'px';
+            label2.textContent = 'Oktaf 2';
+            container.appendChild(label2);
+            posX += widthOctave2;
+            const widthOctave3 = 17 * whiteWidth;
+            const label3 = document.createElement('div');
+            label3.className = 'octave-label';
+            label3.style.left = posX + 'px';
+            label3.style.top = (yWhite + whiteHeight + 5) + 'px';
+            label3.style.width = widthOctave3 + 'px';
+            label3.textContent = 'Oktaf 3';
+            container.appendChild(label3);
         }
 
-        // Fungsi build keyboard dengan oktaf count dan startOctave (default 3)
-        function buildKeyboard(octaveCount, startOctave = 3) {
-            const noteSeq = generateNoteSequence(octaveCount, startOctave);
+        // Fungsi build keyboard dengan oktaf count (standar)
+        function buildKeyboard(octaveCount) {
+            const noteSeq = generateNoteSequence(octaveCount);
             renderKeyboard(noteSeq);
-            const lastOctave = startOctave + octaveCount - 1;
-            statusDisplay.innerHTML = `🎹 ${octaveCount} oktaf (C${startOctave} sampai D${lastOctave}) — Klik tuts untuk bermain`;
+            const lastOctave = 2 + octaveCount - 1;
+            statusDisplay.innerHTML = `🎹 ${octaveCount} oktaf (C2 sampai D${lastOctave}) — Klik tuts untuk bermain`;
         }
 
         // Fungsi build keyboard untuk mode akord saat melodi diputar (C2-B#3)
@@ -1801,10 +1797,11 @@
         // ================================================================
         // REKAMAN MELODI (Tombol Mayor & Minor memutar ulang)
         // ================================================================
+        // Setiap item: { note, freq, duration, time }
         let recordedMelody = [];
-        let recordingStartTime = 0;
+        let recordingStartTime = 0; // waktu mulai rekaman (performance.now)
         let isPlayingRecorded = false;
-        let recordedPlayTimeouts = [];
+        let recordedPlayTimeouts = []; // untuk menyimpan semua timeout
 
         function setChordModeActive() {
             const chordRadio = document.querySelector('input[name="playMode"][value="chord"]');
@@ -1832,16 +1829,24 @@
                 return;
             }
 
+            // Hentikan semua suara (termasuk akord)
             stopAllSounds();
+
+            // Otomatis aktifkan mode Akord
             setChordModeActive();
+
+            // Ubah keyboard ke tampilan C2-B#3 (20 nada)
             buildChordKeyboard();
 
             isPlayingRecorded = true;
+            const startTime = performance.now();
 
-            recordedMelody.forEach((item) => {
-                const delayMs = item.time * 1000;
+            recordedMelody.forEach((item, i) => {
+                // Waktu delay dalam milidetik
+                const delayMs = item.time * 1000; // time dalam detik
                 const timeoutId = setTimeout(() => {
                     if (!isPlayingRecorded) return;
+                    // Mainkan nada dengan durasi yang sama
                     playSingleNote(item.freq, item.duration, currentInstrument, 'melody');
                     const key = keyElements[item.note];
                     if (key) {
@@ -1853,6 +1858,7 @@
                 recordedPlayTimeouts.push(timeoutId);
             });
 
+            // Setelah semua selesai, reset
             const totalTime = recordedMelody[recordedMelody.length - 1].time + 0.2;
             const finalTimeout = setTimeout(() => {
                 isPlayingRecorded = false;
@@ -1873,11 +1879,9 @@
             statusDisplay.innerHTML = '⏹ Pemutaran melodi dihentikan';
         }
 
-        // Kembalikan keyboard ke tampilan normal: 4 oktaf mulai dari C3 (C3-D6)
         function restoreKeyboardAfterPlayback() {
-            // Set ke 4 oktaf, startOctave=3
-            octaveSelector.value = '4';
-            buildKeyboard(4, 3);
+            const val = parseInt(octaveSelector.value);
+            buildKeyboard(val);
         }
 
         // ================================================================
@@ -1921,19 +1925,21 @@
             const octave = parseInt(match[2]);
 
             if (playMode === 'single') {
+                // Hentikan semua suara (termasuk akord) saat beralih ke nada tunggal
                 stopAllSounds();
                 if (isPlayingRecorded) stopRecordedPlayback();
 
                 const freq = FREQ_MAP[note];
                 if (freq) {
-                    const duration = 0.6;
+                    const duration = 0.6; // durasi tetap 0.6 detik
                     playSingleNote(freq, duration, currentInstrument, 'melody');
 
+                    // Rekam dengan waktu relatif
                     const now = performance.now();
                     if (recordedMelody.length === 0) {
                         recordingStartTime = now;
                     }
-                    const elapsed = (now - recordingStartTime) / 1000;
+                    const elapsed = (now - recordingStartTime) / 1000; // detik
                     recordedMelody.push({ note: note, freq: freq, duration: duration, time: elapsed });
 
                     statusDisplay.innerHTML = `🎵 Memainkan <span>${note}</span> (${freq.toFixed(2)} Hz) [${currentInstrument}] (melodi direkam)`;
@@ -1957,6 +1963,7 @@
             }
 
             if (isValidChordRoot) {
+                // Hanya hentikan akord sebelumnya, biarkan melodi tetap berjalan
                 stopChords();
                 const idx = NOTES_20.indexOf(noteName);
                 if (idx === -1) return;
@@ -1974,6 +1981,7 @@
                     statusDisplay.innerHTML = `⚠️ Akord untuk ${note} tidak valid (tidak ada frekuensi).`;
                 }
             } else {
+                // Nada tunggal di luar rentang: mainkan tanpa menghentikan akord, dengan instrumen pilihan
                 const freq = FREQ_MAP[note];
                 if (freq) {
                     const duration = 0.6;
@@ -2003,6 +2011,7 @@
                         chordModeLabel.classList.add('active-mode');
                         modeIndicator.textContent = '🎵 Mode: Akord (C2-B#3)';
                     }
+                    // Saat berpindah mode, hentikan semua suara
                     stopAllSounds();
                     if (isPlayingRecorded) stopRecordedPlayback();
                     statusDisplay.innerHTML = `🔄 Mode berubah ke: ${playMode === 'single' ? 'Tunggal' : 'Akord (C2-B#3)'}`;
@@ -2015,10 +2024,9 @@
             stopAllSounds();
             if (isPlayingRecorded) stopRecordedPlayback();
             if (!isPlayingRecorded) {
-                // Untuk oktaf, kita selalu mulai dari 3 agar konsisten dengan permintaan "C3-D6" untuk 4 oktaf
-                buildKeyboard(val, 3);
+                buildKeyboard(val);
             }
-            statusDisplay.innerHTML = `🔄 Berubah ke ${val} oktaf (mulai dari C3)`;
+            statusDisplay.innerHTML = `🔄 Berubah ke ${val} oktaf`;
         });
 
         instrumentSelector.addEventListener('change', function() {
@@ -2070,9 +2078,8 @@
             melodyResultArea.style.display = 'none';
             melodyResultDisplay.textContent = '-';
             if (!isPlayingRecorded) {
-                // Kembali ke 4 oktaf mulai C3
-                octaveSelector.value = '4';
-                buildKeyboard(4, 3);
+                const val = parseInt(octaveSelector.value);
+                buildKeyboard(val);
             }
         });
 
@@ -2203,7 +2210,7 @@
                     return;
                 }
                 melody = generateSimulation(mood, scale, tempo);
-            } else {
+            } else { // mode 'melodi'
                 if (recordedMelody.length === 0) {
                     alert('Belum ada melodi yang direkam. Mainkan tuts di mode Tunggal terlebih dahulu.');
                     return;
@@ -2864,9 +2871,8 @@ Hasilkan notasi nada:`;
         // INISIALISASI
         // ================================================================
         document.addEventListener('DOMContentLoaded', function() {
-            // Set default ke 4 oktaf, mulai dari C3 (C3-D6)
             octaveSelector.value = '4';
-            buildKeyboard(4, 3);
+            buildKeyboard(4);
             renderTab('teori');
             playMode = 'single';
             singleModeLabel.classList.add('active-mode');
