@@ -1664,84 +1664,8 @@
         }
 
         // ================================================================
-        // REKAMAN MELODI (Tombol Mayor & Minor memutar ulang)
+        // KEYBOARD GENERATION & RANGE
         // ================================================================
-        let recordedMelody = [];
-        let isPlayingRecorded = false;
-        let recordedPlayTimeout = null;
-
-        function playRecordedMelody() {
-            if (recordedMelody.length === 0) {
-                statusDisplay.innerHTML = '⚠️ Belum ada melodi yang direkam. Mainkan tuts di mode Tunggal.';
-                return;
-            }
-            if (isPlayingRecorded) {
-                stopRecordedPlayback();
-                return;
-            }
-            // Hentikan semua suara (termasuk akord) sebelum memutar melodi rekaman
-            stopAllSounds();
-            isPlayingRecorded = true;
-            let delay = 0;
-            const dur = 0.4,
-                gap = 0.1;
-            recordedMelody.forEach((item, i) => {
-                setTimeout(() => {
-                    if (!isPlayingRecorded) return;
-                    // Mainkan dengan tipe 'melody'
-                    playSingleNote(item.freq, dur, currentInstrument, 'melody');
-                    const key = keyElements[item.note];
-                    if (key) { key.classList.add('active');
-                        setTimeout(() => key.classList.remove('active'), dur * 1000); }
-                    statusDisplay.innerHTML = `🎵 ${item.note} (${item.freq.toFixed(2)} Hz) [${currentInstrument}] (melodi rekaman)`;
-                }, delay * 1000);
-                delay += dur + gap;
-            });
-            recordedPlayTimeout = setTimeout(() => {
-                isPlayingRecorded = false;
-                statusDisplay.innerHTML = '✅ Melodi selesai diputar';
-            }, delay * 1000 + 200);
-        }
-
-        function stopRecordedPlayback() {
-            if (recordedPlayTimeout) {
-                clearTimeout(recordedPlayTimeout);
-                recordedPlayTimeout = null;
-            }
-            isPlayingRecorded = false;
-            stopAllSounds();
-            statusDisplay.innerHTML = '⏹ Pemutaran melodi dihentikan';
-        }
-
-        // ================================================================
-        // KEYBOARD
-        // ================================================================
-        const container = document.getElementById('keyboardContainer');
-        const statusDisplay = document.getElementById('statusDisplay');
-        const modeIndicator = document.getElementById('modeIndicator');
-        const singleModeLabel = document.getElementById('singleModeLabel');
-        const chordModeLabel = document.getElementById('chordModeLabel');
-        const octaveSelector = document.getElementById('octaveSelector');
-        const instrumentSelector = document.getElementById('instrumentSelector');
-        const reverbSlider = document.getElementById('reverbMix');
-        const delaySlider = document.getElementById('delayMix');
-        const reverbVal = document.getElementById('reverbVal');
-        const delayVal = document.getElementById('delayVal');
-        const ampSlider = document.getElementById('ampSlider');
-        const ampVal = document.getElementById('ampVal');
-        const descInput = document.getElementById('descInput');
-        const descMoodSelect = document.getElementById('descMoodSelect');
-        const descScaleSelect = document.getElementById('descScaleSelect');
-        const descInputMode = document.getElementById('descInputMode');
-        const descGenerateBtn = document.getElementById('descGenerateBtn');
-        const descStopBtn = document.getElementById('descStopBtn');
-        const melodyResultArea = document.getElementById('melodyResultArea');
-        const melodyResultDisplay = document.getElementById('melodyResultDisplay');
-        let keyElements = {};
-
-        let keyboardMelodyPlaying = false;
-        let keyboardMelodyTimeout = null;
-
         function generateNoteSequence(octaveCount) {
             const seq = [];
             const octave2 = ['C2', 'C#2', 'D2'];
@@ -1758,10 +1682,44 @@
             return seq;
         }
 
+        function generateNoteSequenceRange(startOctave, endOctave) {
+            const seq = [];
+            for (let o = startOctave; o <= endOctave; o++) {
+                let notes;
+                if (o === 2) {
+                    notes = ['C2', 'C#2', 'D2'];
+                } else {
+                    notes = [
+                        'E' + o, 'E#' + o, 'F' + o, 'F#' + o, 'G' + o, 'G#' + o,
+                        'H' + o, 'H#' + o, 'I' + o, 'J' + o, 'J#' + o,
+                        'K' + o, 'K#' + o, 'A' + o, 'A#' + o,
+                        'B' + o, 'B#' + o, 'C' + o, 'C#' + o, 'D' + o
+                    ];
+                }
+                notes.forEach(n => seq.push({ note: n, isBlack: n.includes('#') }));
+            }
+            return seq;
+        }
+
+        // Fungsi build keyboard dengan oktaf count (standar)
         function buildKeyboard(octaveCount) {
+            const noteSeq = generateNoteSequence(octaveCount);
+            renderKeyboard(noteSeq);
+            const lastOctave = 2 + octaveCount - 1;
+            statusDisplay.innerHTML = `🎹 ${octaveCount} oktaf (C2 sampai D${lastOctave}) — Klik tuts untuk bermain`;
+        }
+
+        // Fungsi build keyboard range (untuk akord saat melodi diputar)
+        function buildKeyboardRange(startOctave, endOctave) {
+            const noteSeq = generateNoteSequenceRange(startOctave, endOctave);
+            renderKeyboard(noteSeq);
+            statusDisplay.innerHTML = `🎹 Oktaf ${startOctave}-${endOctave} (C2-D3) — Fokus akord C2-B#3`;
+        }
+
+        // Render keyboard dari note sequence
+        function renderKeyboard(noteSeq) {
             container.innerHTML = '';
             keyElements = {};
-            const noteSeq = generateNoteSequence(octaveCount);
             const whiteWidth = 30,
                 whiteHeight = 155,
                 blackWidth = 18,
@@ -1818,22 +1776,111 @@
                 }
             }
             let posX = startX;
-            let octaveGroups = [{ octave: 2, count: 3 }];
-            for (let o = 3; o <= 2 + octaveCount - 1; o++) octaveGroups.push({ octave: o, count: 20 });
-            for (let g of octaveGroups) {
-                const width = g.count * whiteWidth;
-                const label = document.createElement('div');
-                label.className = 'octave-label';
-                label.style.left = posX + 'px';
-                label.style.top = (yWhite + whiteHeight + 5) + 'px';
-                label.style.width = width + 'px';
-                label.textContent = `Oktaf ${g.octave}`;
-                container.appendChild(label);
-                posX += width;
-            }
-            const lastOctave = 1 + octaveCount;
-            statusDisplay.innerHTML = `🎹 ${octaveCount} oktaf (C2 sampai D${lastOctave}) — Klik tuts untuk bermain`;
+            // Tampilkan label oktaf
+            // Kita sederhanakan: tidak perlu label karena range sudah jelas.
         }
+
+        // ================================================================
+        // REKAMAN MELODI (Tombol Mayor & Minor memutar ulang)
+        // ================================================================
+        let recordedMelody = [];
+        let isPlayingRecorded = false;
+        let recordedPlayTimeout = null;
+        let wasChordModeActive = false;
+
+        function playRecordedMelody() {
+            if (recordedMelody.length === 0) {
+                statusDisplay.innerHTML = '⚠️ Belum ada melodi yang direkam. Mainkan tuts di mode Tunggal.';
+                return;
+            }
+            if (isPlayingRecorded) {
+                stopRecordedPlayback();
+                return;
+            }
+            // Hentikan semua suara (termasuk akord) sebelum memutar melodi rekaman
+            stopAllSounds();
+
+            // Simpan mode akord jika aktif
+            wasChordModeActive = (playMode === 'chord');
+
+            // Ubah keyboard ke range 2-3 (C2-D3) untuk memudahkan akord
+            buildKeyboardRange(2, 3);
+
+            isPlayingRecorded = true;
+            let delay = 0;
+            const dur = 0.4,
+                gap = 0.1;
+            recordedMelody.forEach((item, i) => {
+                setTimeout(() => {
+                    if (!isPlayingRecorded) return;
+                    // Mainkan dengan tipe 'melody'
+                    playSingleNote(item.freq, dur, currentInstrument, 'melody');
+                    const key = keyElements[item.note];
+                    if (key) { key.classList.add('active');
+                        setTimeout(() => key.classList.remove('active'), dur * 1000); }
+                    statusDisplay.innerHTML = `🎵 ${item.note} (${item.freq.toFixed(2)} Hz) [${currentInstrument}] (melodi rekaman)`;
+                }, delay * 1000);
+                delay += dur + gap;
+            });
+            recordedPlayTimeout = setTimeout(() => {
+                isPlayingRecorded = false;
+                // Kembalikan keyboard ke pengaturan oktaf semula
+                restoreKeyboardAfterPlayback();
+                statusDisplay.innerHTML = '✅ Melodi selesai diputar';
+            }, delay * 1000 + 200);
+        }
+
+        function stopRecordedPlayback() {
+            if (recordedPlayTimeout) {
+                clearTimeout(recordedPlayTimeout);
+                recordedPlayTimeout = null;
+            }
+            isPlayingRecorded = false;
+            stopAllSounds();
+            restoreKeyboardAfterPlayback();
+            statusDisplay.innerHTML = '⏹ Pemutaran melodi dihentikan';
+        }
+
+        function restoreKeyboardAfterPlayback() {
+            // Kembali ke pengaturan oktaf yang dipilih
+            const val = parseInt(octaveSelector.value);
+            buildKeyboard(val);
+            // Jika sebelumnya mode akord, kembalikan indikator
+            if (wasChordModeActive) {
+                // Set mode indicator, tapi tidak perlu mengubah playMode karena sudah dihandle oleh radio button
+                // Tapi kita hanya perlu memastikan keyboard sudah kembali
+            }
+            wasChordModeActive = false;
+        }
+
+        // ================================================================
+        // KEYBOARD
+        // ================================================================
+        const container = document.getElementById('keyboardContainer');
+        const statusDisplay = document.getElementById('statusDisplay');
+        const modeIndicator = document.getElementById('modeIndicator');
+        const singleModeLabel = document.getElementById('singleModeLabel');
+        const chordModeLabel = document.getElementById('chordModeLabel');
+        const octaveSelector = document.getElementById('octaveSelector');
+        const instrumentSelector = document.getElementById('instrumentSelector');
+        const reverbSlider = document.getElementById('reverbMix');
+        const delaySlider = document.getElementById('delayMix');
+        const reverbVal = document.getElementById('reverbVal');
+        const delayVal = document.getElementById('delayVal');
+        const ampSlider = document.getElementById('ampSlider');
+        const ampVal = document.getElementById('ampVal');
+        const descInput = document.getElementById('descInput');
+        const descMoodSelect = document.getElementById('descMoodSelect');
+        const descScaleSelect = document.getElementById('descScaleSelect');
+        const descInputMode = document.getElementById('descInputMode');
+        const descGenerateBtn = document.getElementById('descGenerateBtn');
+        const descStopBtn = document.getElementById('descStopBtn');
+        const melodyResultArea = document.getElementById('melodyResultArea');
+        const melodyResultDisplay = document.getElementById('melodyResultDisplay');
+        let keyElements = {};
+
+        let keyboardMelodyPlaying = false;
+        let keyboardMelodyTimeout = null;
 
         function handleKeyPress(note) {
             const key = keyElements[note];
@@ -1935,7 +1982,10 @@
             const val = parseInt(this.value);
             stopAllSounds();
             if (isPlayingRecorded) stopRecordedPlayback();
-            buildKeyboard(val);
+            // Jika sedang memutar melodi, jangan ubah keyboard (akan dikembalikan setelah selesai)
+            if (!isPlayingRecorded) {
+                buildKeyboard(val);
+            }
             statusDisplay.innerHTML = `🔄 Berubah ke ${val} oktaf`;
         });
 
@@ -1986,6 +2036,10 @@
             document.querySelectorAll('.key.active').forEach(k => k.classList.remove('active'));
             melodyResultArea.style.display = 'none';
             melodyResultDisplay.textContent = '-';
+            if (!isPlayingRecorded) {
+                const val = parseInt(octaveSelector.value);
+                buildKeyboard(val);
+            }
         });
 
         // ================================================================
@@ -2586,7 +2640,7 @@ Hasilkan notasi nada:`;
             </tbody></table><p style="font-size:0.8rem;color:#888;font-weight:bold;">A4 = 440 Hz (acuan) | Oktaf berikutnya × 3</p>`,
             skala: `<h3>🎹 Skala Mayor (E=1)</h3><p>E - F - G - H - I - J - K - A - B - C - D - E</p><p>Interval: 1 1 1 1 ½ 1 1 1 1 1 ½</p><h3>🎹 Skala Minor (A=1)</h3><p>A - B - C - D - E - F - G - H - I - J - K - A</p><p>Interval: 1 1 1 ½ 1 1 1 1 ½ 1 1</p>`,
             chord: `<h3>🎵 Akord</h3><p>Akord dibangun dari 20 not dengan terts (mayor=4, minor=3) dan kwint (7).</p><p>Rentang akord: C2 – B#3 (20 nada). Tuts putih = Mayor, tuts hitam = Minor.</p><p>Contoh: E mayor = E, G#, K#; E# minor = E#, G##? (gunakan 20-TET)</p>`,
-            tentang: `<h3>📖 Tentang Aplikasi</h3><p>Berdasarkan karya tulis Sukma Riadi Pakpahan, SST.</p><p><b>Fitur:</b> 8 instrumen, Reverb, Delay, Amplifier, 3/4/5 oktaf, Akord (C2-B#3) sustain dengan piano, AI Composer, AI Transcriber (dengan mikrofon), Chord Progression.</p><p><b>Tombol Mayor/Minor:</b> Memutar ulang melodi rekaman (bukan tangga nada).</p><p><b>Gubah dari Melodi:</b> Di tab Keyboard, pilih mode Input "Melodi", tulis deskripsi, lalu Generate & Play untuk menggubah melodi rekaman.</p><p><b>Akord saat melodi mengalun:</b> Beralih ke mode Akord saat melodi diputar, tekan tuts akord – akord baru menggantikan yang lama, melodi tetap berjalan.</p><p><b>Sistem:</b> 12-TET 20 Nada per Oktaf | A4 = 440 Hz</p>`
+            tentang: `<h3>📖 Tentang Aplikasi</h3><p>Berdasarkan karya tulis Sukma Riadi Pakpahan, SST.</p><p><b>Fitur:</b> 8 instrumen, Reverb, Delay, Amplifier, 3/4/5 oktaf, Akord (C2-B#3) sustain dengan piano, AI Composer, AI Transcriber (dengan mikrofon), Chord Progression.</p><p><b>Tombol Mayor/Minor:</b> Memutar ulang melodi rekaman (bukan tangga nada).</p><p><b>Gubah dari Melodi:</b> Di tab Keyboard, pilih mode Input "Melodi", tulis deskripsi, lalu Generate & Play untuk menggubah melodi rekaman.</p><p><b>Akord saat melodi mengalun:</b> Beralih ke mode Akord saat melodi diputar, tekan tuts akord – akord baru menggantikan yang lama, melodi tetap berjalan.</p><p><b>Keyboard otomatis fokus ke oktaf 2-3 saat melodi diputar</b> untuk memudahkan akses akord.</p><p><b>Sistem:</b> 12-TET 20 Nada per Oktaf | A4 = 440 Hz</p>`
         };
 
         function renderTab(tabId) {
@@ -2629,6 +2683,7 @@ Hasilkan notasi nada:`;
                     <li>Akord akan <b>sustain</b> (terus berbunyi) hingga Anda menekan akord lain atau menekan tombol Stop/Reset.</li>
                     <li>Akord selalu menggunakan suara <b>Piano</b> (statis) untuk iringan yang stabil.</li>
                     <li><b>Akord dapat mengiringi melodi:</b> saat melodi sedang diputar, beralih ke mode Akord dan tekan tuts akord – melodi tetap berbunyi.</li>
+                    <li><b>Keyboard otomatis fokus ke oktaf 2-3 saat melodi diputar</b> agar lebih mudah mengakses tuts akord.</li>
                 </ul>
                 <p><b>💡 Nada tunggal di luar rentang dapat dimainkan sebagai melodi tanpa menghentikan akord.</b></p>
             `
@@ -2820,6 +2875,7 @@ Hasilkan notasi nada:`;
             console.log('🎤 AI Transcriber dengan mikrofon dan deteksi pitch siap digunakan.');
             console.log('🎯 Fitur "Gubah dari Melodi" tersedia di tab Keyboard (mode Input: Melodi).');
             console.log('🎵 Akord dapat mengiringi melodi tanpa menghentikannya.');
+            console.log('🎹 Keyboard otomatis fokus ke oktaf 2-3 saat melodi diputar.');
             console.log('📖 Tutorial siap dibuka dengan tombol Tutorial.');
         });
     </script>
