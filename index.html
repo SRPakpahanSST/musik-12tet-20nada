@@ -1649,14 +1649,8 @@
             keyboardMelodyPlaying = false;
             document.getElementById('descGenerateBtn').disabled = false;
             document.getElementById('descGenerateBtn').textContent = '🎵 Generate & Play';
-            // Kembalikan ke mode Nada Tunggal jika sedang memutar melodi
             if (isPlayingRecorded) {
-                // Ini akan dipanggil dari stopRecordedPlayback
-                // Tapi kita panggil di sini untuk jaga-jaga
-                if (document.querySelector('input[name="playMode"][value="single"]')) {
-                    document.querySelector('input[name="playMode"][value="single"]').checked = true;
-                    document.querySelector('input[name="playMode"][value="single"]').dispatchEvent(new Event('change'));
-                }
+                // sudah ditangani di stopRecordedPlayback
             }
         }
 
@@ -1694,10 +1688,8 @@
         // === HANYA C2-B#3 (20 nada), tidak termasuk C3 dan D3 ===
         function generateChordRangeNotes() {
             const seq = [];
-            // Oktaf 2: C2, C#2, D2
             const octave2 = ['C2', 'C#2', 'D2'];
             octave2.forEach(n => seq.push({ note: n, isBlack: n.includes('#') }));
-            // Oktaf 3: E3 sampai B#3 (17 nada), tidak termasuk C3 dan D3
             const octave3 = [
                 'E3', 'E#3', 'F3', 'F#3', 'G3', 'G#3', 'H3', 'H#3', 'I3',
                 'J3', 'J#3', 'K3', 'K#3', 'A3', 'A#3', 'B3', 'B#3'
@@ -1767,7 +1759,6 @@
             }
             // Tampilkan label oktaf
             let posX = startX;
-            // Oktaf 2: 3 tuts putih
             const widthOctave2 = 3 * whiteWidth;
             const label2 = document.createElement('div');
             label2.className = 'octave-label';
@@ -1777,7 +1768,6 @@
             label2.textContent = 'Oktaf 2';
             container.appendChild(label2);
             posX += widthOctave2;
-            // Oktaf 3: 17 tuts putih
             const widthOctave3 = 17 * whiteWidth;
             const label3 = document.createElement('div');
             label3.className = 'octave-label';
@@ -1806,12 +1796,11 @@
         // ================================================================
         // REKAMAN MELODI (Tombol Mayor & Minor memutar ulang)
         // ================================================================
-        let recordedMelody = [];
+        let recordedMelody = []; // setiap item: { note, freq, duration }
         let isPlayingRecorded = false;
         let recordedPlayTimeout = null;
         let wasChordModeActive = false;
 
-        // Fungsi untuk mengaktifkan radio button Akord
         function setChordModeActive() {
             const chordRadio = document.querySelector('input[name="playMode"][value="chord"]');
             if (chordRadio) {
@@ -1820,7 +1809,6 @@
             }
         }
 
-        // Fungsi untuk mengaktifkan radio button Nada Tunggal
         function setSingleModeActive() {
             const singleRadio = document.querySelector('input[name="playMode"][value="single"]');
             if (singleRadio) {
@@ -1849,25 +1837,21 @@
 
             isPlayingRecorded = true;
             let delay = 0;
-            const dur = 0.4,
-                gap = 0.1;
             recordedMelody.forEach((item, i) => {
+                const dur = item.duration || 0.6; // gunakan durasi yang tersimpan
                 setTimeout(() => {
                     if (!isPlayingRecorded) return;
-                    // Mainkan dengan tipe 'melody'
                     playSingleNote(item.freq, dur, currentInstrument, 'melody');
                     const key = keyElements[item.note];
                     if (key) { key.classList.add('active');
                         setTimeout(() => key.classList.remove('active'), dur * 1000); }
                     statusDisplay.innerHTML = `🎵 ${item.note} (${item.freq.toFixed(2)} Hz) [${currentInstrument}] (melodi rekaman)`;
                 }, delay * 1000);
-                delay += dur + gap;
+                delay += dur + 0.1; // gap 0.1 detik
             });
             recordedPlayTimeout = setTimeout(() => {
                 isPlayingRecorded = false;
-                // Kembalikan keyboard ke pengaturan oktaf semula
                 restoreKeyboardAfterPlayback();
-                // Otomatis aktifkan mode Nada Tunggal
                 setSingleModeActive();
                 statusDisplay.innerHTML = '✅ Melodi selesai diputar';
             }, delay * 1000 + 200);
@@ -1881,13 +1865,11 @@
             isPlayingRecorded = false;
             stopAllSounds();
             restoreKeyboardAfterPlayback();
-            // Otomatis aktifkan mode Nada Tunggal
             setSingleModeActive();
             statusDisplay.innerHTML = '⏹ Pemutaran melodi dihentikan';
         }
 
         function restoreKeyboardAfterPlayback() {
-            // Kembali ke pengaturan oktaf yang dipilih
             const val = parseInt(octaveSelector.value);
             buildKeyboard(val);
             wasChordModeActive = false;
@@ -1940,8 +1922,10 @@
 
                 const freq = FREQ_MAP[note];
                 if (freq) {
-                    playSingleNote(freq, 0.6, currentInstrument, 'melody');
-                    recordedMelody.push({ note: note, freq: freq });
+                    const duration = 0.6; // durasi tetap 0.6 detik
+                    playSingleNote(freq, duration, currentInstrument, 'melody');
+                    // Simpan durasi
+                    recordedMelody.push({ note: note, freq: freq, duration: duration });
                     statusDisplay.innerHTML = `🎵 Memainkan <span>${note}</span> (${freq.toFixed(2)} Hz) [${currentInstrument}] (melodi direkam)`;
                 }
                 return;
@@ -1984,7 +1968,8 @@
                 // Nada tunggal di luar rentang: mainkan tanpa menghentikan akord, dengan instrumen pilihan
                 const freq = FREQ_MAP[note];
                 if (freq) {
-                    playSingleNote(freq, 0.6, currentInstrument, 'melody');
+                    const duration = 0.6;
+                    playSingleNote(freq, duration, currentInstrument, 'melody');
                     statusDisplay.innerHTML = `🎵 Nada <span>${note}</span> (${freq.toFixed(2)} Hz) [${currentInstrument}] (melodi)`;
                 }
             }
@@ -2022,7 +2007,6 @@
             const val = parseInt(this.value);
             stopAllSounds();
             if (isPlayingRecorded) stopRecordedPlayback();
-            // Jika sedang memutar melodi, jangan ubah keyboard (akan dikembalikan setelah selesai)
             if (!isPlayingRecorded) {
                 buildKeyboard(val);
             }
@@ -2231,7 +2215,6 @@
 
         function playMelody(melody, tempo = 120) {
             if (!melody || melody.length === 0) return;
-            // Hentikan semua suara (termasuk akord) sebelum memutar melodi hasil generate
             stopAllSounds();
             if (isPlayingRecorded) stopRecordedPlayback();
             keyboardMelodyPlaying = true;
@@ -2891,19 +2874,28 @@ Hasilkan notasi nada:`;
             aiDescModeLabel.classList.add('active-ai-mode');
             aiPromptModeLabel.classList.remove('active-ai-mode');
 
-            // Status transcriber
-            statusEl.textContent = '🔴 Klik tombol mikrofon untuk mulai merekam (maks. 22 menit)';
-            ctxCanvas.fillStyle = '#0d0d1a';
-            ctxCanvas.fillRect(0, 0, canvas.width, canvas.height);
-            ctxCanvas.fillStyle = '#555';
-            ctxCanvas.font = '14px sans-serif';
-            ctxCanvas.textAlign = 'center';
-            ctxCanvas.fillText('Tunggu rekaman...', canvas.width / 2, canvas.height / 2 + 5);
+            // Status transcriber (dummy)
+            const statusEl = document.getElementById('status');
+            if (statusEl) statusEl.textContent = '🔴 Klik tombol mikrofon untuk mulai merekam (maks. 22 menit)';
+            const canvas = document.getElementById('waveformCanvas');
+            if (canvas) {
+                const ctxCanvas = canvas.getContext('2d');
+                ctxCanvas.fillStyle = '#0d0d1a';
+                ctxCanvas.fillRect(0, 0, canvas.width, canvas.height);
+                ctxCanvas.fillStyle = '#555';
+                ctxCanvas.font = '14px sans-serif';
+                ctxCanvas.textAlign = 'center';
+                ctxCanvas.fillText('Tunggu rekaman...', canvas.width / 2, canvas.height / 2 + 5);
+            }
 
             if (navigator.permissions && navigator.permissions.query) {
                 navigator.permissions.query({ name: 'microphone' }).then(result => {
                     if (result.state === 'denied') {
-                        showError('Izin mikrofon telah ditolak. Mohon izinkan akses mikrofon di pengaturan browser.');
+                        const err = document.getElementById('errorMessage');
+                        if (err) {
+                            err.classList.add('show');
+                            document.getElementById('errorText').textContent = 'Izin mikrofon telah ditolak. Mohon izinkan akses mikrofon di pengaturan browser.';
+                        }
                     }
                 }).catch(() => {});
             }
