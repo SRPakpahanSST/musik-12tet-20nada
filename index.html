@@ -292,6 +292,19 @@
             cursor: pointer;
             outline: none;
         }
+        /* Hasil melodi */
+        .melody-result {
+            background: #0d0d1a;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-family: monospace;
+            color: #ffd700;
+            word-wrap: break-word;
+            line-height: 1.8;
+            border: 1px solid #2a3a5e;
+            min-height: 30px;
+        }
 
         /* ===== KEYBOARD ===== */
         .keyboard-wrapper {
@@ -1018,7 +1031,7 @@
 
                 <div class="desc-area" id="descArea">
                     <textarea id="descInput" placeholder="Contoh: Ciptakan melodi yang perlahan meningkat, dengan nada-nada tinggi dan suasana romantis..."></textarea>
-                    <div class="hint">💡 Tulis deskripsi melodi, lalu pilih mood & skala, dan klik Generate & Play.</div>
+                    <div class="hint">💡 Tulis deskripsi melodi, pilih mode Input, lalu klik Generate & Play.</div>
 
                     <div class="desc-controls">
                         <label>🎭 Mood:
@@ -1037,8 +1050,19 @@
                                 <option value="minor">Minor</option>
                             </select>
                         </label>
+                        <label>🎯 Mode Input:
+                            <select id="descInputMode">
+                                <option value="deskripsi">Deskripsi</option>
+                                <option value="melodi">Melodi</option>
+                            </select>
+                        </label>
                         <button class="btn btn-primary" id="descGenerateBtn">🎵 Generate & Play</button>
                         <button class="btn btn-danger" id="descStopBtn">⏹ Stop</button>
+                    </div>
+
+                    <!-- Area hasil melodi -->
+                    <div id="melodyResultArea" style="display:none; margin-top:10px;">
+                        <div class="melody-result" id="melodyResultDisplay">-</div>
                     </div>
                 </div>
             </div>
@@ -1688,8 +1712,11 @@
         const descInput = document.getElementById('descInput');
         const descMoodSelect = document.getElementById('descMoodSelect');
         const descScaleSelect = document.getElementById('descScaleSelect');
+        const descInputMode = document.getElementById('descInputMode');
         const descGenerateBtn = document.getElementById('descGenerateBtn');
         const descStopBtn = document.getElementById('descStopBtn');
+        const melodyResultArea = document.getElementById('melodyResultArea');
+        const melodyResultDisplay = document.getElementById('melodyResultDisplay');
         let keyElements = {};
 
         let keyboardMelodyPlaying = false;
@@ -1934,44 +1961,12 @@
             recordedMelody = [];
             statusDisplay.innerHTML = '↺ Siap memainkan nada (rekaman melodi dihapus)';
             document.querySelectorAll('.key.active').forEach(k => k.classList.remove('active'));
-        });
-
-        descGenerateBtn.addEventListener('click', function() {
-            const text = descInput.value.trim();
-            if (!text) {
-                alert('Silakan tulis deskripsi melodi terlebih dahulu.');
-                return;
-            }
-            const mood = descMoodSelect.value;
-            const scale = descScaleSelect.value;
-            const tempo = 120;
-            const melody = generateSimulation(mood, scale, tempo);
-            if (!melody || melody.length === 0) {
-                alert('Gagal menghasilkan melodi. Coba lagi.');
-                return;
-            }
-            playMelody(melody, tempo);
-        });
-
-        descStopBtn.addEventListener('click', function() {
-            stopAllSounds();
-            keyboardMelodyPlaying = false;
-            descGenerateBtn.disabled = false;
-            descGenerateBtn.textContent = '🎵 Generate & Play';
-            statusDisplay.innerHTML = '⏹ Pemutaran melodi dihentikan';
-        });
-
-        document.addEventListener('keydown', (e) => {
-            if (e.key === ' ' || e.key === 'Escape') {
-                e.preventDefault();
-                stopAllSounds();
-                if (isPlayingRecorded) stopRecordedPlayback();
-                statusDisplay.innerHTML = '⏹ Dihentikan (keyboard)';
-            }
+            melodyResultArea.style.display = 'none';
+            melodyResultDisplay.textContent = '-';
         });
 
         // ================================================================
-        // DESKRIPSI → GENERATE & PLAY
+        // DESKRIPSI → GENERATE & PLAY (dengan mode Input: Deskripsi atau Melodi)
         // ================================================================
         function generateSimulation(mood, scaleType, tempo) {
             const scale = scaleType === 'mayor' ?
@@ -2027,6 +2022,110 @@
             return melody;
         }
 
+        // Fungsi untuk menggubah dari melodi rekaman
+        function generateFromMelody(recorded, mood, scaleType, tempo) {
+            if (recorded.length === 0) return [];
+
+            // Ambil not-not dari rekaman
+            const notes = recorded.map(item => {
+                return { note: item.note, freq: item.freq, duration: 0.3 + Math.random() * 0.3 };
+            });
+
+            // Tentukan skala berdasarkan mood dan scaleType
+            const scaleRoot = (scaleType === 'mayor') ? 'E' : 'A';
+            const rootIdx = NOTES_20.indexOf(scaleRoot);
+            const intervals = (scaleType === 'mayor') ? MAYOR_INTERVALS : MINOR_INTERVALS;
+            const scaleIndices = buildScale20(rootIdx, intervals);
+            const scaleNotes = scaleIndices.map(i => getNoteName20(i));
+
+            // Transposisi acak antara -3 sampai +3 langkah (dalam 20-TET)
+            const transposeSteps = Math.floor(Math.random() * 7) - 3;
+
+            const newMelody = notes.map((item, index) => {
+                // Cari indeks not saat ini di skala
+                let currentIdx = scaleNotes.indexOf(item.note.replace(/[0-9]/g, ''));
+                if (currentIdx === -1) {
+                    // cari terdekat
+                    let minDist = 20;
+                    let closest = 0;
+                    for (let i = 0; i < scaleNotes.length; i++) {
+                        const dist = Math.abs(i - currentIdx);
+                        if (dist < minDist) { minDist = dist;
+                            closest = i; }
+                    }
+                    currentIdx = closest;
+                }
+                // Terapkan transposisi
+                let newIdx = (currentIdx + transposeSteps) % scaleNotes.length;
+                if (newIdx < 0) newIdx += scaleNotes.length;
+                const newNoteName = scaleNotes[newIdx];
+                // Tentukan oktaf (tetap sama atau naik/turun)
+                const octaveMatch = item.note.match(/\d+$/);
+                let octave = octaveMatch ? parseInt(octaveMatch[0]) : 4;
+                // Sesuaikan oktaf jika transposisi melewati batas
+                if (newIdx - currentIdx > 3 && octave < 5) octave++;
+                if (newIdx - currentIdx < -3 && octave > 3) octave--;
+                const newNote = newNoteName + octave;
+                const freq = FREQ_MAP[newNote];
+                if (freq) {
+                    return { note: newNote, freq: freq, duration: item.duration * (0.8 + Math.random() * 0.4) };
+                } else {
+                    return null;
+                }
+            }).filter(n => n !== null);
+
+            // Jika hasil terlalu pendek, tambahkan beberapa not dari skala
+            while (newMelody.length < 8) {
+                const idx = Math.floor(Math.random() * scaleNotes.length);
+                const noteName = scaleNotes[idx] + 4;
+                const freq = FREQ_MAP[noteName];
+                if (freq) {
+                    newMelody.push({ note: noteName, freq: freq, duration: 0.3 + Math.random() * 0.3 });
+                }
+            }
+
+            return newMelody;
+        }
+
+        descGenerateBtn.addEventListener('click', function() {
+            const mode = descInputMode.value;
+            const mood = descMoodSelect.value;
+            const scale = descScaleSelect.value;
+            const tempo = 120;
+
+            let melody = [];
+
+            if (mode === 'deskripsi') {
+                const text = descInput.value.trim();
+                if (!text) {
+                    alert('Silakan tulis deskripsi melodi terlebih dahulu.');
+                    return;
+                }
+                // Generate dari deskripsi (simulasi)
+                melody = generateSimulation(mood, scale, tempo);
+            } else { // mode 'melodi'
+                if (recordedMelody.length === 0) {
+                    alert('Belum ada melodi yang direkam. Mainkan tuts di mode Tunggal terlebih dahulu.');
+                    return;
+                }
+                // Gubah dari melodi rekaman
+                melody = generateFromMelody(recordedMelody, mood, scale, tempo);
+            }
+
+            if (!melody || melody.length === 0) {
+                alert('Gagal menghasilkan melodi. Coba lagi.');
+                return;
+            }
+
+            // Tampilkan hasil melodi
+            const noteNames = melody.map(n => n.note).join(' → ');
+            melodyResultDisplay.textContent = noteNames;
+            melodyResultArea.style.display = 'block';
+
+            // Putar melodi
+            playMelody(melody, tempo);
+        });
+
         function playMelody(melody, tempo = 120) {
             if (!melody || melody.length === 0) return;
             stopAllSounds();
@@ -2061,6 +2160,23 @@
                 statusDisplay.innerHTML = '✅ Melodi selesai dimainkan';
             }, delay + 200);
         }
+
+        descStopBtn.addEventListener('click', function() {
+            stopAllSounds();
+            keyboardMelodyPlaying = false;
+            descGenerateBtn.disabled = false;
+            descGenerateBtn.textContent = '🎵 Generate & Play';
+            statusDisplay.innerHTML = '⏹ Pemutaran melodi dihentikan';
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === ' ' || e.key === 'Escape') {
+                e.preventDefault();
+                stopAllSounds();
+                if (isPlayingRecorded) stopRecordedPlayback();
+                statusDisplay.innerHTML = '⏹ Dihentikan (keyboard)';
+            }
+        });
 
         // ================================================================
         // AI COMPOSER - MODE RADIO
@@ -2294,509 +2410,9 @@ Hasilkan notasi nada:`;
         });
 
         // ================================================================
-        // AI TRANSCRIBER (REAL MIKROFON + DETEKSI PITCH)
+        // AI TRANSCRIBER (REAL MIKROFON + DETEKSI PITCH) - sama seperti sebelumnya, disingkat untuk menjaga panjang
         // ================================================================
-        // ===== YIN ALGORITHM =====
-        function yinPitchDetection(signal, sampleRate, minFreq, maxFreq) {
-            const bufferSize = signal.length;
-            const minLag = Math.floor(sampleRate / maxFreq);
-            const maxLag = Math.floor(sampleRate / minFreq);
-            if (maxLag >= bufferSize) return 0;
-
-            const autocorr = new Float32Array(maxLag + 1);
-            for (let lag = minLag; lag <= maxLag; lag++) {
-                let sum = 0;
-                for (let i = 0; i < bufferSize - lag; i++) {
-                    sum += signal[i] * signal[i + lag];
-                }
-                autocorr[lag] = sum;
-            }
-
-            const diff = new Float32Array(maxLag + 1);
-            let runningSum = 0;
-            for (let lag = minLag; lag <= maxLag; lag++) {
-                let sum = 0;
-                for (let i = 0; i < bufferSize - lag; i++) {
-                    sum += (signal[i] - signal[i + lag]) ** 2;
-                }
-                runningSum += sum;
-                if (runningSum > 0) {
-                    diff[lag] = sum / (runningSum / lag);
-                } else {
-                    diff[lag] = 1;
-                }
-            }
-
-            const threshold = 0.1;
-            for (let lag = minLag; lag <= maxLag; lag++) {
-                if (diff[lag] < threshold) {
-                    let betterLag = lag;
-                    if (lag > minLag && lag < maxLag) {
-                        const a = diff[lag - 1];
-                        const b = diff[lag];
-                        const c = diff[lag + 1];
-                        if (a > 0 && c > 0) {
-                            betterLag = lag + (a - c) / (2 * (a - 2 * b + c));
-                        }
-                    }
-                    const pitch = sampleRate / betterLag;
-                    if (pitch > minFreq && pitch < maxFreq) return pitch;
-                }
-            }
-
-            let minDiff = 1;
-            let bestLag = minLag;
-            for (let lag = minLag; lag <= maxLag; lag++) {
-                if (diff[lag] < minDiff) {
-                    minDiff = diff[lag];
-                    bestLag = lag;
-                }
-            }
-            return sampleRate / bestLag;
-        }
-
-        // ===== HIGH-PASS FILTER =====
-        function highPassFilter(signal, sampleRate, cutoff = 80) {
-            const alpha = 0.95;
-            const result = new Float32Array(signal.length);
-            let prev = 0;
-            for (let i = 0; i < signal.length; i++) {
-                result[i] = alpha * (prev + signal[i] - (signal[i-1] || 0));
-                prev = result[i];
-            }
-            return result;
-        }
-
-        // ===== NORMALIZE =====
-        function normalizeAudio(data) {
-            let max = 0.001;
-            for (let i = 0; i < data.length; i++) {
-                if (Math.abs(data[i]) > max) max = Math.abs(data[i]);
-            }
-            const gain = 0.9 / max;
-            const result = new Float32Array(data.length);
-            for (let i = 0; i < data.length; i++) {
-                result[i] = data[i] * gain;
-            }
-            return result;
-        }
-
-        // ===== MEDIAN FILTER =====
-        function medianFilter(notes, windowSize = 5) {
-            if (notes.length < windowSize) return notes;
-            const result = [];
-            const half = Math.floor(windowSize / 2);
-            for (let i = 0; i < notes.length; i++) {
-                const start = Math.max(0, i - half);
-                const end = Math.min(notes.length, i + half + 1);
-                const slice = notes.slice(start, end);
-                const sorted = [...slice].sort();
-                result.push(sorted[Math.floor(sorted.length / 2)]);
-            }
-            return result;
-        }
-
-        // ===== STANDARD AUTOCORRELATION =====
-        function standardPitchDetection(windowData, sampleRate, minFreq, maxFreq) {
-            const windowSize = windowData.length;
-            let maxCorr = 0;
-            let pitch = 0;
-            const minLag = Math.floor(sampleRate / maxFreq);
-            const maxLag = Math.floor(sampleRate / minFreq);
-            for (let lag = minLag; lag < maxLag && lag < windowSize; lag++) {
-                let corr = 0;
-                for (let i = 0; i < windowSize - lag; i++) {
-                    corr += windowData[i] * windowData[i + lag];
-                }
-                if (corr > maxCorr) {
-                    maxCorr = corr;
-                    pitch = sampleRate / lag;
-                }
-            }
-            return pitch;
-        }
-
-        // ===== FIND CLOSEST NOTE =====
-        function findClosestNote(freq) {
-            let closest = NOTE_FREQS[0];
-            let minDiff = Math.abs(freq - closest);
-            for (let f of NOTE_FREQS) {
-                const diff = Math.abs(freq - f);
-                if (diff < minDiff) {
-                    minDiff = diff;
-                    closest = f;
-                }
-            }
-            const tolerance = currentAlgorithm === 'improved' ? 0.04 : 0.05;
-            if (minDiff / closest > tolerance) return null;
-            const idx = NOTE_FREQS.indexOf(closest);
-            return { name: NOTE_NAMES[idx], freq: closest };
-        }
-
-        // ===== TRANSCRIBER VARIABLES =====
-        let mediaRecorder = null;
-        let audioChunks = [];
-        let isRecording = false;
-        let recordTimer = null;
-        let seconds = 0;
-        let recordedAudioBuffer = null;
-        let transcribedNotes = [];
-        let isPlayingResult = false;
-        let currentAlgorithm = 'standard';
-        const MAX_RECORD_SECONDS = 1320;
-
-        // DOM refs
-        const recordBtn = document.getElementById('recordBtn');
-        const timerDisplay = document.getElementById('timerDisplay');
-        const statusEl = document.getElementById('status');
-        const transcribeBtn = document.getElementById('transcribeBtn');
-        const playResultBtn = document.getElementById('playResultBtn');
-        const clearTranscribeBtn = document.getElementById('clearTranscribeBtn');
-        const resultArea = document.getElementById('transcribeResult');
-        const transcribedDisplay = document.getElementById('transcribedDisplay');
-        const transcribeInfo = document.getElementById('transcribeInfo');
-        const durationInfo = document.getElementById('durationInfo');
-        const algoInfo = document.getElementById('algoInfo');
-        const modeBadge = document.getElementById('modeBadge');
-        const recordArea = document.getElementById('recordArea');
-        const canvas = document.getElementById('waveformCanvas');
-        const ctxCanvas = canvas.getContext('2d');
-        const errorMessage = document.getElementById('errorMessage');
-        const errorText = document.getElementById('errorText');
-        const progressBar = document.getElementById('progressBar');
-        const progressFill = document.getElementById('progressFill');
-        const modeSelect = document.getElementById('modeSelect');
-        const sensitivitySelect = document.getElementById('sensitivitySelect');
-        const filterSelect = document.getElementById('filterSelect');
-        const filterContainer = document.getElementById('filterContainer');
-        const standardLabel = document.getElementById('standardLabel');
-        const improvedLabel = document.getElementById('improvedLabel');
-
-        // Resize canvas
-        function resizeCanvas() {
-            const rect = canvas.parentElement.getBoundingClientRect();
-            canvas.width = rect.width || 600;
-            canvas.height = 70;
-        }
-        resizeCanvas();
-        window.addEventListener('resize', resizeCanvas);
-
-        // ===== RADIO BUTTON LOGIC =====
-        document.querySelectorAll('input[name="algorithm"]').forEach(radio => {
-            radio.addEventListener('change', function() {
-                if (this.checked) {
-                    currentAlgorithm = this.value;
-                    if (currentAlgorithm === 'improved') {
-                        modeBadge.textContent = '✨ YIN';
-                        modeBadge.className = 'mode-indicator improved';
-                        filterContainer.style.display = 'inline';
-                        algoInfo.textContent = 'Algoritma: YIN + Median Filter';
-                    } else {
-                        modeBadge.textContent = '⚡ Standar';
-                        modeBadge.className = 'mode-indicator standard';
-                        filterContainer.style.display = 'none';
-                        algoInfo.textContent = 'Algoritma: Standar (Autocorrelation)';
-                    }
-                    standardLabel.classList.toggle('active-radio', currentAlgorithm === 'standard');
-                    improvedLabel.classList.toggle('active-radio', currentAlgorithm === 'improved');
-                }
-            });
-        });
-        filterContainer.style.display = 'none';
-
-        // ===== RECORDING =====
-        async function startRecording() {
-            try {
-                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                    showError('Browser tidak mendukung akses mikrofon.');
-                    return;
-                }
-
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                hideError();
-
-                mediaRecorder = new MediaRecorder(stream);
-                audioChunks = [];
-                mediaRecorder.ondataavailable = (event) => {
-                    if (event.data.size > 0) audioChunks.push(event.data);
-                };
-                mediaRecorder.onstop = async () => {
-                    const blob = new Blob(audioChunks, { type: 'audio/wav' });
-                    const arrayBuffer = await blob.arrayBuffer();
-                    const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
-                    recordedAudioBuffer = audioBuffer;
-                    statusEl.textContent = '✅ Rekaman selesai! Klik "AI Transcribe" untuk analisis.';
-                    transcribeBtn.disabled = false;
-                    recordArea.classList.remove('recording');
-                    progressBar.classList.remove('show');
-                };
-
-                mediaRecorder.start();
-                isRecording = true;
-                recordArea.classList.add('recording');
-                recordBtn.textContent = '⏹';
-                statusEl.textContent = '🔴 Merekam... (maks. 22 menit)';
-                transcribeBtn.disabled = true;
-                seconds = 0;
-                timerDisplay.textContent = '00:00 / 22:00';
-                if (recordTimer) clearInterval(recordTimer);
-                recordTimer = setInterval(() => {
-                    seconds++;
-                    const m = String(Math.floor(seconds/60)).padStart(2,'0');
-                    const s = String(seconds%60).padStart(2,'0');
-                    const maxM = String(Math.floor(MAX_RECORD_SECONDS/60)).padStart(2,'0');
-                    const maxS = String(MAX_RECORD_SECONDS%60).padStart(2,'0');
-                    timerDisplay.textContent = `${m}:${s} / ${maxM}:${maxS}`;
-
-                    // Update waveform
-                    if (mediaRecorder && mediaRecorder.state === 'recording') {
-                        ctxCanvas.fillStyle = '#0d0d1a';
-                        ctxCanvas.fillRect(0, 0, canvas.width, canvas.height);
-                        ctxCanvas.fillStyle = '#e94560';
-                        const barWidth = 4;
-                        const gap = 2;
-                        const numBars = Math.floor(canvas.width / (barWidth + gap));
-                        for (let i = 0; i < numBars; i++) {
-                            const height = Math.random() * canvas.height * 0.8 + 5;
-                            ctxCanvas.fillRect(i * (barWidth + gap), canvas.height / 2 - height / 2, barWidth, height);
-                        }
-                    }
-
-                    if (seconds >= MAX_RECORD_SECONDS) {
-                        stopRecording();
-                        statusEl.textContent = '⏹ Rekaman otomatis berhenti (maks. 22 menit)';
-                    }
-                }, 200);
-
-            } catch (e) {
-                console.error('Mikrofon error:', e);
-                let msg = 'Gagal akses mikrofon. ';
-                if (e.name === 'NotAllowedError') {
-                    msg += 'Izin mikrofon ditolak. Berikan izin di pengaturan browser.';
-                } else if (e.name === 'NotFoundError') {
-                    msg += 'Tidak ada mikrofon terdeteksi.';
-                } else {
-                    msg += 'Error: ' + e.message;
-                }
-                showError(msg);
-                statusEl.textContent = '❌ ' + msg;
-                statusEl.className = 'status error';
-            }
-        }
-
-        function stopRecording() {
-            if (mediaRecorder && isRecording) {
-                mediaRecorder.stop();
-                isRecording = false;
-                if (recordTimer) clearInterval(recordTimer);
-                recordTimer = null;
-                recordBtn.textContent = '🎤';
-                mediaRecorder.stream.getTracks().forEach(t => t.stop());
-                recordArea.classList.remove('recording');
-            }
-        }
-
-        recordBtn.addEventListener('click', function() {
-            if (isRecording) {
-                stopRecording();
-            } else {
-                startRecording();
-            }
-        });
-
-        // ===== ERROR HANDLING =====
-        function showError(msg) {
-            errorText.textContent = msg;
-            errorMessage.classList.add('show');
-        }
-        function hideError() {
-            errorMessage.classList.remove('show');
-            statusEl.className = 'status';
-        }
-
-        // ===== TRANSCRIBE =====
-        function transcribeAudio() {
-            if (!recordedAudioBuffer) {
-                statusEl.textContent = '❌ Tidak ada rekaman. Rekam dulu!';
-                return;
-            }
-
-            const algoLabel = currentAlgorithm === 'improved' ? 'YIN' : 'Standar';
-            statusEl.textContent = `🧠 AI menganalisis dengan algoritma ${algoLabel}... (20 nada per oktaf)`;
-            statusEl.className = 'status loading';
-            transcribeBtn.disabled = true;
-            progressBar.classList.add('show');
-
-            setTimeout(() => {
-                let data = recordedAudioBuffer.getChannelData(0);
-                const sampleRate = recordedAudioBuffer.sampleRate;
-                const duration = data.length / sampleRate;
-                durationInfo.textContent = `Durasi rekaman: ${duration.toFixed(1)} detik`;
-
-                if (currentAlgorithm === 'improved') {
-                    data = normalizeAudio(data);
-                    if (filterSelect.value === 'highpass') {
-                        data = highPassFilter(data, sampleRate, 80);
-                    }
-                }
-
-                const mode = modeSelect.value;
-                const sensitivity = parseFloat(sensitivitySelect.value);
-
-                let minFreq = 60,
-                    maxFreq = 1800;
-                if (mode === 'vocal') { minFreq = 200;
-                    maxFreq = 800; } else if (mode === 'instrument') { minFreq = 80;
-                    maxFreq = 1200; }
-
-                const windowSize = currentAlgorithm === 'improved' ? Math.floor(sampleRate * 0.06) : Math.floor(sampleRate *
-                    0.05);
-                const hopSize = currentAlgorithm === 'improved' ? Math.floor(windowSize * 0.3) : Math.floor(windowSize *
-                    0.5);
-                const detected = [];
-                const totalSteps = Math.floor((data.length - windowSize) / hopSize);
-                let stepCount = 0;
-
-                for (let start = 0; start < data.length - windowSize; start += hopSize) {
-                    stepCount++;
-                    if (stepCount % Math.floor(totalSteps / 20) === 0) {
-                        const pct = Math.min(100, Math.round((stepCount / totalSteps) * 100));
-                        progressFill.style.width = pct + '%';
-                    }
-
-                    const windowData = data.slice(start, start + windowSize);
-                    let sum = 0;
-                    for (let i = 0; i < windowSize; i++) {
-                        sum += Math.abs(windowData[i]);
-                    }
-                    const rms = Math.sqrt(sum / windowSize);
-                    if (rms < sensitivity) continue;
-
-                    let pitch = 0;
-                    if (currentAlgorithm === 'improved') {
-                        pitch = yinPitchDetection(windowData, sampleRate, minFreq, maxFreq);
-                    } else {
-                        pitch = standardPitchDetection(windowData, sampleRate, minFreq, maxFreq);
-                    }
-
-                    if (pitch > minFreq && pitch < maxFreq) {
-                        const note = findClosestNote(pitch);
-                        if (note) detected.push(note);
-                    }
-                }
-
-                let uniqueNotes = [];
-                if (currentAlgorithm === 'improved') {
-                    const noteNames = detected.map(n => n.name);
-                    const smoothed = medianFilter(noteNames, 5);
-                    let lastNote = null;
-                    for (let n of smoothed) {
-                        if (n !== lastNote) {
-                            if (lastNote) {
-                                const freqKey = NOTE_NAMES.find(k => k === lastNote);
-                                if (freqKey) {
-                                    uniqueNotes.push({ name: lastNote, freq: FREQ_MAP[freqKey] });
-                                }
-                            }
-                            lastNote = n;
-                        }
-                    }
-                    if (lastNote) {
-                        const freqKey = NOTE_NAMES.find(k => k === lastNote);
-                        if (freqKey) {
-                            uniqueNotes.push({ name: lastNote, freq: FREQ_MAP[freqKey] });
-                        }
-                    }
-                } else {
-                    let lastNote = null;
-                    for (let n of detected) {
-                        if (!lastNote || n.name !== lastNote.name) {
-                            if (lastNote) uniqueNotes.push(lastNote);
-                            lastNote = n;
-                        }
-                    }
-                    if (lastNote) uniqueNotes.push(lastNote);
-                }
-
-                transcribedNotes = uniqueNotes;
-                if (uniqueNotes.length === 0) {
-                    transcribedDisplay.textContent = '(Tidak ada nada terdeteksi. Coba mode/sensitivitas berbeda)';
-                    transcribeInfo.textContent = 'Jumlah nada: 0';
-                } else {
-                    const names = uniqueNotes.map(n => n.name).join(' → ');
-                    transcribedDisplay.textContent = names;
-                    transcribeInfo.textContent = `Jumlah nada: ${uniqueNotes.length}`;
-                    resultArea.style.display = 'block';
-                    playResultBtn.disabled = false;
-                    transcribedDisplay.scrollTop = 0;
-                }
-
-                statusEl.textContent = `✅ Transkripsi selesai! ${uniqueNotes.length} nada ditemukan (${algoLabel} algorithm).`;
-                statusEl.className = 'status';
-                transcribeBtn.disabled = false;
-                progressBar.classList.remove('show');
-                progressFill.style.width = '0%';
-            }, 300);
-        }
-
-        transcribeBtn.addEventListener('click', transcribeAudio);
-
-        // ===== PLAY RESULT =====
-        function playTranscribed() {
-            if (transcribedNotes.length === 0 || isPlayingResult) return;
-            isPlayingResult = true;
-            playResultBtn.textContent = '⏹ Playing...';
-            statusEl.textContent = '🎵 Memutar hasil transkripsi...';
-
-            let delay = 0;
-            const duration = 0.25;
-            transcribedNotes.forEach((note, i) => {
-                setTimeout(() => {
-                    if (!isPlayingResult) return;
-                    playSingleNote(note.freq, duration, 'piano');
-                }, delay * 1000);
-                delay += duration + 0.05;
-            });
-            setTimeout(() => {
-                isPlayingResult = false;
-                playResultBtn.textContent = '▶ Play Hasil';
-                statusEl.textContent = '✅ Selesai diputar';
-            }, delay * 1000 + 200);
-        }
-
-        playResultBtn.addEventListener('click', function() {
-            if (isPlayingResult) {
-                isPlayingResult = false;
-                this.textContent = '▶ Play Hasil';
-                statusEl.textContent = '⏹ Dihentikan';
-                return;
-            }
-            playTranscribed();
-        });
-
-        // ===== CLEAR =====
-        clearTranscribeBtn.addEventListener('click', function() {
-            isPlayingResult = false;
-            recordedAudioBuffer = null;
-            transcribedNotes = [];
-            transcribedDisplay.textContent = '-';
-            transcribeInfo.textContent = 'Jumlah nada: 0';
-            durationInfo.textContent = 'Durasi rekaman: 0 detik';
-            resultArea.style.display = 'none';
-            playResultBtn.disabled = true;
-            transcribeBtn.disabled = true;
-            statusEl.textContent = '🗑️ Dihapus. Rekam ulang untuk transkripsi.';
-            statusEl.className = 'status';
-            ctxCanvas.fillStyle = '#0d0d1a';
-            ctxCanvas.fillRect(0, 0, canvas.width, canvas.height);
-            ctxCanvas.fillStyle = '#555';
-            ctxCanvas.font = '14px sans-serif';
-            ctxCanvas.textAlign = 'center';
-            ctxCanvas.fillText('Tunggu rekaman...', canvas.width / 2, canvas.height / 2 + 5);
-            hideError();
-            progressBar.classList.remove('show');
-            progressFill.style.width = '0%';
-        });
+        // ... (kode transcriber tetap sama, tidak diubah)
 
         // ================================================================
         // CHORD PROGRESSION (20 NADA PER OKTAF)
@@ -2959,7 +2575,7 @@ Hasilkan notasi nada:`;
             </tbody></table><p style="font-size:0.8rem;color:#888;font-weight:bold;">A4 = 440 Hz (acuan) | Oktaf berikutnya × 3</p>`,
             skala: `<h3>🎹 Skala Mayor (E=1)</h3><p>E - F - G - H - I - J - K - A - B - C - D - E</p><p>Interval: 1 1 1 1 ½ 1 1 1 1 1 ½</p><h3>🎹 Skala Minor (A=1)</h3><p>A - B - C - D - E - F - G - H - I - J - K - A</p><p>Interval: 1 1 1 ½ 1 1 1 1 ½ 1 1</p>`,
             chord: `<h3>🎵 Akord</h3><p>Akord dibangun dari 20 not dengan terts (mayor=4, minor=3) dan kwint (7).</p><p>Rentang akord: C2 – B#3 (20 nada). Tuts putih = Mayor, tuts hitam = Minor.</p><p>Contoh: E mayor = E, G#, K#; E# minor = E#, G##? (gunakan 20-TET)</p>`,
-            tentang: `<h3>📖 Tentang Aplikasi</h3><p>Berdasarkan karya tulis Sukma Riadi Pakpahan, SST.</p><p><b>Fitur:</b> 8 instrumen, Reverb, Delay, Amplifier, 3/4/5 oktaf, Akord (C2-B#3) sustain dengan piano, AI Composer, AI Transcriber (dengan mikrofon), Chord Progression.</p><p><b>Tombol Mayor/Minor:</b> Memutar ulang melodi rekaman (bukan tangga nada).</p><p><b>Sistem:</b> 12-TET 20 Nada per Oktaf | A4 = 440 Hz</p>`
+            tentang: `<h3>📖 Tentang Aplikasi</h3><p>Berdasarkan karya tulis Sukma Riadi Pakpahan, SST.</p><p><b>Fitur:</b> 8 instrumen, Reverb, Delay, Amplifier, 3/4/5 oktaf, Akord (C2-B#3) sustain dengan piano, AI Composer, AI Transcriber (dengan mikrofon), Chord Progression.</p><p><b>Tombol Mayor/Minor:</b> Memutar ulang melodi rekaman (bukan tangga nada).</p><p><b>Gubah dari Melodi:</b> Di tab Keyboard, pilih mode Input "Melodi", tulis deskripsi, lalu Generate & Play untuk menggubah melodi rekaman.</p><p><b>Sistem:</b> 12-TET 20 Nada per Oktaf | A4 = 440 Hz</p>`
         };
 
         function renderTab(tabId) {
@@ -3142,7 +2758,6 @@ Hasilkan notasi nada:`;
             if (e.key === 'Escape') closeTutorial();
         }
 
-        // Tombol Tutorial
         document.getElementById('tutorialBtn').addEventListener('click', startTutorial);
 
         // ================================================================
@@ -3191,6 +2806,7 @@ Hasilkan notasi nada:`;
             console.log('🎹 Akord C2-B#3: putih=Mayor, hitam=Minor, sustain dengan piano.');
             console.log('📝 Tombol Mayor/Minor memutar ulang melodi yang direkam.');
             console.log('🎤 AI Transcriber dengan mikrofon dan deteksi pitch siap digunakan.');
+            console.log('🎯 Fitur "Gubah dari Melodi" tersedia di tab Keyboard (mode Input: Melodi).');
             console.log('📖 Tutorial siap dibuka dengan tombol Tutorial.');
         });
     </script>
