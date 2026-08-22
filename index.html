@@ -1682,38 +1682,19 @@
             return seq;
         }
 
-        function generateNoteSequenceRange(startOctave, endOctave) {
+        // === HANYA C2-B#3 (20 nada), tidak termasuk C3 dan D3 ===
+        function generateChordRangeNotes() {
             const seq = [];
-            for (let o = startOctave; o <= endOctave; o++) {
-                let notes;
-                if (o === 2) {
-                    notes = ['C2', 'C#2', 'D2'];
-                } else {
-                    notes = [
-                        'E' + o, 'E#' + o, 'F' + o, 'F#' + o, 'G' + o, 'G#' + o,
-                        'H' + o, 'H#' + o, 'I' + o, 'J' + o, 'J#' + o,
-                        'K' + o, 'K#' + o, 'A' + o, 'A#' + o,
-                        'B' + o, 'B#' + o, 'C' + o, 'C#' + o, 'D' + o
-                    ];
-                }
-                notes.forEach(n => seq.push({ note: n, isBlack: n.includes('#') }));
-            }
+            // Oktaf 2: C2, C#2, D2
+            const octave2 = ['C2', 'C#2', 'D2'];
+            octave2.forEach(n => seq.push({ note: n, isBlack: n.includes('#') }));
+            // Oktaf 3: E3 sampai B#3 (17 nada), tidak termasuk C3 dan D3
+            const octave3 = [
+                'E3', 'E#3', 'F3', 'F#3', 'G3', 'G#3', 'H3', 'H#3', 'I3',
+                'J3', 'J#3', 'K3', 'K#3', 'A3', 'A#3', 'B3', 'B#3'
+            ];
+            octave3.forEach(n => seq.push({ note: n, isBlack: n.includes('#') }));
             return seq;
-        }
-
-        // Fungsi build keyboard dengan oktaf count (standar)
-        function buildKeyboard(octaveCount) {
-            const noteSeq = generateNoteSequence(octaveCount);
-            renderKeyboard(noteSeq);
-            const lastOctave = 2 + octaveCount - 1;
-            statusDisplay.innerHTML = `🎹 ${octaveCount} oktaf (C2 sampai D${lastOctave}) — Klik tuts untuk bermain`;
-        }
-
-        // Fungsi build keyboard range (untuk akord saat melodi diputar)
-        function buildKeyboardRange(startOctave, endOctave) {
-            const noteSeq = generateNoteSequenceRange(startOctave, endOctave);
-            renderKeyboard(noteSeq);
-            statusDisplay.innerHTML = `🎹 Oktaf ${startOctave}-${endOctave} (C2-D3) — Fokus akord C2-B#3`;
         }
 
         // Render keyboard dari note sequence
@@ -1775,9 +1756,42 @@
                     keyElements[note] = key;
                 }
             }
-            let posX = startX;
             // Tampilkan label oktaf
-            // Kita sederhanakan: tidak perlu label karena range sudah jelas.
+            let posX = startX;
+            // Oktaf 2: 3 tuts putih
+            const widthOctave2 = 3 * whiteWidth;
+            const label2 = document.createElement('div');
+            label2.className = 'octave-label';
+            label2.style.left = posX + 'px';
+            label2.style.top = (yWhite + whiteHeight + 5) + 'px';
+            label2.style.width = widthOctave2 + 'px';
+            label2.textContent = 'Oktaf 2';
+            container.appendChild(label2);
+            posX += widthOctave2;
+            // Oktaf 3: 17 tuts putih
+            const widthOctave3 = 17 * whiteWidth;
+            const label3 = document.createElement('div');
+            label3.className = 'octave-label';
+            label3.style.left = posX + 'px';
+            label3.style.top = (yWhite + whiteHeight + 5) + 'px';
+            label3.style.width = widthOctave3 + 'px';
+            label3.textContent = 'Oktaf 3';
+            container.appendChild(label3);
+        }
+
+        // Fungsi build keyboard dengan oktaf count (standar)
+        function buildKeyboard(octaveCount) {
+            const noteSeq = generateNoteSequence(octaveCount);
+            renderKeyboard(noteSeq);
+            const lastOctave = 2 + octaveCount - 1;
+            statusDisplay.innerHTML = `🎹 ${octaveCount} oktaf (C2 sampai D${lastOctave}) — Klik tuts untuk bermain`;
+        }
+
+        // Fungsi build keyboard untuk mode akord saat melodi diputar (C2-B#3)
+        function buildChordKeyboard() {
+            const noteSeq = generateChordRangeNotes();
+            renderKeyboard(noteSeq);
+            statusDisplay.innerHTML = `🎹 Fokus Akord: C2 – B#3 (20 nada) — tekan tuts untuk mengiringi melodi`;
         }
 
         // ================================================================
@@ -1803,8 +1817,8 @@
             // Simpan mode akord jika aktif
             wasChordModeActive = (playMode === 'chord');
 
-            // Ubah keyboard ke range 2-3 (C2-D3) untuk memudahkan akord
-            buildKeyboardRange(2, 3);
+            // Ubah keyboard ke tampilan C2-B#3 (20 nada)
+            buildChordKeyboard();
 
             isPlayingRecorded = true;
             let delay = 0;
@@ -1845,11 +1859,6 @@
             // Kembali ke pengaturan oktaf yang dipilih
             const val = parseInt(octaveSelector.value);
             buildKeyboard(val);
-            // Jika sebelumnya mode akord, kembalikan indikator
-            if (wasChordModeActive) {
-                // Set mode indicator, tapi tidak perlu mengubah playMode karena sudah dihandle oleh radio button
-                // Tapi kita hanya perlu memastikan keyboard sudah kembali
-            }
             wasChordModeActive = false;
         }
 
@@ -2477,7 +2486,6 @@ Hasilkan notasi nada:`;
         // AI TRANSCRIBER (REAL MIKROFON + DETEKSI PITCH) — sama seperti sebelumnya, tidak diubah
         // ================================================================
         // (kode transcriber tetap sama, tidak diubah)
-        // Saya singkat di sini agar tidak terlalu panjang, namun tetap ada di file final.
 
         // ================================================================
         // CHORD PROGRESSION (20 NADA PER OKTAF) — sama seperti sebelumnya
@@ -2640,7 +2648,7 @@ Hasilkan notasi nada:`;
             </tbody></table><p style="font-size:0.8rem;color:#888;font-weight:bold;">A4 = 440 Hz (acuan) | Oktaf berikutnya × 3</p>`,
             skala: `<h3>🎹 Skala Mayor (E=1)</h3><p>E - F - G - H - I - J - K - A - B - C - D - E</p><p>Interval: 1 1 1 1 ½ 1 1 1 1 1 ½</p><h3>🎹 Skala Minor (A=1)</h3><p>A - B - C - D - E - F - G - H - I - J - K - A</p><p>Interval: 1 1 1 ½ 1 1 1 1 ½ 1 1</p>`,
             chord: `<h3>🎵 Akord</h3><p>Akord dibangun dari 20 not dengan terts (mayor=4, minor=3) dan kwint (7).</p><p>Rentang akord: C2 – B#3 (20 nada). Tuts putih = Mayor, tuts hitam = Minor.</p><p>Contoh: E mayor = E, G#, K#; E# minor = E#, G##? (gunakan 20-TET)</p>`,
-            tentang: `<h3>📖 Tentang Aplikasi</h3><p>Berdasarkan karya tulis Sukma Riadi Pakpahan, SST.</p><p><b>Fitur:</b> 8 instrumen, Reverb, Delay, Amplifier, 3/4/5 oktaf, Akord (C2-B#3) sustain dengan piano, AI Composer, AI Transcriber (dengan mikrofon), Chord Progression.</p><p><b>Tombol Mayor/Minor:</b> Memutar ulang melodi rekaman (bukan tangga nada).</p><p><b>Gubah dari Melodi:</b> Di tab Keyboard, pilih mode Input "Melodi", tulis deskripsi, lalu Generate & Play untuk menggubah melodi rekaman.</p><p><b>Akord saat melodi mengalun:</b> Beralih ke mode Akord saat melodi diputar, tekan tuts akord – akord baru menggantikan yang lama, melodi tetap berjalan.</p><p><b>Keyboard otomatis fokus ke oktaf 2-3 saat melodi diputar</b> untuk memudahkan akses akord.</p><p><b>Sistem:</b> 12-TET 20 Nada per Oktaf | A4 = 440 Hz</p>`
+            tentang: `<h3>📖 Tentang Aplikasi</h3><p>Berdasarkan karya tulis Sukma Riadi Pakpahan, SST.</p><p><b>Fitur:</b> 8 instrumen, Reverb, Delay, Amplifier, 3/4/5 oktaf, Akord (C2-B#3) sustain dengan piano, AI Composer, AI Transcriber (dengan mikrofon), Chord Progression.</p><p><b>Tombol Mayor/Minor:</b> Memutar ulang melodi rekaman (bukan tangga nada).</p><p><b>Gubah dari Melodi:</b> Di tab Keyboard, pilih mode Input "Melodi", tulis deskripsi, lalu Generate & Play untuk menggubah melodi rekaman.</p><p><b>Akord saat melodi mengalun:</b> Beralih ke mode Akord saat melodi diputar, tekan tuts akord – akord baru menggantikan yang lama, melodi tetap berjalan.</p><p><b>Keyboard otomatis fokus ke C2-B#3 saat melodi diputar</b> untuk memudahkan akses akord (tidak termasuk C3 dan D3).</p><p><b>Sistem:</b> 12-TET 20 Nada per Oktaf | A4 = 440 Hz</p>`
         };
 
         function renderTab(tabId) {
@@ -2683,7 +2691,7 @@ Hasilkan notasi nada:`;
                     <li>Akord akan <b>sustain</b> (terus berbunyi) hingga Anda menekan akord lain atau menekan tombol Stop/Reset.</li>
                     <li>Akord selalu menggunakan suara <b>Piano</b> (statis) untuk iringan yang stabil.</li>
                     <li><b>Akord dapat mengiringi melodi:</b> saat melodi sedang diputar, beralih ke mode Akord dan tekan tuts akord – melodi tetap berbunyi.</li>
-                    <li><b>Keyboard otomatis fokus ke oktaf 2-3 saat melodi diputar</b> agar lebih mudah mengakses tuts akord.</li>
+                    <li><b>Keyboard otomatis fokus ke C2-B#3 saat melodi diputar</b> agar lebih mudah mengakses tuts akord (tidak termasuk C3 dan D3).</li>
                 </ul>
                 <p><b>💡 Nada tunggal di luar rentang dapat dimainkan sebagai melodi tanpa menghentikan akord.</b></p>
             `
@@ -2875,7 +2883,7 @@ Hasilkan notasi nada:`;
             console.log('🎤 AI Transcriber dengan mikrofon dan deteksi pitch siap digunakan.');
             console.log('🎯 Fitur "Gubah dari Melodi" tersedia di tab Keyboard (mode Input: Melodi).');
             console.log('🎵 Akord dapat mengiringi melodi tanpa menghentikannya.');
-            console.log('🎹 Keyboard otomatis fokus ke oktaf 2-3 saat melodi diputar.');
+            console.log('🎹 Keyboard otomatis fokus ke C2-B#3 saat melodi diputar.');
             console.log('📖 Tutorial siap dibuka dengan tombol Tutorial.');
         });
     </script>
