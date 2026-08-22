@@ -2513,496 +2513,496 @@ Hasilkan notasi nada:`;
             document.getElementById('aiPlayBtn').textContent = '▶ Play';
         });
 
-// ================================================================
-// AI TRANSCRIBER - IMPLEMENTASI REKAMAN MIKROFON & DETEKSI PITCH
-// ================================================================
-let mediaRecorder = null;
-let audioChunks = [];
-let recording = false;
-let recordingStartTime = 0;
-let timerInterval = null;
-let recordedAudioBuffer = null;
-let transcribedNotes = [];
-let canvasCtx = null;
-let animationId = null;
-let analyser = null;
-let dataArray = null;
+        // ================================================================
+        // AI TRANSCRIBER - IMPLEMENTASI REKAMAN MIKROFON & DETEKSI PITCH
+        // ================================================================
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let recording = false;
+        let recordingStartTime = 0;
+        let timerInterval = null;
+        let recordedAudioBuffer = null;
+        let transcribedNotes = [];
+        let canvasCtx = null;
+        let animationId = null;
+        let analyser = null;
+        let dataArray = null;
 
-const recordBtn = document.getElementById('recordBtn');
-const timerDisplay = document.getElementById('timerDisplay');
-const transcribeBtn = document.getElementById('transcribeBtn');
-const playResultBtn = document.getElementById('playResultBtn');
-const clearTranscribeBtn = document.getElementById('clearTranscribeBtn');
-const transcribedDisplay = document.getElementById('transcribedDisplay');
-const transcribeInfo = document.getElementById('transcribeInfo');
-const durationInfo = document.getElementById('durationInfo');
-const algoInfo = document.getElementById('algoInfo');
-const errorMessage = document.getElementById('errorMessage');
-const errorText = document.getElementById('errorText');
-const statusEl = document.getElementById('status');
-const recordArea = document.getElementById('recordArea');
-const progressBar = document.getElementById('progressBar');
-const progressFill = document.getElementById('progressFill');
-const waveformCanvas = document.getElementById('waveformCanvas');
-const modeBadge = document.getElementById('modeBadge');
+        const recordBtn = document.getElementById('recordBtn');
+        const timerDisplay = document.getElementById('timerDisplay');
+        const transcribeBtn = document.getElementById('transcribeBtn');
+        const playResultBtn = document.getElementById('playResultBtn');
+        const clearTranscribeBtn = document.getElementById('clearTranscribeBtn');
+        const transcribedDisplay = document.getElementById('transcribedDisplay');
+        const transcribeInfo = document.getElementById('transcribeInfo');
+        const durationInfo = document.getElementById('durationInfo');
+        const algoInfo = document.getElementById('algoInfo');
+        const errorMessage = document.getElementById('errorMessage');
+        const errorText = document.getElementById('errorText');
+        const statusEl = document.getElementById('status');
+        const recordArea = document.getElementById('recordArea');
+        const progressBar = document.getElementById('progressBar');
+        const progressFill = document.getElementById('progressFill');
+        const waveformCanvas = document.getElementById('waveformCanvas');
+        const modeBadge = document.getElementById('modeBadge');
 
-// Inisialisasi canvas
-if (waveformCanvas) {
-    canvasCtx = waveformCanvas.getContext('2d');
-    waveformCanvas.width = waveformCanvas.clientWidth || 400;
-    waveformCanvas.height = waveformCanvas.clientHeight || 70;
-}
-
-function showError(msg) {
-    errorMessage.classList.add('show');
-    errorText.textContent = msg;
-    setTimeout(() => errorMessage.classList.remove('show'), 5000);
-}
-
-// Cari frekuensi terdekat dalam 20 nada per oktaf
-function findClosestNote(freq) {
-    let closest = { note: 'A4', freq: 440, diff: Infinity };
-    for (const [note, f] of Object.entries(FREQ_MAP)) {
-        const diff = Math.abs(freq - f);
-        if (diff < closest.diff) {
-            closest = { note, freq: f, diff };
+        // Inisialisasi canvas
+        if (waveformCanvas) {
+            canvasCtx = waveformCanvas.getContext('2d');
+            waveformCanvas.width = waveformCanvas.clientWidth || 400;
+            waveformCanvas.height = waveformCanvas.clientHeight || 70;
         }
-    }
-    return closest;
-}
 
-// Algoritma autokorelasi (standar)
-function detectPitchStandard(buffer, sampleRate) {
-    const data = new Float32Array(buffer);
-    const len = data.length;
-    if (len < 256) return 0;
-
-    const maxLag = Math.floor(sampleRate / 60);
-    const minLag = Math.floor(sampleRate / 1800);
-    let bestLag = 0;
-    let bestCorr = 0;
-
-    for (let lag = minLag; lag < maxLag; lag++) {
-        let corr = 0;
-        for (let i = 0; i < len - lag; i++) {
-            corr += data[i] * data[i + lag];
+        function showError(msg) {
+            errorMessage.classList.add('show');
+            errorText.textContent = msg;
+            setTimeout(() => errorMessage.classList.remove('show'), 5000);
         }
-        corr /= (len - lag);
-        if (corr > bestCorr) {
-            bestCorr = corr;
-            bestLag = lag;
+
+        // Cari frekuensi terdekat dalam 20 nada per oktaf
+        function findClosestNote(freq) {
+            let closest = { note: 'A4', freq: 440, diff: Infinity };
+            for (const [note, f] of Object.entries(FREQ_MAP)) {
+                const diff = Math.abs(freq - f);
+                if (diff < closest.diff) {
+                    closest = { note, freq: f, diff };
+                }
+            }
+            return closest;
         }
-    }
-    return bestLag > 0 ? sampleRate / bestLag : 0;
-}
 
-// Algoritma YIN (improved)
-function detectPitchYIN(buffer, sampleRate) {
-    const data = new Float32Array(buffer);
-    const len = data.length;
-    if (len < 256) return 0;
+        // Algoritma autokorelasi (standar)
+        function detectPitchStandard(buffer, sampleRate) {
+            const data = new Float32Array(buffer);
+            const len = data.length;
+            if (len < 256) return 0;
 
-    const maxLag = Math.floor(sampleRate / 60);
-    const minLag = Math.floor(sampleRate / 1800);
-    const tau = [];
+            const maxLag = Math.floor(sampleRate / 60);
+            const minLag = Math.floor(sampleRate / 1800);
+            let bestLag = 0;
+            let bestCorr = 0;
 
-    for (let lag = 0; lag < maxLag; lag++) {
-        let sum = 0;
-        for (let i = 0; i < len - lag; i++) {
-            const diff = data[i] - data[i + lag];
-            sum += diff * diff;
+            for (let lag = minLag; lag < maxLag; lag++) {
+                let corr = 0;
+                for (let i = 0; i < len - lag; i++) {
+                    corr += data[i] * data[i + lag];
+                }
+                corr /= (len - lag);
+                if (corr > bestCorr) {
+                    bestCorr = corr;
+                    bestLag = lag;
+                }
+            }
+            return bestLag > 0 ? sampleRate / bestLag : 0;
         }
-        tau.push(sum / (len - lag));
-    }
 
-    const cmnd = [];
-    let runningSum = 0;
-    for (let i = 0; i < tau.length; i++) {
-        runningSum += tau[i];
-        cmnd.push(i > 0 ? tau[i] / (runningSum / i) : 1);
-    }
+        // Algoritma YIN (improved)
+        function detectPitchYIN(buffer, sampleRate) {
+            const data = new Float32Array(buffer);
+            const len = data.length;
+            if (len < 256) return 0;
 
-    const threshold = 0.15;
-    let lag = 0;
-    for (let i = minLag; i < cmnd.length; i++) {
-        if (cmnd[i] < threshold && (i === minLag || cmnd[i] < cmnd[i - 1])) {
-            lag = i;
-            break;
+            const maxLag = Math.floor(sampleRate / 60);
+            const minLag = Math.floor(sampleRate / 1800);
+            const tau = [];
+
+            for (let lag = 0; lag < maxLag; lag++) {
+                let sum = 0;
+                for (let i = 0; i < len - lag; i++) {
+                    const diff = data[i] - data[i + lag];
+                    sum += diff * diff;
+                }
+                tau.push(sum / (len - lag));
+            }
+
+            const cmnd = [];
+            let runningSum = 0;
+            for (let i = 0; i < tau.length; i++) {
+                runningSum += tau[i];
+                cmnd.push(i > 0 ? tau[i] / (runningSum / i) : 1);
+            }
+
+            const threshold = 0.15;
+            let lag = 0;
+            for (let i = minLag; i < cmnd.length; i++) {
+                if (cmnd[i] < threshold && (i === minLag || cmnd[i] < cmnd[i - 1])) {
+                    lag = i;
+                    break;
+                }
+            }
+
+            if (lag > 0 && lag < maxLag) {
+                const l = Math.max(0, lag - 1);
+                const r = Math.min(lag + 1, cmnd.length - 1);
+                const y0 = cmnd[l];
+                const y1 = cmnd[lag];
+                const y2 = cmnd[r];
+                if (y2 - 2 * y1 + y0 !== 0) {
+                    const shift = 0.5 * (y0 - y2) / (y2 - 2 * y1 + y0);
+                    lag = lag + shift;
+                }
+                return sampleRate / lag;
+            }
+            return 0;
         }
-    }
 
-    if (lag > 0 && lag < maxLag) {
-        const l = Math.max(0, lag - 1);
-        const r = Math.min(lag + 1, cmnd.length - 1);
-        const y0 = cmnd[l];
-        const y1 = cmnd[lag];
-        const y2 = cmnd[r];
-        if (y2 - 2 * y1 + y0 !== 0) {
-            const shift = 0.5 * (y0 - y2) / (y2 - 2 * y1 + y0);
-            lag = lag + shift;
-        }
-        return sampleRate / lag;
-    }
-    return 0;
-}
+        // Rekam
+        recordBtn.addEventListener('click', async function() {
+            if (recording) {
+                if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                    mediaRecorder.stop();
+                }
+                recording = false;
+                recordBtn.textContent = '🎤';
+                recordBtn.classList.remove('recording');
+                recordArea.classList.remove('recording');
+                clearInterval(timerInterval);
+                statusEl.textContent = '⏹ Rekaman dihentikan. Klik "AI Transcribe" untuk menganalisis.';
+                if (animationId) {
+                    cancelAnimationFrame(animationId);
+                    animationId = null;
+                }
+                return;
+            }
 
-// Rekam
-recordBtn.addEventListener('click', async function() {
-    if (recording) {
-        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-            mediaRecorder.stop();
-        }
-        recording = false;
-        recordBtn.textContent = '🎤';
-        recordBtn.classList.remove('recording');
-        recordArea.classList.remove('recording');
-        clearInterval(timerInterval);
-        statusEl.textContent = '⏹ Rekaman dihentikan. Klik "AI Transcribe" untuk menganalisis.';
-        if (animationId) {
-            cancelAnimationFrame(animationId);
-            animationId = null;
-        }
-        return;
-    }
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    audio: {
+                        echoCancellation: false,
+                        noiseSuppression: false,
+                        autoGainControl: false,
+                        channelCount: 1,
+                        sampleRate: 44100
+                    }
+                });
 
-    try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-            audio: {
-                echoCancellation: false,
-                noiseSuppression: false,
-                autoGainControl: false,
-                channelCount: 1,
-                sampleRate: 44100
+                const options = { mimeType: 'audio/webm;codecs=opus' };
+                if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                    options.mimeType = 'audio/webm';
+                }
+                mediaRecorder = new MediaRecorder(stream, options);
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = (e) => {
+                    if (e.data.size > 0) audioChunks.push(e.data);
+                };
+
+                mediaRecorder.onstop = async () => {
+                    const blob = new Blob(audioChunks, { type: 'audio/webm' });
+                    const arrayBuffer = await blob.arrayBuffer();
+                    const audioContext = new AudioContext();
+                    const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                    recordedAudioBuffer = audioBuffer;
+                    const duration = audioBuffer.duration;
+                    durationInfo.textContent = `Durasi rekaman: ${duration.toFixed(2)} detik`;
+                    transcribeBtn.disabled = false;
+                    playResultBtn.disabled = true;
+                    statusEl.textContent = `✅ Rekaman selesai (${duration.toFixed(2)} detik). Klik "AI Transcribe" untuk menganalisis.`;
+                    progressBar.classList.add('show');
+                    progressFill.style.width = '100%';
+                    setTimeout(() => progressBar.classList.remove('show'), 1500);
+                    drawWaveform(audioBuffer);
+                };
+
+                mediaRecorder.start(100);
+                recording = true;
+                recordBtn.textContent = '⏹';
+                recordBtn.classList.add('recording');
+                recordArea.classList.add('recording');
+                recordingStartTime = Date.now();
+                statusEl.textContent = '🔴 Merekam... (maks. 22 menit)';
+                transcribeBtn.disabled = true;
+                playResultBtn.disabled = true;
+
+                let elapsed = 0;
+                timerInterval = setInterval(() => {
+                    elapsed = (Date.now() - recordingStartTime) / 1000;
+                    if (elapsed >= 1320) {
+                        recordBtn.click();
+                        return;
+                    }
+                    const mins = Math.floor(elapsed / 60);
+                    const secs = Math.floor(elapsed % 60);
+                    timerDisplay.textContent = `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')} / 22:00`;
+                    progressFill.style.width = `${(elapsed/1320)*100}%`;
+                }, 100);
+
+                const audioContext = new AudioContext();
+                const source = audioContext.createMediaStreamSource(stream);
+                analyser = audioContext.createAnalyser();
+                analyser.fftSize = 512;
+                source.connect(analyser);
+                dataArray = new Uint8Array(analyser.fftSize);
+                drawWaveformRealtime();
+
+            } catch (err) {
+                console.error(err);
+                showError('Gagal mengakses mikrofon: ' + err.message);
+                statusEl.textContent = '❌ Error: ' + err.message;
             }
         });
 
-        const options = { mimeType: 'audio/webm;codecs=opus' };
-        if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-            options.mimeType = 'audio/webm';
+        function drawWaveformRealtime() {
+            if (!canvasCtx || !analyser) return;
+            const canvas = waveformCanvas;
+            const ctx = canvasCtx;
+            const width = canvas.width;
+            const height = canvas.height;
+            analyser.getByteTimeDomainData(dataArray);
+
+            ctx.fillStyle = '#0d0d1a';
+            ctx.fillRect(0, 0, width, height);
+            ctx.lineWidth = 1.5;
+            ctx.strokeStyle = '#e94560';
+            ctx.beginPath();
+
+            const bufferLength = dataArray.length;
+            const sliceWidth = width / bufferLength;
+            let x = 0;
+
+            for (let i = 0; i < bufferLength; i++) {
+                const v = dataArray[i] / 128.0 - 1.0;
+                const y = (v * height / 2) + height / 2;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+                x += sliceWidth;
+            }
+            ctx.stroke();
+            animationId = requestAnimationFrame(drawWaveformRealtime);
         }
-        mediaRecorder = new MediaRecorder(stream, options);
-        audioChunks = [];
 
-        mediaRecorder.ondataavailable = (e) => {
-            if (e.data.size > 0) audioChunks.push(e.data);
-        };
+        function drawWaveform(buffer) {
+            if (!canvasCtx) return;
+            const canvas = waveformCanvas;
+            const ctx = canvasCtx;
+            const width = canvas.width;
+            const height = canvas.height;
+            const data = buffer.getChannelData(0);
+            const step = Math.max(1, Math.floor(data.length / width));
+            ctx.fillStyle = '#0d0d1a';
+            ctx.fillRect(0, 0, width, height);
+            ctx.lineWidth = 1.5;
+            ctx.strokeStyle = '#f5a623';
+            ctx.beginPath();
+            for (let i = 0; i < width; i++) {
+                const idx = Math.min(i * step, data.length - 1);
+                const val = data[idx];
+                const y = (val * height / 2) + height / 2;
+                if (i === 0) ctx.moveTo(i, y);
+                else ctx.lineTo(i, y);
+            }
+            ctx.stroke();
+        }
 
-        mediaRecorder.onstop = async () => {
-            const blob = new Blob(audioChunks, { type: 'audio/webm' });
-            const arrayBuffer = await blob.arrayBuffer();
-            const audioContext = new AudioContext();
-            const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-            recordedAudioBuffer = audioBuffer;
-            const duration = audioBuffer.duration;
-            durationInfo.textContent = `Durasi rekaman: ${duration.toFixed(2)} detik`;
-            transcribeBtn.disabled = false;
-            playResultBtn.disabled = true;
-            statusEl.textContent = `✅ Rekaman selesai (${duration.toFixed(2)} detik). Klik "AI Transcribe" untuk menganalisis.`;
-            progressBar.classList.add('show');
-            progressFill.style.width = '100%';
-            setTimeout(() => progressBar.classList.remove('show'), 1500);
-            drawWaveform(audioBuffer);
-        };
-
-        mediaRecorder.start(100);
-        recording = true;
-        recordBtn.textContent = '⏹';
-        recordBtn.classList.add('recording');
-        recordArea.classList.add('recording');
-        recordingStartTime = Date.now();
-        statusEl.textContent = '🔴 Merekam... (maks. 22 menit)';
-        transcribeBtn.disabled = true;
-        playResultBtn.disabled = true;
-
-        let elapsed = 0;
-        timerInterval = setInterval(() => {
-            elapsed = (Date.now() - recordingStartTime) / 1000;
-            if (elapsed >= 1320) {
-                recordBtn.click();
+        // Transcribe
+        transcribeBtn.addEventListener('click', function() {
+            if (!recordedAudioBuffer) {
+                showError('Belum ada rekaman. Rekam audio terlebih dahulu.');
                 return;
             }
-            const mins = Math.floor(elapsed / 60);
-            const secs = Math.floor(elapsed % 60);
-            timerDisplay.textContent = `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')} / 22:00`;
-            progressFill.style.width = `${(elapsed/1320)*100}%`;
-        }, 100);
 
-        const audioContext = new AudioContext();
-        const source = audioContext.createMediaStreamSource(stream);
-        analyser = audioContext.createAnalyser();
-        analyser.fftSize = 512;
-        source.connect(analyser);
-        dataArray = new Uint8Array(analyser.fftSize);
-        drawWaveformRealtime();
+            const algorithm = document.querySelector('input[name="algorithm"]:checked').value;
+            const mode = document.getElementById('modeSelect').value;
+            const sensitivity = parseFloat(document.getElementById('sensitivitySelect').value);
 
-    } catch (err) {
-        console.error(err);
-        showError('Gagal mengakses mikrofon: ' + err.message);
-        statusEl.textContent = '❌ Error: ' + err.message;
-    }
-});
+            statusEl.textContent = '🧠 Menganalisis audio...';
+            transcribeBtn.disabled = true;
+            transcribeBtn.textContent = '⏳ Analisis...';
 
-function drawWaveformRealtime() {
-    if (!canvasCtx || !analyser) return;
-    const canvas = waveformCanvas;
-    const ctx = canvasCtx;
-    const width = canvas.width;
-    const height = canvas.height;
-    analyser.getByteTimeDomainData(dataArray);
+            setTimeout(() => {
+                try {
+                    const sampleRate = recordedAudioBuffer.sampleRate;
+                    const data = recordedAudioBuffer.getChannelData(0);
+                    const hopSize = Math.floor(sampleRate * 0.02);
+                    const windowSize = Math.floor(sampleRate * 0.05);
+                    const minFreq = mode === 'vocal' ? 200 : (mode === 'instrument' ? 80 : 60);
+                    const maxFreq = mode === 'vocal' ? 800 : (mode === 'instrument' ? 1200 : 1800);
 
-    ctx.fillStyle = '#0d0d1a';
-    ctx.fillRect(0, 0, width, height);
-    ctx.lineWidth = 1.5;
-    ctx.strokeStyle = '#e94560';
-    ctx.beginPath();
+                    transcribedNotes = [];
+                    const detectedFreqs = [];
 
-    const bufferLength = dataArray.length;
-    const sliceWidth = width / bufferLength;
-    let x = 0;
+                    for (let start = 0; start < data.length - windowSize; start += hopSize) {
+                        const segment = data.slice(start, start + windowSize);
+                        let freq = algorithm === 'improved' ? detectPitchYIN(segment, sampleRate) : detectPitchStandard(segment, sampleRate);
 
-    for (let i = 0; i < bufferLength; i++) {
-        const v = dataArray[i] / 128.0 - 1.0;
-        const y = (v * height / 2) + height / 2;
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-        x += sliceWidth;
-    }
-    ctx.stroke();
-    animationId = requestAnimationFrame(drawWaveformRealtime);
-}
-
-function drawWaveform(buffer) {
-    if (!canvasCtx) return;
-    const canvas = waveformCanvas;
-    const ctx = canvasCtx;
-    const width = canvas.width;
-    const height = canvas.height;
-    const data = buffer.getChannelData(0);
-    const step = Math.max(1, Math.floor(data.length / width));
-    ctx.fillStyle = '#0d0d1a';
-    ctx.fillRect(0, 0, width, height);
-    ctx.lineWidth = 1.5;
-    ctx.strokeStyle = '#f5a623';
-    ctx.beginPath();
-    for (let i = 0; i < width; i++) {
-        const idx = Math.min(i * step, data.length - 1);
-        const val = data[idx];
-        const y = (val * height / 2) + height / 2;
-        if (i === 0) ctx.moveTo(i, y);
-        else ctx.lineTo(i, y);
-    }
-    ctx.stroke();
-}
-
-// Transcribe
-transcribeBtn.addEventListener('click', function() {
-    if (!recordedAudioBuffer) {
-        showError('Belum ada rekaman. Rekam audio terlebih dahulu.');
-        return;
-    }
-
-    const algorithm = document.querySelector('input[name="algorithm"]:checked').value;
-    const mode = document.getElementById('modeSelect').value;
-    const sensitivity = parseFloat(document.getElementById('sensitivitySelect').value);
-
-    statusEl.textContent = '🧠 Menganalisis audio...';
-    transcribeBtn.disabled = true;
-    transcribeBtn.textContent = '⏳ Analisis...';
-
-    setTimeout(() => {
-        try {
-            const sampleRate = recordedAudioBuffer.sampleRate;
-            const data = recordedAudioBuffer.getChannelData(0);
-            const hopSize = Math.floor(sampleRate * 0.02);
-            const windowSize = Math.floor(sampleRate * 0.05);
-            const minFreq = mode === 'vocal' ? 200 : (mode === 'instrument' ? 80 : 60);
-            const maxFreq = mode === 'vocal' ? 800 : (mode === 'instrument' ? 1200 : 1800);
-
-            transcribedNotes = [];
-            const detectedFreqs = [];
-
-            for (let start = 0; start < data.length - windowSize; start += hopSize) {
-                const segment = data.slice(start, start + windowSize);
-                let freq = algorithm === 'improved' ? detectPitchYIN(segment, sampleRate) : detectPitchStandard(segment, sampleRate);
-
-                if (freq >= minFreq && freq <= maxFreq) {
-                    const closest = findClosestNote(freq);
-                    const error = Math.abs(freq - closest.freq);
-                    if (error < sensitivity * 120) {
-                        detectedFreqs.push({
-                            note: closest.note,
-                            freq: closest.freq,
-                            time: start / sampleRate,
-                            rawFreq: freq
-                        });
-                    }
-                }
-            }
-
-            const notesMap = {};
-            detectedFreqs.forEach(d => {
-                const key = Math.floor(d.time);
-                if (!notesMap[key]) notesMap[key] = [];
-                notesMap[key].push(d);
-            });
-
-            const resultNotes = [];
-            for (const [sec, notes] of Object.entries(notesMap)) {
-                const freqCount = {};
-                notes.forEach(n => {
-                    freqCount[n.note] = (freqCount[n.note] || 0) + 1;
-                });
-                let maxCount = 0;
-                let bestNote = 'A4';
-                for (const [note, count] of Object.entries(freqCount)) {
-                    if (count > maxCount) {
-                        maxCount = count;
-                        bestNote = note;
-                    }
-                }
-                resultNotes.push(bestNote);
-            }
-
-            if (resultNotes.length < 3) {
-                const rawNotes = detectedFreqs.map(d => d.note);
-                if (rawNotes.length > 0) {
-                    const freqCount = {};
-                    rawNotes.forEach(n => {
-                        freqCount[n] = (freqCount[n] || 0) + 1;
-                    });
-                    let maxCount = 0;
-                    let bestNote = 'A4';
-                    for (const [note, count] of Object.entries(freqCount)) {
-                        if (count > maxCount) {
-                            maxCount = count;
-                            bestNote = note;
+                        if (freq >= minFreq && freq <= maxFreq) {
+                            const closest = findClosestNote(freq);
+                            const error = Math.abs(freq - closest.freq);
+                            if (error < sensitivity * 120) {
+                                detectedFreqs.push({
+                                    note: closest.note,
+                                    freq: closest.freq,
+                                    time: start / sampleRate,
+                                    rawFreq: freq
+                                });
+                            }
                         }
                     }
-                    while (resultNotes.length < 3) resultNotes.push(bestNote);
-                } else {
-                    resultNotes.push('A4', 'C4', 'E4');
+
+                    const notesMap = {};
+                    detectedFreqs.forEach(d => {
+                        const key = Math.floor(d.time);
+                        if (!notesMap[key]) notesMap[key] = [];
+                        notesMap[key].push(d);
+                    });
+
+                    const resultNotes = [];
+                    for (const [sec, notes] of Object.entries(notesMap)) {
+                        const freqCount = {};
+                        notes.forEach(n => {
+                            freqCount[n.note] = (freqCount[n.note] || 0) + 1;
+                        });
+                        let maxCount = 0;
+                        let bestNote = 'A4';
+                        for (const [note, count] of Object.entries(freqCount)) {
+                            if (count > maxCount) {
+                                maxCount = count;
+                                bestNote = note;
+                            }
+                        }
+                        resultNotes.push(bestNote);
+                    }
+
+                    if (resultNotes.length < 3) {
+                        const rawNotes = detectedFreqs.map(d => d.note);
+                        if (rawNotes.length > 0) {
+                            const freqCount = {};
+                            rawNotes.forEach(n => {
+                                freqCount[n] = (freqCount[n] || 0) + 1;
+                            });
+                            let maxCount = 0;
+                            let bestNote = 'A4';
+                            for (const [note, count] of Object.entries(freqCount)) {
+                                if (count > maxCount) {
+                                    maxCount = count;
+                                    bestNote = note;
+                                }
+                            }
+                            while (resultNotes.length < 3) resultNotes.push(bestNote);
+                        } else {
+                            resultNotes.push('A4', 'C4', 'E4');
+                        }
+                    }
+
+                    transcribedNotes = resultNotes;
+                    const display = resultNotes.join(' → ');
+                    transcribedDisplay.textContent = display;
+                    document.getElementById('transcribeResult').style.display = 'block';
+                    transcribeInfo.textContent = `Jumlah nada: ${resultNotes.length}`;
+                    algoInfo.textContent = `Algoritma: ${algorithm === 'improved' ? 'Improved (YIN)' : 'Standar'}`;
+                    modeBadge.textContent = algorithm === 'improved' ? '⚡ Improved' : '⚡ Standar';
+                    modeBadge.className = `mode-indicator ${algorithm === 'improved' ? 'improved' : 'standard'}`;
+
+                    statusEl.textContent = `✅ Transkripsi selesai! ${resultNotes.length} nada terdeteksi.`;
+                    playResultBtn.disabled = false;
+                    transcribeBtn.disabled = false;
+                    transcribeBtn.textContent = '🧠 AI Transcribe';
+                    document.getElementById('chordInput').value = display;
+
+                } catch (err) {
+                    console.error(err);
+                    showError('Error saat transkripsi: ' + err.message);
+                    statusEl.textContent = '❌ Error: ' + err.message;
+                    transcribeBtn.disabled = false;
+                    transcribeBtn.textContent = '🧠 AI Transcribe';
                 }
+            }, 100);
+        });
+
+        // Play hasil transkripsi
+        playResultBtn.addEventListener('click', function() {
+            if (transcribedNotes.length === 0) {
+                showError('Tidak ada nada untuk diputar.');
+                return;
+            }
+            if (isPlaying) {
+                stopAllSounds();
+                playResultBtn.textContent = '▶ Play Hasil';
+                return;
             }
 
-            transcribedNotes = resultNotes;
-            const display = resultNotes.join(' → ');
-            transcribedDisplay.textContent = display;
-            document.getElementById('transcribeResult').style.display = 'block';
-            transcribeInfo.textContent = `Jumlah nada: ${resultNotes.length}`;
-            algoInfo.textContent = `Algoritma: ${algorithm === 'improved' ? 'Improved (YIN)' : 'Standar'}`;
-            modeBadge.textContent = algorithm === 'improved' ? '⚡ Improved' : '⚡ Standar';
-            modeBadge.className = `mode-indicator ${algorithm === 'improved' ? 'improved' : 'standard'}`;
+            const tempo = 120;
+            const duration = 60000 / tempo / 2 / 1000;
+            let delay = 0;
 
-            statusEl.textContent = `✅ Transkripsi selesai! ${resultNotes.length} nada terdeteksi.`;
-            playResultBtn.disabled = false;
-            transcribeBtn.disabled = false;
-            transcribeBtn.textContent = '🧠 AI Transcribe';
-            document.getElementById('chordInput').value = display;
+            transcribedNotes.forEach((note, i) => {
+                const freq = FREQ_MAP[note];
+                if (!freq) return;
+                setTimeout(() => {
+                    playSingleNote(freq, duration, currentInstrument, 'melody');
+                    statusEl.textContent = `🎵 Memutar: ${note} (${freq.toFixed(2)} Hz)`;
+                }, delay * 1000);
+                delay += duration + 0.05;
+            });
 
-        } catch (err) {
-            console.error(err);
-            showError('Error saat transkripsi: ' + err.message);
-            statusEl.textContent = '❌ Error: ' + err.message;
-            transcribeBtn.disabled = false;
-            transcribeBtn.textContent = '🧠 AI Transcribe';
-        }
-    }, 100);
-});
+            setTimeout(() => {
+                statusEl.textContent = '✅ Pemutaran hasil transkripsi selesai.';
+                playResultBtn.textContent = '▶ Play Hasil';
+            }, delay * 1000 + 200);
 
-// Play hasil transkripsi
-playResultBtn.addEventListener('click', function() {
-    if (transcribedNotes.length === 0) {
-        showError('Tidak ada nada untuk diputar.');
-        return;
-    }
-    if (isPlaying) {
-        stopAllSounds();
-        playResultBtn.textContent = '▶ Play Hasil';
-        return;
-    }
+            playResultBtn.textContent = '⏹ Stop';
+            isPlaying = true;
+            const origStop = stopAllSounds;
+            stopAllSounds = function() {
+                origStop();
+                isPlaying = false;
+                playResultBtn.textContent = '▶ Play Hasil';
+            };
+        });
 
-    const tempo = 120;
-    const duration = 60000 / tempo / 2 / 1000;
-    let delay = 0;
+        // Clear
+        clearTranscribeBtn.addEventListener('click', function() {
+            recordedAudioBuffer = null;
+            transcribedNotes = [];
+            document.getElementById('transcribeResult').style.display = 'none';
+            transcribedDisplay.textContent = '-';
+            transcribeInfo.textContent = 'Jumlah nada: 0';
+            durationInfo.textContent = 'Durasi rekaman: 0 detik';
+            algoInfo.textContent = 'Algoritma: Standar';
+            statusEl.textContent = '🔴 Klik tombol mikrofon untuk mulai merekam (maks. 22 menit)';
+            transcribeBtn.disabled = true;
+            playResultBtn.disabled = true;
+            timerDisplay.textContent = '00:00 / 22:00';
+            progressFill.style.width = '0%';
+            progressBar.classList.remove('show');
+            if (canvasCtx) {
+                canvasCtx.fillStyle = '#0d0d1a';
+                canvasCtx.fillRect(0, 0, waveformCanvas.width, waveformCanvas.height);
+                canvasCtx.fillStyle = '#555';
+                canvasCtx.font = '14px sans-serif';
+                canvasCtx.textAlign = 'center';
+                canvasCtx.fillText('Tunggu rekaman...', waveformCanvas.width / 2, waveformCanvas.height / 2 + 5);
+            }
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+            }
+            recording = false;
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+            }
+            recordBtn.textContent = '🎤';
+            recordBtn.classList.remove('recording');
+            recordArea.classList.remove('recording');
+            clearInterval(timerInterval);
+            isPlaying = false;
+            stopAllSounds();
+            stopAllSounds = function() {
+                activeOscillators.forEach(osc => { try { osc.stop(); } catch (e) {} });
+                activeOscillators = [];
+                isPlaying = false;
+                if (keyboardMelodyTimeout) {
+                    clearTimeout(keyboardMelodyTimeout);
+                    keyboardMelodyTimeout = null;
+                }
+                keyboardMelodyPlaying = false;
+                document.getElementById('descGenerateBtn').disabled = false;
+                document.getElementById('descGenerateBtn').textContent = '🎵 Generate & Play';
+                if (isPlayingRecorded) {}
+            };
+        });
 
-    transcribedNotes.forEach((note, i) => {
-        const freq = FREQ_MAP[note];
-        if (!freq) return;
-        setTimeout(() => {
-            playSingleNote(freq, duration, currentInstrument, 'melody');
-            statusEl.textContent = `🎵 Memutar: ${note} (${freq.toFixed(2)} Hz)`;
-        }, delay * 1000);
-        delay += duration + 0.05;
-    });
-
-    setTimeout(() => {
-        statusEl.textContent = '✅ Pemutaran hasil transkripsi selesai.';
-        playResultBtn.textContent = '▶ Play Hasil';
-    }, delay * 1000 + 200);
-
-    playResultBtn.textContent = '⏹ Stop';
-    isPlaying = true;
-    const origStop = stopAllSounds;
-    stopAllSounds = function() {
-        origStop();
-        isPlaying = false;
-        playResultBtn.textContent = '▶ Play Hasil';
-    };
-});
-
-// Clear
-clearTranscribeBtn.addEventListener('click', function() {
-    recordedAudioBuffer = null;
-    transcribedNotes = [];
-    document.getElementById('transcribeResult').style.display = 'none';
-    transcribedDisplay.textContent = '-';
-    transcribeInfo.textContent = 'Jumlah nada: 0';
-    durationInfo.textContent = 'Durasi rekaman: 0 detik';
-    algoInfo.textContent = 'Algoritma: Standar';
-    statusEl.textContent = '🔴 Klik tombol mikrofon untuk mulai merekam (maks. 22 menit)';
-    transcribeBtn.disabled = true;
-    playResultBtn.disabled = true;
-    timerDisplay.textContent = '00:00 / 22:00';
-    progressFill.style.width = '0%';
-    progressBar.classList.remove('show');
-    if (canvasCtx) {
-        canvasCtx.fillStyle = '#0d0d1a';
-        canvasCtx.fillRect(0, 0, waveformCanvas.width, waveformCanvas.height);
-        canvasCtx.fillStyle = '#555';
-        canvasCtx.font = '14px sans-serif';
-        canvasCtx.textAlign = 'center';
-        canvasCtx.fillText('Tunggu rekaman...', waveformCanvas.width / 2, waveformCanvas.height / 2 + 5);
-    }
-    if (animationId) {
-        cancelAnimationFrame(animationId);
-        animationId = null;
-    }
-    recording = false;
-    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-        mediaRecorder.stop();
-    }
-    recordBtn.textContent = '🎤';
-    recordBtn.classList.remove('recording');
-    recordArea.classList.remove('recording');
-    clearInterval(timerInterval);
-    isPlaying = false;
-    stopAllSounds();
-    stopAllSounds = function() {
-        activeOscillators.forEach(osc => { try { osc.stop(); } catch (e) {} });
-        activeOscillators = [];
-        isPlaying = false;
-        if (keyboardMelodyTimeout) {
-            clearTimeout(keyboardMelodyTimeout);
-            keyboardMelodyTimeout = null;
-        }
-        keyboardMelodyPlaying = false;
-        document.getElementById('descGenerateBtn').disabled = false;
-        document.getElementById('descGenerateBtn').textContent = '🎵 Generate & Play';
-        if (isPlayingRecorded) {}
-    };
-});
-
-
+        // ================================================================
         // CHORD PROGRESSION (20 NADA PER OKTAF) — sama seperti sebelumnya
         // ================================================================
         document.getElementById('chordGenerateBtn').addEventListener('click', function() {
