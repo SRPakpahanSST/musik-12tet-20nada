@@ -138,7 +138,6 @@
         .tab-btn-nav.transcriber-tab:hover { background: #3a9a5a; }
         .tab-btn-nav.chord-tab { background: #b8860b; color: #fff; }
         .tab-btn-nav.chord-tab:hover { background: #d4a017; }
-        /* Tombol Tutorial */
         .tab-btn-nav.tutorial-btn {
             background: #f5a623;
             color: #000;
@@ -225,7 +224,6 @@
             display: inline-block;
         }
 
-        /* Mode Deskripsi saja — tanpa Prompt AI */
         .mode-desc-group {
             display: flex;
             align-items: center;
@@ -247,7 +245,6 @@
             color: #aaa;
         }
 
-        /* Deskripsi Area (Keyboard) */
         .desc-area {
             width: 100%;
             padding: 8px 0;
@@ -292,7 +289,6 @@
             cursor: pointer;
             outline: none;
         }
-        /* Hasil melodi */
         .melody-result {
             background: #0d0d1a;
             padding: 10px 15px;
@@ -306,7 +302,6 @@
             min-height: 30px;
         }
 
-        /* ===== KEYBOARD ===== */
         .keyboard-wrapper {
             overflow-x: auto;
             padding: 10px 0;
@@ -378,7 +373,6 @@
         }
         .status span { color: #f5a623; font-weight: 600; }
 
-        /* ===== AI CONTAINER ===== */
         .ai-container {
             background: #0d0d1a;
             border-radius: 12px;
@@ -459,7 +453,6 @@
         }
         .mood-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
 
-        /* ===== AI COMPOSER MODE RADIO ===== */
         .ai-mode-radio {
             display: flex;
             gap: 12px;
@@ -497,7 +490,6 @@
         .ai-mode-badge.desc { background: #0f3460; color: #aaa; }
         .ai-mode-badge.prompt { background: #2d7d46; color: #fff; }
 
-        /* ===== AI COMPOSER INPUT AREAS ===== */
         .ai-input-area {
             display: none;
             width: 100%;
@@ -542,7 +534,6 @@
         }
         .ai-input-area .input-group .api-hint a { color: #f5a623; }
 
-        /* ===== INFO PANEL ===== */
         .info-section {
             background: #1a1a2e;
             border-radius: 16px;
@@ -617,7 +608,6 @@
         .keyboard-wrapper::-webkit-scrollbar-track { background: #0d0d1a; }
         .keyboard-wrapper::-webkit-scrollbar-thumb { background: #e94560; border-radius: 10px; }
 
-        /* ===== TRANSCRIBER CUSTOM ===== */
         .record-area {
             text-align: center;
             padding: 20px;
@@ -803,11 +793,6 @@
             .record-btn { width: 60px; height: 60px; font-size: 1.8rem; }
         }
 
-        /* ===== TUTORIAL OVERLAY ===== */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.95); }
-            to { opacity: 1; transform: scale(1); }
-        }
         .tutorial-overlay {
             position: fixed;
             top: 0; left: 0;
@@ -1165,12 +1150,10 @@
                     </h3>
                     <p style="color:#aaa;margin-bottom:10px;font-size:0.85rem;">Rekam lagu atau suara (maks. 22 menit), AI akan menuliskannya (A4 = 440 Hz)</p>
 
-                    <!-- Error -->
                     <div class="error-message" id="errorMessage">
                         ⚠️ <span id="errorText">Terjadi kesalahan. Pastikan browser mengizinkan akses mikrofon.</span>
                     </div>
 
-                    <!-- Record Area -->
                     <div class="record-area" id="recordArea">
                         <button class="record-btn" id="recordBtn">🎤</button>
                         <div class="timer" id="timerDisplay">00:00 / 22:00</div>
@@ -1182,7 +1165,6 @@
                         </div>
                     </div>
 
-                    <!-- Controls -->
                     <div class="transcriber-controls">
                         <div class="radio-group">
                             <label id="standardLabel" class="active-radio">
@@ -1343,113 +1325,106 @@
         });
 
         // ================================================================
-        // DATA FREKUENSI 12-TET (20 NADA PER OKTAF)
+        // DATA FREKUENSI 12-TET (20 NADA PER OKTAF) — 5 desimal
         // ================================================================
         const FREQ_MAP = {
-    // Oktaf 2
-    'C2': 60.90000,
-    'C#2': 64.34000,
-    'D2': 67.97400,
-
-    // Oktaf 3
-    'E3': 71.81300,
-    'E#3': 75.86800,
-    'F3': 80.15200,
-    'F#3': 84.67800,
-    'G3': 89.46000,
-    'G#3': 94.51100,
-    'H3': 99.84800,
-    'H#3': 105.48600,
-    'I3': 111.44300,
-    'J3': 117.73500,
-    'J#3': 124.38400,
-    'K3': 131.40700,
-    'K#3': 138.82700,
-    'A3': 146.66700,
-    'A#3': 154.94900,
-    'B3': 163.69800,
-    'B#3': 172.94200,
-    'C3': 182.70700,
-    'C#3': 193.02400,
-    'D3': 203.92400,
-
-    // Oktaf 4 (A4 = 440.00000)
-    'E4': 215.43900,
-    'E#4': 227.60400,
-    'F4': 240.45600,
-    'F#4': 254.03400,
-    'G4': 268.37900,
-    'G#4': 283.53300,
-    'H4': 299.54400,
-    'H#4': 316.45800,
-    'I4': 334.32800,
-    'J4': 353.20600,
-    'J#4': 373.15100,
-    'K4': 394.22200,
-    'K#4': 416.48200,
-    'A4': 440.00000,
-    'A#4': 464.84600,
-    'B4': 491.09400,
-    'B#4': 518.82500,
-    'C4': 548.12200,
-    'C#4': 579.07300,
-    'D4': 611.77100,
-
-    // Oktaf 5
-    'E5': 646.31600,
-    'E#5': 682.81200,
-    'F5': 721.36900,
-    'F#5': 762.10200,
-    'G5': 805.13600,
-    'G#5': 850.60000,
-    'H5': 898.63100,
-    'H#5': 949.37400,
-    'I5': 1002.98300,
-    'J5': 1059.61900,
-    'J#5': 1119.45300,
-    'K5': 1182.66500,
-    'K#5': 1249.44700,
-    'A5': 1320.00000,
-    'A#5': 1394.53700,
-    'B5': 1473.28300,
-    'B#5': 1556.47500,
-    'C5': 1644.36500,
-    'C#5': 1737.21800,
-    'D5': 1835.31400,
-
-    // Oktaf 6
-    'E6': 1938.94900,
-    'E#6': 2048.43600,
-    'F6': 2164.10600,
-    'F#6': 2286.30700,
-    'G6': 2415.40900,
-    'G#6': 2551.80000,
-    'H6': 2695.89400,
-    'H#6': 2848.12300,
-    'I6': 3008.94900,
-    'J6': 3178.85700,
-    'J#6': 3358.35800,
-    'K6': 3547.99600,
-    'K#6': 3748.34100,
-    'A6': 3960.00000,
-    'A#6': 4183.61100,
-    'B6': 4419.84800,
-    'B#6': 4669.42500,
-    'C6': 4933.09500,
-    'C#6': 5211.65300,
-    'D6': 5505.94200
-};
-
-        const NOTE_FREQS = Object.values(FREQ_MAP);
-        const NOTE_NAMES = Object.keys(FREQ_MAP);
+            // Oktaf 2
+            'C2': 60.90000,
+            'C#2': 64.34000,
+            'D2': 67.97400,
+            // Oktaf 3
+            'E3': 71.81300,
+            'E#3': 75.86800,
+            'F3': 80.15200,
+            'F#3': 84.67800,
+            'G3': 89.46000,
+            'G#3': 94.51100,
+            'H3': 99.84800,
+            'H#3': 105.48600,
+            'I3': 111.44300,
+            'J3': 117.73500,
+            'J#3': 124.38400,
+            'K3': 131.40700,
+            'K#3': 138.82700,
+            'A3': 146.66700,
+            'A#3': 154.94900,
+            'B3': 163.69800,
+            'B#3': 172.94200,
+            'C3': 182.70700,
+            'C#3': 193.02400,
+            'D3': 203.92400,
+            // Oktaf 4 (A4 = 440.00000)
+            'E4': 215.43900,
+            'E#4': 227.60400,
+            'F4': 240.45600,
+            'F#4': 254.03400,
+            'G4': 268.37900,
+            'G#4': 283.53300,
+            'H4': 299.54400,
+            'H#4': 316.45800,
+            'I4': 334.32800,
+            'J4': 353.20600,
+            'J#4': 373.15100,
+            'K4': 394.22200,
+            'K#4': 416.48200,
+            'A4': 440.00000,
+            'A#4': 464.84600,
+            'B4': 491.09400,
+            'B#4': 518.82500,
+            'C4': 548.12200,
+            'C#4': 579.07300,
+            'D4': 611.77100,
+            // Oktaf 5
+            'E5': 646.31600,
+            'E#5': 682.81200,
+            'F5': 721.36900,
+            'F#5': 762.10200,
+            'G5': 805.13600,
+            'G#5': 850.60000,
+            'H5': 898.63100,
+            'H#5': 949.37400,
+            'I5': 1002.98300,
+            'J5': 1059.61900,
+            'J#5': 1119.45300,
+            'K5': 1182.66500,
+            'K#5': 1249.44700,
+            'A5': 1320.00000,
+            'A#5': 1394.53700,
+            'B5': 1473.28300,
+            'B#5': 1556.47500,
+            'C5': 1644.36500,
+            'C#5': 1737.21800,
+            'D5': 1835.31400,
+            // Oktaf 6
+            'E6': 1938.94900,
+            'E#6': 2048.43600,
+            'F6': 2164.10600,
+            'F#6': 2286.30700,
+            'G6': 2415.40900,
+            'G#6': 2551.80000,
+            'H6': 2695.89400,
+            'H#6': 2848.12300,
+            'I6': 3008.94900,
+            'J6': 3178.85700,
+            'J#6': 3358.35800,
+            'K6': 3547.99600,
+            'K#6': 3748.34100,
+            'A6': 3960.00000,
+            'A#6': 4183.61100,
+            'B6': 4419.84800,
+            'B#6': 4669.42500,
+            'C6': 4933.09500,
+            'C#6': 5211.65300,
+            'D6': 5505.94200
+        };
 
         // ================================================================
         // SISTEM 20 NADA PER OKTAF – FUNGSI DASAR
         // ================================================================
         const NOTES_20 = ['E','E#','F','F#','G','G#','H','H#','I','J','J#','K','K#','A','A#','B','B#','C','C#','D'];
-        // ===== PERBAIKAN : interval yang benar sesuai dokumen =====
-        const MAYOR_INTERVALS = [2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 1];
-        const MINOR_INTERVALS = [2, 2, 2, 1, 2, 2, 2, 2, 1, 2, 2];
+        // Interval sesuai dokumen (dalam satuan ½ laras)
+        const MAYOR_INTERVALS = [2,2,2,2,1,2,2,2,2,2,1];
+        const MINOR_INTERVALS = [2,2,2,1,2,2,2,2,1,2,2];
 
         function buildScale20(rootIdx, intervals) {
             const scale = [rootIdx];
@@ -1467,12 +1442,14 @@
 
         // ===== PERBAIKAN : buildChord20 dengan interval yang benar =====
         function buildChord20(rootIdx, type) {
-            let third = 4;
-            let fifth;
-            if (type === 'mayor') fifth = 8;
-            else if (type === 'minor') fifth = 7;
-            else if (type === 'diminished') fifth = 6; // perkiraan
-            else fifth = 7;
+            let third = 4;      // mayor third (2 laras)
+            let fifth = 7;      // perfect fifth (3.5 laras)
+            if (type === 'minor') {
+                third = 3;      // minor third (1.5 laras)
+            } else if (type === 'diminished') {
+                third = 3;
+                fifth = 6;      // diminished fifth (3 laras)
+            }
             const thirdIdx = (rootIdx + third) % 20;
             const fifthIdx = (rootIdx + fifth) % 20;
             return [getNoteName20(rootIdx), getNoteName20(thirdIdx), getNoteName20(fifthIdx)];
@@ -1628,7 +1605,6 @@
             }
         }
 
-        // === playSingleNote dengan penanda jenis suara ('melody' atau 'chord') ===
         function playSingleNote(freq, duration = 0.6, instrumentType = null, soundType = 'melody') {
             const useInstrument = instrumentType || currentInstrument;
             try {
@@ -1669,7 +1645,6 @@
                 delayInput.connect(delayNode);
                 delayInput.connect(delayDryGain);
 
-                // Tandai oscillator sebagai 'melody' atau 'chord'
                 mainOsc._type = soundType;
 
                 if (oscData.extraOsc) {
@@ -1714,7 +1689,6 @@
             } catch (e) { console.warn(e); return null; }
         }
 
-        // === Hentikan semua suara ===
         function stopAllSounds() {
             activeOscillators.forEach(osc => { try { osc.stop(); } catch (e) {} });
             activeOscillators = [];
@@ -1726,13 +1700,11 @@
             keyboardMelodyPlaying = false;
             document.getElementById('descGenerateBtn').disabled = false;
             document.getElementById('descGenerateBtn').textContent = '🎵 Generate & Play';
-            // Jika ada playback rekaman, hentikan juga
             if (isPlayingRecorded) {
                 // akan ditangani di stopRecordedPlayback
             }
         }
 
-        // === Hentikan hanya akord (tidak menghentikan melodi) ===
         function stopChords() {
             const toRemove = [];
             activeOscillators.forEach(osc => {
@@ -1763,7 +1735,6 @@
             return seq;
         }
 
-        // === HANYA C2-B#3 (20 nada), tidak termasuk C3 dan D3 ===
         function generateChordRangeNotes() {
             const seq = [];
             const octave2 = ['C2', 'C#2', 'D2'];
@@ -1776,7 +1747,6 @@
             return seq;
         }
 
-        // Render keyboard dari note sequence
         function renderKeyboard(noteSeq) {
             container.innerHTML = '';
             keyElements = {};
@@ -1835,7 +1805,6 @@
                     keyElements[note] = key;
                 }
             }
-            // Tampilkan label oktaf
             let posX = startX;
             const widthOctave2 = 3 * whiteWidth;
             const label2 = document.createElement('div');
@@ -1856,7 +1825,6 @@
             container.appendChild(label3);
         }
 
-        // Fungsi build keyboard dengan oktaf count (standar)
         function buildKeyboard(octaveCount) {
             const noteSeq = generateNoteSequence(octaveCount);
             renderKeyboard(noteSeq);
@@ -1864,7 +1832,6 @@
             statusDisplay.innerHTML = `🎹 ${octaveCount} oktaf (C2 sampai D${lastOctave}) — Klik tuts untuk bermain`;
         }
 
-        // Fungsi build keyboard untuk mode akord saat melodi diputar (C2-B#3)
         function buildChordKeyboard() {
             const noteSeq = generateChordRangeNotes();
             renderKeyboard(noteSeq);
@@ -1874,11 +1841,10 @@
         // ================================================================
         // REKAMAN MELODI (Tombol Mayor & Minor memutar ulang)
         // ================================================================
-        // Setiap item: { note, freq, duration, time }
         let recordedMelody = [];
-        let recordingStartTime = 0; // waktu mulai rekaman (performance.now)
+        let recordingStartTime = 0;
         let isPlayingRecorded = false;
-        let recordedPlayTimeouts = []; // untuk menyimpan semua timeout
+        let recordedPlayTimeouts = [];
 
         function setChordModeActive() {
             const chordRadio = document.querySelector('input[name="playMode"][value="chord"]');
@@ -1906,24 +1872,17 @@
                 return;
             }
 
-            // Hentikan semua suara (termasuk akord)
             stopAllSounds();
-
-            // Otomatis aktifkan mode Akord
             setChordModeActive();
-
-            // Ubah keyboard ke tampilan C2-B#3 (20 nada)
             buildChordKeyboard();
 
             isPlayingRecorded = true;
             const startTime = performance.now();
 
             recordedMelody.forEach((item, i) => {
-                // Waktu delay dalam milidetik
-                const delayMs = item.time * 1000; // time dalam detik
+                const delayMs = item.time * 1000;
                 const timeoutId = setTimeout(() => {
                     if (!isPlayingRecorded) return;
-                    // Mainkan nada dengan durasi yang sama
                     playSingleNote(item.freq, item.duration, currentInstrument, 'melody');
                     const key = keyElements[item.note];
                     if (key) {
@@ -1935,7 +1894,6 @@
                 recordedPlayTimeouts.push(timeoutId);
             });
 
-            // Setelah semua selesai, reset
             const totalTime = recordedMelody[recordedMelody.length - 1].time + 0.2;
             const finalTimeout = setTimeout(() => {
                 isPlayingRecorded = false;
@@ -2002,21 +1960,19 @@
             const octave = parseInt(match[2]);
 
             if (playMode === 'single') {
-                // Hentikan semua suara (termasuk akord) saat beralih ke nada tunggal
                 stopAllSounds();
                 if (isPlayingRecorded) stopRecordedPlayback();
 
                 const freq = FREQ_MAP[note];
                 if (freq) {
-                    const duration = 0.6; // durasi tetap 0.6 detik
+                    const duration = 0.6;
                     playSingleNote(freq, duration, currentInstrument, 'melody');
 
-                    // Rekam dengan waktu relatif
                     const now = performance.now();
                     if (recordedMelody.length === 0) {
                         recordingStartTime = now;
                     }
-                    const elapsed = (now - recordingStartTime) / 1000; // detik
+                    const elapsed = (now - recordingStartTime) / 1000;
                     recordedMelody.push({ note: note, freq: freq, duration: duration, time: elapsed });
 
                     statusDisplay.innerHTML = `🎵 Memainkan <span>${note}</span> (${freq.toFixed(2)} Hz) [${currentInstrument}] (melodi direkam)`;
@@ -2040,7 +1996,6 @@
             }
 
             if (isValidChordRoot) {
-                // Hanya hentikan akord sebelumnya, biarkan melodi tetap berjalan
                 stopChords();
                 const idx = NOTES_20.indexOf(noteName);
                 if (idx === -1) return;
@@ -2058,7 +2013,6 @@
                     statusDisplay.innerHTML = `⚠️ Akord untuk ${note} tidak valid (tidak ada frekuensi).`;
                 }
             } else {
-                // Nada tunggal di luar rentang: mainkan tanpa menghentikan akord, dengan instrumen pilihan
                 const freq = FREQ_MAP[note];
                 if (freq) {
                     const duration = 0.6;
@@ -2088,7 +2042,6 @@
                         chordModeLabel.classList.add('active-mode');
                         modeIndicator.textContent = '🎵 Mode: Akord (C2-B#3)';
                     }
-                    // Saat berpindah mode, hentikan semua suara
                     stopAllSounds();
                     if (isPlayingRecorded) stopRecordedPlayback();
                     statusDisplay.innerHTML = `🔄 Mode berubah ke: ${playMode === 'single' ? 'Tunggal' : 'Akord (C2-B#3)'}`;
@@ -2397,7 +2350,6 @@
             });
         });
 
-        // ===== Mood tags =====
         const moodTags = document.querySelectorAll('#moodTags .mood-tag');
         let selectedMood = 'sad';
 
@@ -2409,9 +2361,6 @@
             });
         });
 
-        // ================================================================
-        // AI COMPOSER - GENERATE WITH AI (OpenAI)
-        // ================================================================
         async function generateWithAI(prompt, mood, scaleType, tempo, apiKey) {
             try {
                 const systemPrompt = `Anda adalah komposer musik yang ahli dalam sistem 12-TET 20 nada per oktaf dengan A4=440 Hz.
@@ -2472,9 +2421,6 @@ Hasilkan notasi nada:`;
             }
         }
 
-        // ================================================================
-        // AI COMPOSER - GENERATE BUTTON
-        // ================================================================
         let generatedMelody = [];
         let aiPlaying = false;
         let aiPlayTimeout = null;
@@ -2591,12 +2537,7 @@ Hasilkan notasi nada:`;
         });
 
         // ================================================================
-        // AI TRANSCRIBER (REAL MIKROFON + DETEKSI PITCH) — sama seperti sebelumnya, tidak diubah
-        // ================================================================
-        // (kode transcriber tetap sama, tidak diubah)
-
-        // ================================================================
-        // CHORD PROGRESSION (20 NADA PER OKTAF) — sama seperti sebelumnya
+        // CHORD PROGRESSION (20 NADA PER OKTAF)
         // ================================================================
         document.getElementById('chordGenerateBtn').addEventListener('click', function() {
             const input = document.getElementById('chordInput').value.trim();
@@ -2968,7 +2909,6 @@ Hasilkan notasi nada:`;
             aiDescModeLabel.classList.add('active-ai-mode');
             aiPromptModeLabel.classList.remove('active-ai-mode');
 
-            // Status transcriber (dummy)
             const statusEl = document.getElementById('status');
             if (statusEl) statusEl.textContent = '🔴 Klik tombol mikrofon untuk mulai merekam (maks. 22 menit)';
             const canvas = document.getElementById('waveformCanvas');
