@@ -1649,6 +1649,15 @@
             keyboardMelodyPlaying = false;
             document.getElementById('descGenerateBtn').disabled = false;
             document.getElementById('descGenerateBtn').textContent = '🎵 Generate & Play';
+            // Kembalikan ke mode Nada Tunggal jika sedang memutar melodi
+            if (isPlayingRecorded) {
+                // Ini akan dipanggil dari stopRecordedPlayback
+                // Tapi kita panggil di sini untuk jaga-jaga
+                if (document.querySelector('input[name="playMode"][value="single"]')) {
+                    document.querySelector('input[name="playMode"][value="single"]').checked = true;
+                    document.querySelector('input[name="playMode"][value="single"]').dispatchEvent(new Event('change'));
+                }
+            }
         }
 
         // === Hentikan hanya akord (tidak menghentikan melodi) ===
@@ -1802,6 +1811,24 @@
         let recordedPlayTimeout = null;
         let wasChordModeActive = false;
 
+        // Fungsi untuk mengaktifkan radio button Akord
+        function setChordModeActive() {
+            const chordRadio = document.querySelector('input[name="playMode"][value="chord"]');
+            if (chordRadio) {
+                chordRadio.checked = true;
+                chordRadio.dispatchEvent(new Event('change'));
+            }
+        }
+
+        // Fungsi untuk mengaktifkan radio button Nada Tunggal
+        function setSingleModeActive() {
+            const singleRadio = document.querySelector('input[name="playMode"][value="single"]');
+            if (singleRadio) {
+                singleRadio.checked = true;
+                singleRadio.dispatchEvent(new Event('change'));
+            }
+        }
+
         function playRecordedMelody() {
             if (recordedMelody.length === 0) {
                 statusDisplay.innerHTML = '⚠️ Belum ada melodi yang direkam. Mainkan tuts di mode Tunggal.';
@@ -1814,8 +1841,8 @@
             // Hentikan semua suara (termasuk akord) sebelum memutar melodi rekaman
             stopAllSounds();
 
-            // Simpan mode akord jika aktif
-            wasChordModeActive = (playMode === 'chord');
+            // Otomatis aktifkan mode Akord
+            setChordModeActive();
 
             // Ubah keyboard ke tampilan C2-B#3 (20 nada)
             buildChordKeyboard();
@@ -1840,6 +1867,8 @@
                 isPlayingRecorded = false;
                 // Kembalikan keyboard ke pengaturan oktaf semula
                 restoreKeyboardAfterPlayback();
+                // Otomatis aktifkan mode Nada Tunggal
+                setSingleModeActive();
                 statusDisplay.innerHTML = '✅ Melodi selesai diputar';
             }, delay * 1000 + 200);
         }
@@ -1852,6 +1881,8 @@
             isPlayingRecorded = false;
             stopAllSounds();
             restoreKeyboardAfterPlayback();
+            // Otomatis aktifkan mode Nada Tunggal
+            setSingleModeActive();
             statusDisplay.innerHTML = '⏹ Pemutaran melodi dihentikan';
         }
 
@@ -2302,7 +2333,7 @@
         });
 
         // ================================================================
-        // AI COMPOSER - GENERATE WITH AI (OpenAI) — sama seperti sebelumnya
+        // AI COMPOSER - GENERATE WITH AI (OpenAI)
         // ================================================================
         async function generateWithAI(prompt, mood, scaleType, tempo, apiKey) {
             try {
@@ -2648,7 +2679,7 @@ Hasilkan notasi nada:`;
             </tbody></table><p style="font-size:0.8rem;color:#888;font-weight:bold;">A4 = 440 Hz (acuan) | Oktaf berikutnya × 3</p>`,
             skala: `<h3>🎹 Skala Mayor (E=1)</h3><p>E - F - G - H - I - J - K - A - B - C - D - E</p><p>Interval: 1 1 1 1 ½ 1 1 1 1 1 ½</p><h3>🎹 Skala Minor (A=1)</h3><p>A - B - C - D - E - F - G - H - I - J - K - A</p><p>Interval: 1 1 1 ½ 1 1 1 1 ½ 1 1</p>`,
             chord: `<h3>🎵 Akord</h3><p>Akord dibangun dari 20 not dengan terts (mayor=4, minor=3) dan kwint (7).</p><p>Rentang akord: C2 – B#3 (20 nada). Tuts putih = Mayor, tuts hitam = Minor.</p><p>Contoh: E mayor = E, G#, K#; E# minor = E#, G##? (gunakan 20-TET)</p>`,
-            tentang: `<h3>📖 Tentang Aplikasi</h3><p>Berdasarkan karya tulis Sukma Riadi Pakpahan, SST.</p><p><b>Fitur:</b> 8 instrumen, Reverb, Delay, Amplifier, 3/4/5 oktaf, Akord (C2-B#3) sustain dengan piano, AI Composer, AI Transcriber (dengan mikrofon), Chord Progression.</p><p><b>Tombol Mayor/Minor:</b> Memutar ulang melodi rekaman (bukan tangga nada).</p><p><b>Gubah dari Melodi:</b> Di tab Keyboard, pilih mode Input "Melodi", tulis deskripsi, lalu Generate & Play untuk menggubah melodi rekaman.</p><p><b>Akord saat melodi mengalun:</b> Beralih ke mode Akord saat melodi diputar, tekan tuts akord – akord baru menggantikan yang lama, melodi tetap berjalan.</p><p><b>Keyboard otomatis fokus ke C2-B#3 saat melodi diputar</b> untuk memudahkan akses akord (tidak termasuk C3 dan D3).</p><p><b>Sistem:</b> 12-TET 20 Nada per Oktaf | A4 = 440 Hz</p>`
+            tentang: `<h3>📖 Tentang Aplikasi</h3><p>Berdasarkan karya tulis Sukma Riadi Pakpahan, SST.</p><p><b>Fitur:</b> 8 instrumen, Reverb, Delay, Amplifier, 3/4/5 oktaf, Akord (C2-B#3) sustain dengan piano, AI Composer, AI Transcriber (dengan mikrofon), Chord Progression.</p><p><b>Tombol Mayor/Minor:</b> Memutar ulang melodi rekaman (bukan tangga nada).</p><p><b>Gubah dari Melodi:</b> Di tab Keyboard, pilih mode Input "Melodi", tulis deskripsi, lalu Generate & Play untuk menggubah melodi rekaman.</p><p><b>Akord saat melodi mengalun:</b> Beralih ke mode Akord saat melodi diputar, tekan tuts akord – akord baru menggantikan yang lama, melodi tetap berjalan.</p><p><b>Keyboard otomatis fokus ke C2-B#3 saat melodi diputar</b> untuk memudahkan akses akord (tidak termasuk C3 dan D3).</p><p><b>Tombol Mayor/Minor otomatis mengaktifkan mode Akord</b>, dan setelah selesai kembali ke Nada Tunggal.</p><p><b>Sistem:</b> 12-TET 20 Nada per Oktaf | A4 = 440 Hz</p>`
         };
 
         function renderTab(tabId) {
@@ -2692,6 +2723,7 @@ Hasilkan notasi nada:`;
                     <li>Akord selalu menggunakan suara <b>Piano</b> (statis) untuk iringan yang stabil.</li>
                     <li><b>Akord dapat mengiringi melodi:</b> saat melodi sedang diputar, beralih ke mode Akord dan tekan tuts akord – melodi tetap berbunyi.</li>
                     <li><b>Keyboard otomatis fokus ke C2-B#3 saat melodi diputar</b> agar lebih mudah mengakses tuts akord (tidak termasuk C3 dan D3).</li>
+                    <li><b>Tombol Mayor/Minor otomatis mengaktifkan mode Akord</b>, dan setelah selesai kembali ke Nada Tunggal.</li>
                 </ul>
                 <p><b>💡 Nada tunggal di luar rentang dapat dimainkan sebagai melodi tanpa menghentikan akord.</b></p>
             `
@@ -2884,6 +2916,7 @@ Hasilkan notasi nada:`;
             console.log('🎯 Fitur "Gubah dari Melodi" tersedia di tab Keyboard (mode Input: Melodi).');
             console.log('🎵 Akord dapat mengiringi melodi tanpa menghentikannya.');
             console.log('🎹 Keyboard otomatis fokus ke C2-B#3 saat melodi diputar.');
+            console.log('🔄 Tombol Mayor/Minor otomatis aktifkan mode Akord, kembali ke Nada Tunggal setelah selesai.');
             console.log('📖 Tutorial siap dibuka dengan tombol Tutorial.');
         });
     </script>
